@@ -247,7 +247,7 @@ for (m in unique(df_long$month_label)) {
               aes(x = bucket, y = probability, fill = bucket)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
     labs(
-      title = paste("Rate Outcome Probabilities -", m),
+      title = paste("Cash Rate Outcome Probabilities -", m),
       caption = paste("Based on futures-implied rates as of", format(latest_scrape, "%d %B %Y")),
       x = "Target Rate Bucket", y = "Probability (%)"
     ) +
@@ -271,3 +271,40 @@ tryCatch({
   
 
 }
+
+                       
+                       # Select latest forecast path
+fan_df <- cash_rate %>%
+  filter(scrape_date == max(scrape_date)) %>%
+  select(date, forecast_rate = cash_rate) %>%
+  arrange(date)
+
+
+n_rows <- min(nrow(fan_df), length(rmse))
+
+fan_df <- fan_df[1:n_rows, ] %>%
+  mutate(
+    stdev = rmse[1:n_rows],
+    lower_95 = forecast_rate - qnorm(0.975) * stdev,
+    upper_95 = forecast_rate + qnorm(0.975) * stdev,
+    lower_65 = forecast_rate - qnorm(0.825) * stdev,
+    upper_65 = forecast_rate + qnorm(0.825) * stdev
+  )
+
+# Plot the fan chart
+viz_fan <- ggplot(fan_df, aes(x = date)) +
+  geom_ribbon(aes(ymin = lower_95, ymax = upper_95), fill = "#cbd5e1") +
+  geom_ribbon(aes(ymin = lower_65, ymax = upper_65), fill = "#94a3b8") +
+  geom_line(aes(y = forecast_rate), color = "black", linewidth = 1) +
+  scale_y_continuous(labels = label_percent(scale = 1), limits = c(0, NA)) +
+  scale_x_date(date_labels = "%b\n%Y", date_breaks = "3 months") +
+  theme_bw() +
+  labs(
+    title = "Mean Path of Cash Rate with Uncertainty Bands",
+    caption = paste("Shaded areas represent 65% and 95% confidence interval using historical forecast errors. Futures-implied path as of", format(max(cash_rate$scrape_date), "%d %B %Y")),
+    x = NULL, y = NULL
+  ) +
+  theme(panel.grid.minor = element_blank())
+
+                       ggsave("docs/rate_fan_chart.png", plot = viz_fan, width = 8, height = 5, dpi = 300)
+
