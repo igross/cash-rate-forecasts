@@ -239,9 +239,12 @@ df_long <- df_long %>%
   filter(date %in% meeting_months)
 
 latest_scrape <- max(cash_rate$scrape_date)
-
+print(df_long)
+                       
 # Save each chart
 for (m in unique(df_long$month_label)) {
+  print(m)
+  
   p <- ggplot(filter(df_long, month_label == m),
               aes(x = bucket, y = probability, fill = bucket)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
