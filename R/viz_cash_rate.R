@@ -151,7 +151,7 @@ forecast_df <- cash_rate %>%
 # Inject known RBA meeting dates
 meeting_dates <- tibble(
   expiry = as.Date(c(
-    "2025-02-01", "2025-03-01", "2025-05-01", "2025-07-01",
+    "2025-02-01", "2025-04-01", "2025-05-01", "2025-07-01",
     "2025-08-01", "2025-09-01", "2025-11-01", "2025-12-01"
   )),
   meeting_date = as.Date(c(
