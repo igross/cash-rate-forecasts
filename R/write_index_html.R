@@ -1,39 +1,50 @@
-# Load libraries
+# write_index_html.R
+
 suppressPackageStartupMessages({
   library(lubridate)
   library(stringr)
 })
 
-# Read PNG filenames
+# List PNGs for meeting charts
 png_files <- list.files("docs", pattern = "^rate_probabilities_.*\\.png$", full.names = FALSE)
 
-# Extract and parse meeting dates
+# Extract and format meeting labels
 labels <- png_files |>
   str_remove("^rate_probabilities_") |>
   str_remove("\\.png$") |>
-  str_replace_all("_", " ")  # "May 2025"
+  str_replace_all("_", " ")
 
-# Convert to dates (assume 1st of month)
+# Parse dates from labels
 dates <- suppressWarnings(as.Date(paste0("01 ", labels), format = "%d %B %Y"))
 valid_idx <- which(!is.na(dates) & dates > Sys.Date())
 
-# Subset to future meetings
+# Filter and sort
 png_files <- png_files[valid_idx]
 labels <- labels[valid_idx]
+dates <- dates[valid_idx]
 
-# Sort by date
-order_idx <- order(dates[valid_idx])
+order_idx <- order(dates)
 png_files <- png_files[order_idx]
 labels <- labels[order_idx]
 
-# Create individual cards
+# Build HTML chart blocks
 cards <- mapply(function(file, label) {
   sprintf('<div class="chart-card">
     <img src="%s" alt="%s" />
-    <div class="chart-label">%s</div>
-  </div>', file, label, label)
+  </div>', file, label)
 }, png_files, labels)
 
+# Check if fan chart exists
+fan_chart_section <- ""
+if (file.exists("docs/rate_fan_chart.png")) {
+  fan_chart_section <- '
+  <h1 style="margin-top:60px;">Forecast Path with Uncertainty Bands</h1>
+  <div class="chart-card" style="max-width: 800px; margin: 0 auto;">
+    <img src="rate_fan_chart.png" alt="Fan Chart of Forecast Path">
+  </div>'
+}
+
+# Assemble full HTML
 html <- sprintf('
 <!DOCTYPE html>
 <html lang="en">
@@ -73,25 +84,23 @@ html <- sprintf('
       width: 100%%;
       border-radius: 6px;
     }
-    .chart-label {
-      margin-top: 12px;
-      font-size: 1rem;
-      color: #555;
-    }
   </style>
 </head>
 <body>
 
   <h1>Rate Outcome Probabilities by RBA Meeting</h1>
+
   <div class="grid">
     %s
   </div>
 
+  %s
+
 </body>
 </html>
-', paste(cards, collapse = "\n"))
-
+', paste(cards, collapse = "\n"), fan_chart_section)
 
 # Write to file
 writeLines(html, "docs/index.html")
-message("✅ index.html updated with ", length(png_files), " charts.")
+message("✅ index.html updated with ", length(png_files), " meeting charts.",
+        if (fan_chart_section != "") " Fan chart included." else " Fan chart missing.")
