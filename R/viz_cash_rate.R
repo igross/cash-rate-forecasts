@@ -238,13 +238,11 @@ df_long <- df_long %>%
 
 # Save each chart
 for (m in unique(df_long$month_label)) {
- meeting_day <- meeting_lookup$meeting_date[meeting_lookup$month_label == m]
-  
   p <- ggplot(filter(df_long, month_label == m),
               aes(x = bucket, y = probability, fill = bucket)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
     labs(
-      title = paste("Rate Outcome Probabilities –", format(meeting_day, "%d %B %Y")),
+      title = paste("Rate Outcome Probabilities -", m),
       x = "Target Rate Bucket", y = "Probability (%)"
     ) +
     theme_bw() +
