@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Rate Probabilities by Meeting</title>
+  <title>Rate Outcome Probabilities by RBA Meeting</title>
   <style>
     body {
       font-family: "Segoe UI", Roboto, sans-serif;
@@ -50,7 +50,7 @@
 </head>
 <body>
 
-  <h1>Rate Probabilities by Meeting</h1>
+  <h1>Rate Outcome Probabilities by RBA Meeting</h1>
   <div class="grid" id="chartGrid"></div>
 
   <script>
@@ -60,34 +60,40 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
 
-        const links = Array.from(doc.querySelectorAll("a"))
-          .map(link => link.getAttribute("href"))
-          .filter(href => href && href.endsWith(".png") && href.includes("rate_probabilities"))
-          .sort();
-
+        const today = new Date();
         const grid = document.getElementById("chartGrid");
 
-        links.forEach(href => {
-          const label = href
-            .replace("rate_probabilities_", "")
-            .replace(".png", "")
-            .replace(/_/g, " ");
+        Array.from(doc.querySelectorAll("a"))
+          .map(link => link.getAttribute("href"))
+          .filter(href => href && href.endsWith(".png") && href.includes("rate_probabilities"))
+          .sort()
+          .forEach(href => {
+            const label = href
+              .replace("rate_probabilities_", "")
+              .replace(".png", "")
+              .replace(/_/g, " "); // e.g., "May 2025"
 
-          const card = document.createElement("div");
-          card.className = "chart-card";
+            const [monthStr, yearStr] = label.split(" ");
+            const dateStr = `01 ${monthStr} ${yearStr}`;
+            const meetingDate = new Date(dateStr);
 
-          const img = document.createElement("img");
-          img.src = href;
-          img.alt = label;
+            if (isNaN(meetingDate.getTime()) || meetingDate < today) return;
 
-          const caption = document.createElement("div");
-          caption.className = "chart-label";
-          caption.textContent = label;
+            const card = document.createElement("div");
+            card.className = "chart-card";
 
-          card.appendChild(img);
-          card.appendChild(caption);
-          grid.appendChild(card);
-        });
+            const img = document.createElement("img");
+            img.src = href;
+            img.alt = label;
+
+            const caption = document.createElement("div");
+            caption.className = "chart-label";
+            caption.textContent = label;
+
+            card.appendChild(img);
+            card.appendChild(caption);
+            grid.appendChild(card);
+          });
       });
   </script>
 
