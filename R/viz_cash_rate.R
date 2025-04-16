@@ -219,24 +219,25 @@ bucket_matrix <- apply(bucket_matrix, 1, function(row) row / sum(row)) %>% t()
 colnames(bucket_matrix) <- paste0("p_", bucket_centers)
 df_probs <- cbind(df_result["date"], round(bucket_matrix * 100, 2))
 
-# Reshape
+# Only keep future meeting dates (after today)
+future_meeting_dates <- meeting_dates %>%
+  filter(meeting_date > Sys.Date())
+
+# Get the relevant months
+meeting_months <- floor_date(future_meeting_dates$expiry, "month")
+
+# Reshape probability matrix
 df_long <- df_probs %>%
   rename_with(~ gsub("p_", "", .x), starts_with("p_")) %>%
   pivot_longer(cols = -date, names_to = "bucket", values_to = "probability") %>%
-  mutate(bucket = paste0(bucket, "%"),
-         month_label = format(date, "%b %Y"))
-
-
-meeting_months <- meeting_months[meeting_dates >= floor_date(Sys.Date(), "month")]
-
-meeting_months <- floor_date(meeting_months, "month")
-
-
-df_long <- df_long %>%
+  mutate(
+    bucket = paste0(bucket, "%"),
+    month_label = format(date, "%b %Y")
+  ) %>%
   filter(date %in% meeting_months)
 
+# Keep latest scrape for captions
 latest_scrape <- max(cash_rate$scrape_date)
-
 # Save each chart
 for (m in unique(df_long$month_label)) {
   p <- ggplot(filter(df_long, month_label == m),
