@@ -255,6 +255,8 @@ for (m in unique(df_long$month_label)) {
   p <- ggplot(filter(df_long, month_label == m),
               aes(x = bucket, y = probability, fill = bucket)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
+  geom_vline(xintercept = as.character(current_rate), color = "black", linetype = "dashed", linewidth = 0.8) +
+
     labs(
       title = paste("Cash Rate Outcome Probabilities -", m),
       caption = paste("Based on futures-implied rates as of", format(latest_scrape, "%d %B %Y")),
