@@ -4,6 +4,7 @@ suppressPackageStartupMessages({
   library(lubridate)
   library(ggrepel)
   library(tidyr)
+  library(scales)
           })
  
 cash_rate <- readRDS(file.path("combined_data", "all_data.Rds"))
