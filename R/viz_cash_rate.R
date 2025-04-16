@@ -296,10 +296,10 @@ fan_df <- fan_df[1:n_rows, ] %>%
 
 # Plot the fan chart
 viz_fan <- ggplot(fan_df, aes(x = date)) +
-  geom_ribbon(aes(ymin = lower_95, ymax = upper_95), fill = "#cbd5e1") +
-  geom_ribbon(aes(ymin = lower_65, ymax = upper_65), fill = "#94a3b8") +
-  geom_line(aes(y = forecast_rate), color = "black", linewidth = 1) +
-  scale_y_continuous(labels = label_percent(scale = 1), limits = c(0, NA)) +
+  geom_ribbon(aes(ymin = lower_95, ymax = upper_95), fill = "#a6cee3", alpha = 0.5) +  # 95% band — light blue
+  geom_ribbon(aes(ymin = lower_65, ymax = upper_65), fill = "#1f78b4", alpha = 0.6) +  # 65% band — stronger blue
+  geom_line(aes(y = forecast_rate), color = "#e31a1c", size = 1.2) +  # Mean path — bold red
+   scale_y_continuous(labels = label_percent(scale = 1), limits = c(0, NA)) +
   scale_x_date(date_labels = "%b\n%Y", date_breaks = "3 months") +
   theme_bw() +
   labs(
