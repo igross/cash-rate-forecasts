@@ -256,6 +256,9 @@ for (m in unique(df_long$month_label)) {
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+
+tryCatch({
+
   ggsave(
     filename = paste0("docs/rate_probabilities_", gsub(" ", "_", m), ".png"),
     plot = p,
@@ -263,4 +266,9 @@ for (m in unique(df_long$month_label)) {
     height = 4,
     dpi = 300
   )
+}, error = function(e) {
+  message("❌ Failed to generate fan chart: ", e$message)
+})
+  
+
 }
