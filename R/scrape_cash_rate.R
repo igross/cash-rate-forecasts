@@ -45,4 +45,4 @@ saveRDS(all_data,
         file = file.path("combined_data",
                          "all_data.Rds"))
 
-
+write_csv(all_data, file = "combined_data/cash_rate.csv")
