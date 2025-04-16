@@ -1,44 +1,79 @@
-files <- list.files("docs", pattern = "^rate_probabilities_.*\\.png$", full.names = FALSE)
 
-# Optional: filter for future meetings
-labels <- gsub("rate_probabilities_", "", gsub(".png", "", files))
-labels <- gsub("_", " ", labels)
-
-dates <- as.Date(paste0("01 ", labels), format = "%d %B %Y")
-keep <- dates > Sys.Date()
-files <- files[keep]
-labels <- labels[keep]
-
-# Generate chart HTML
-cards <- mapply(function(file, label) {
-  sprintf('<div class="chart-card"><img src="%s" alt="%s" /><div class="chart-label">%s</div></div>',
-          file, label, label)
-}, files, labels)
-
-# Wrap in full HTML template
-html <- sprintf('
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Rate Outcome Probabilities by RBA Meeting</title>
   <style>
-    body { font-family: "Segoe UI", Roboto, sans-serif; background-color: #f5f7fa; color: #333; margin: 0; padding: 40px 20px; }
-    h1 { text-align: center; margin-bottom: 30px; font-size: 2rem; color: #2c3e50; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; padding: 10px; max-width: 1200px; margin: 0 auto; }
-    .chart-card { background: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); padding: 15px; text-align: center; }
-    .chart-card img { width: 100%; border-radius: 6px; }
-    .chart-label { margin-top: 12px; font-size: 1rem; color: #555; }
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2rem;
+      color: #2c3e50;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 30px;
+      padding: 10px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .chart-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px;
+      text-align: center;
+    }
+    .chart-card img {
+      width: 100%;
+      border-radius: 6px;
+    }
+    .chart-label {
+      margin-top: 12px;
+      font-size: 1rem;
+      color: #555;
+    }
   </style>
 </head>
 <body>
+
   <h1>Rate Outcome Probabilities by RBA Meeting</h1>
   <div class="grid">
-    %s
+    <div class="chart-card">
+    <img src="rate_probabilities_May_2025.png" alt="May 2025" />
+    <div class="chart-label">May 2025</div>
   </div>
+<div class="chart-card">
+    <img src="rate_probabilities_Jul_2025.png" alt="Jul 2025" />
+    <div class="chart-label">Jul 2025</div>
+  </div>
+<div class="chart-card">
+    <img src="rate_probabilities_Aug_2025.png" alt="Aug 2025" />
+    <div class="chart-label">Aug 2025</div>
+  </div>
+<div class="chart-card">
+    <img src="rate_probabilities_Sep_2025.png" alt="Sep 2025" />
+    <div class="chart-label">Sep 2025</div>
+  </div>
+<div class="chart-card">
+    <img src="rate_probabilities_Nov_2025.png" alt="Nov 2025" />
+    <div class="chart-label">Nov 2025</div>
+  </div>
+<div class="chart-card">
+    <img src="rate_probabilities_Dec_2025.png" alt="Dec 2025" />
+    <div class="chart-label">Dec 2025</div>
+  </div>
+  </div>
+
 </body>
 </html>
-', paste(cards, collapse = "\n"))
 
-# Write it to docs/index.html
-writeLines(html, "docs/index.html")
