@@ -31,7 +31,7 @@ labels <- labels[order_idx]
 cards <- mapply(function(file, label) {
   sprintf('<div class="chart-card">
     <img src="%s" alt="%s" />
-  </div>', file, label)
+  </div>', file)
 }, png_files, labels)
 
 # Check if fan chart exists
