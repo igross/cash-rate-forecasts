@@ -18,7 +18,7 @@ forecast_df <- cash_rate %>%
   mutate(forecast_rate = forecast_rate_raw + spread) %>%
   filter(date >= as.Date("2025-04-01"),
          date <= as.Date("2026-09-01"))
-
+ 
 # Inject known RBA meeting dates
 meeting_dates <- tibble(
   expiry = as.Date(c(
