@@ -233,8 +233,12 @@ rba_meeting_dates <- as.Date(c(
 ))
 meeting_months <- floor_date(rba_meeting_dates, "month")
 
+meeting_months <- meeting_months[meeting_months >= floor_date(Sys.Date(), "month")]
+
 df_long <- df_long %>%
   filter(date %in% meeting_months)
+
+latest_scrape <- max(cash_rate$scrape_date)
 
 # Save each chart
 for (m in unique(df_long$month_label)) {
