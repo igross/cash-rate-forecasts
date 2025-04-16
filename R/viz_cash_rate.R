@@ -264,11 +264,6 @@ for (m in unique(df_long$month_label)) {
 }
 
 
-
-
-
-
-
                        # Select latest forecast path
 fan_df <- cash_rate %>%
   filter(scrape_date == max(scrape_date)) %>%
