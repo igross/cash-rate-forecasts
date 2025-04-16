@@ -13,6 +13,10 @@ file.remove(list.files("docs", pattern = "\\.png$", full.names = TRUE))
 
 cash_rate <- readRDS(file.path("combined_data", "all_data.Rds"))
 
+current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
+    filter(date == max(date)) %>%
+    pull(value)
+
 if (!dir.exists("figures")) dir.create("figures")
 
 viz_1 <- cash_rate |>
