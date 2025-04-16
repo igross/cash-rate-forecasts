@@ -242,7 +242,7 @@ for (m in unique(df_long$month_label)) {
               aes(x = bucket, y = probability, fill = bucket)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
     labs(
-      title = paste("Rate Outcome Probabilities -", m),
+      title = paste("Rate Outcome Probabilities –", format(meeting_day, "%d %B %Y")),
       x = "Target Rate Bucket", y = "Probability (%)"
     ) +
     theme_bw() +
