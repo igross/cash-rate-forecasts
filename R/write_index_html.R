@@ -98,7 +98,14 @@ html <- sprintf('
 </head>
 <body>
 
-  <h1>Rate Outcome Probabilities by RBA Meeting</h1>
+ <p style="max-width: 800px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
+    This website provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia's cash rate,
+    based on ASX 30-day interbank futures data. For each upcoming RBA meeting, we show the probability distribution
+    over possible rate outcomes based on historical data. These expectations update automatically each morning based on the latest market data using code provided by Matt Cowgill.
+  </p>
+
+
+  <h1>Cash Rate Outcome Probabilities by RBA Meeting</h1>
 
   %s
 
