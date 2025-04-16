@@ -5,7 +5,9 @@ suppressPackageStartupMessages({
   library(ggrepel)
   library(tidyr)
           })
- 
+
+file.remove(list.files("docs", pattern = "\\.png$", full.names = TRUE))
+
 cash_rate <- readRDS(file.path("combined_data", "all_data.Rds"))
 
 if (!dir.exists("figures")) dir.create("figures")
