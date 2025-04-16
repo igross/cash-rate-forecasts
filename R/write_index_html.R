@@ -34,7 +34,6 @@ cards <- mapply(function(file, label) {
   </div>', file, label, label)
 }, png_files, labels)
 
-# Assemble full HTML
 html <- sprintf('
 <!DOCTYPE html>
 <html lang="en">
@@ -71,7 +70,7 @@ html <- sprintf('
       text-align: center;
     }
     .chart-card img {
-      width: 100%;
+      width: 100%%;
       border-radius: 6px;
     }
     .chart-label {
@@ -91,6 +90,7 @@ html <- sprintf('
 </body>
 </html>
 ', paste(cards, collapse = "\n"))
+
 
 # Write to file
 writeLines(html, "docs/index.html")
