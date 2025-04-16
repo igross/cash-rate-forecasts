@@ -294,12 +294,11 @@ viz_fan <- ggplot(fan_df, aes(x = date)) +
   geom_line(aes(y = forecast_rate), color = "black", linewidth = 1) +
   scale_y_continuous(labels = label_percent(scale = 1), limits = c(0, NA)) +
   scale_x_date(date_labels = "%b\n%Y", date_breaks = "3 months") +
-  theme_minimal() +
+  theme_bw() +
   labs(
-    title = "Mean Path of Cash Rate with 65% and 95% Uncertainty Bands",
-    subtitle = paste("Futures-implied path as of", format(max(cash_rate$scrape_date), "%d %B %Y")),
-    x = NULL, y = NULL,
-    caption = "Shaded areas represent 65% and 95% confidence intervals (Bank of England fan chart style)"
+    title = "Mean Path of Cash Rate with Uncertainty Bands",
+    caption = paste("Shaded areas represent 65% and 95% confidence interval using historical forecast errors. Futures-implied path as of", format(max(cash_rate$scrape_date), "%d %B %Y")),
+    x = NULL, y = NULL
   ) +
   theme(panel.grid.minor = element_blank())
 
