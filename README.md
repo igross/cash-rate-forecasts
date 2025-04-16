@@ -29,6 +29,28 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
+    #> # A tibble: 133 × 4
+    #>    date       bucket probability month_label
+    #>    <date>     <chr>        <dbl> <chr>      
+    #>  1 2025-04-01 0.1%             0 Apr 2025   
+    #>  2 2025-04-01 0.35%            0 Apr 2025   
+    #>  3 2025-04-01 0.6%             0 Apr 2025   
+    #>  4 2025-04-01 0.85%            0 Apr 2025   
+    #>  5 2025-04-01 1.1%             0 Apr 2025   
+    #>  6 2025-04-01 1.35%            0 Apr 2025   
+    #>  7 2025-04-01 1.6%             0 Apr 2025   
+    #>  8 2025-04-01 1.85%            0 Apr 2025   
+    #>  9 2025-04-01 2.1%             0 Apr 2025   
+    #> 10 2025-04-01 2.35%            0 Apr 2025   
+    #> # ℹ 123 more rows
+    #> [1] "Apr 2025"
+    #> [1] "May 2025"
+    #> [1] "Jul 2025"
+    #> [1] "Aug 2025"
+    #> [1] "Sep 2025"
+    #> [1] "Nov 2025"
+    #> [1] "Dec 2025"
+
 ![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-2-4.png)<!-- -->
 
     #> Warning: Removed 126 rows containing missing values or values outside the scale range
