@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rate Probabilities by Meeting</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 40px; background: #fff; }
+    img { max-width: 100%; max-height: 80vh; }
+    .controls { margin-top: 20px; }
+    button { padding: 10px 20px; margin: 0 10px; font-size: 16px; }
+    #label { font-size: 1.2em; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>Rate Probabilities by Meeting</h1>
+  <p id="label"></p>
+  <img id="forecastImage" src="" alt="Rate Forecast" />
+  
+  <div class="controls">
+    <button onclick="prevImage()">⟨ Previous</button>
+    <button onclick="nextImage()">Next ⟩</button>
+  </div>
+
+  <script>
+    // Automatically scan all PNG files in the folder
+    fetch('./')
+      .then(response => response.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const links = Array.from(doc.querySelectorAll("a"))
+          .map(link => link.getAttribute("href"))
+          .filter(href => href && href.endsWith(".png") && href.includes("rate_probabilities"))
+          .sort();
+
+        const images = links;
+        const labels = links.map(f => f
+          .replace("rate_probabilities_", "")
+          .replace(".png", "")
+          .replace(/_/g, " ")
+        );
+
+        let index = 0;
+
+        function updateImage() {
+          document.getElementById("forecastImage").src = images[index];
+          document.getElementById("label").innerText = labels[index];
+        }
+
+        window.nextImage = function() {
+          index = (index + 1) % images.length;
+          updateImage();
+        }
+
+        window.prevImage = function() {
+          index = (index - 1 + images.length) % images.length;
+          updateImage();
+        }
+
+        if (images.length > 0) {
+          updateImage();
+        } else {
+          document.getElementById("label").innerText = "No forecast images found.";
+        }
+      });
+  </script>
+
+</body>
+</html>
