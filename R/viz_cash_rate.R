@@ -141,10 +141,13 @@ viz_5 <- cash_rate |>
 # VIZ 6: BUCKETED RATE PROBABILITIES BY MEETING
 # ============================
 
-# Forecast path and RMSE
+
+spread <- 0.01  # 1bp upward adjustment to all forecast rates
+
 forecast_df <- cash_rate %>%
   filter(scrape_date == max(scrape_date)) %>%
-  select(date, forecast_rate = cash_rate) %>%
+  select(date, forecast_rate_raw = cash_rate) %>%
+  mutate(forecast_rate = forecast_rate_raw + spread) %>%
   filter(date >= as.Date("2025-04-01"),
          date <= as.Date("2026-09-01"))
 
@@ -233,17 +236,26 @@ rba_meeting_dates <- as.Date(c(
 ))
 meeting_months <- floor_date(rba_meeting_dates, "month")
 
+# Keep only future meetings
 df_long <- df_long %>%
-  filter(date %in% meeting_months)
+  filter(date >= Sys.Date(), date %in% meeting_months)
 
-# Save each chart
+# Clean the figures folder (only rate probability PNGs)
+unlink("figures/rate_probabilities_*.png")
+
+# Pull the scrape date for subtitle
+scrape_label <- format(max(cash_rate$scrape_date), "%d %b %Y")
+
+# Save one chart per future meeting month
 for (m in unique(df_long$month_label)) {
   p <- ggplot(filter(df_long, month_label == m),
               aes(x = bucket, y = probability, fill = bucket)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
     labs(
       title = paste("Rate Outcome Probabilities -", m),
-      x = "Target Rate Bucket", y = "Probability (%)"
+      subtitle = paste("Based on futures pricing as at", scrape_label),
+      x = "Target Rate Bucket",
+      y = "Probability (%)"
     ) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -256,3 +268,4 @@ for (m in unique(df_long$month_label)) {
     dpi = 300
   )
 }
+
