@@ -4,11 +4,66 @@
   <meta charset="UTF-8" />
   <title>Rate Probabilities by Meeting</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 40px; background: #fff; }
-    img { max-width: 100%; max-height: 80vh; }
-    .controls { margin-top: 20px; }
-    button { padding: 10px 20px; margin: 0 10px; font-size: 16px; }
-    #label { font-size: 1.2em; margin-bottom: 10px; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 2rem;
+      color: #2c3e50;
+    }
+
+    #label {
+      font-size: 1.1rem;
+      color: #555;
+      margin-bottom: 15px;
+    }
+
+    #forecastImage {
+      max-width: 100%;
+      max-height: 75vh;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+      padding: 10px;
+    }
+
+    .controls {
+      margin-top: 25px;
+    }
+
+    button {
+      padding: 10px 18px;
+      margin: 0 8px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    button:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -16,14 +71,13 @@
   <h1>Rate Probabilities by Meeting</h1>
   <p id="label"></p>
   <img id="forecastImage" src="" alt="Rate Forecast" />
-  
+
   <div class="controls">
     <button onclick="prevImage()">⟨ Previous</button>
     <button onclick="nextImage()">Next ⟩</button>
   </div>
 
   <script>
-    // Automatically scan all PNG files in the folder
     fetch('./')
       .then(response => response.text())
       .then(html => {
