@@ -5,6 +5,8 @@ suppressPackageStartupMessages({
   library(ggrepel)
   library(tidyr)
   library(scales)
+  library(readabs)
+  library(readrba)
           })
 
 file.remove(list.files("docs", pattern = "\\.png$", full.names = TRUE))
