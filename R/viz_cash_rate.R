@@ -231,9 +231,11 @@ rba_meeting_dates <- as.Date(c(
   "2025-04-01", "2025-05-20", "2025-07-08", "2025-08-12",
   "2025-09-30", "2025-11-04", "2025-12-09"
 ))
+
+meeting_months <- meeting_months[rba_meeting_dates >= floor_date(Sys.Date(), "month")]
+
 meeting_months <- floor_date(rba_meeting_dates, "month")
 
-meeting_months <- meeting_months[meeting_months >= floor_date(Sys.Date(), "month")]
 
 df_long <- df_long %>%
   filter(date %in% meeting_months)
