@@ -14,6 +14,13 @@ labels <- png_files |>
   str_remove("\\.png$") |>
   str_replace_all("_", " ")  # e.g. "May 2025"
 
+intro_paragraph <- '
+  <p style="max-width: 800px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
+    This website provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia\'s cash rate,
+    based on ASX 30-day interbank futures data. For each upcoming RBA meeting, we show the probability distribution
+    over possible rate outcomes based on historical data. These expectations update automatically each morning based on the latest market data using code provided by Matt Cowgill.
+  </p>'
+
 # Parse to dates (assume 1st of each month)
 dates <- suppressWarnings(as.Date(paste0("01 ", labels), format = "%d %B %Y"))
 valid_idx <- which(!is.na(dates) & dates > Sys.Date())
