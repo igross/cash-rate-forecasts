@@ -247,7 +247,7 @@ for (m in unique(df_long$month_label)) {
     geom_bar(stat = "identity", show.legend = FALSE) +
     labs(
       title = paste("Rate Outcome Probabilities -", m),
-      subtitle = paste("Based on futures-implied rates as of", format(latest_scrape, "%d %B %Y")),
+      caption = paste("Based on futures-implied rates as of", format(latest_scrape, "%d %B %Y")),
       x = "Target Rate Bucket", y = "Probability (%)"
     ) +
     theme_bw() +
