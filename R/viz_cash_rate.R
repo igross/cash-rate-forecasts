@@ -243,8 +243,6 @@ print(df_long)
                        
 # Save each chart
 for (m in unique(df_long$month_label)) {
-  print(m)
-  
   p <- ggplot(filter(df_long, month_label == m),
               aes(x = bucket, y = probability, fill = bucket)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
@@ -266,6 +264,7 @@ tryCatch({
     height = 4,
     dpi = 300
   )
+  print(m)
 }, error = function(e) {
   message("❌ Failed to generate fan chart: ", e$message)
 })
