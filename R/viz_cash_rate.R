@@ -236,6 +236,9 @@ rba_meeting_dates <- as.Date(c(
 ))
 meeting_months <- floor_date(rba_meeting_dates, "month")
 
+df_long <- df_long %>%
+  filter(date %in% meeting_months)
+                       
 # Keep only future meetings
 df_long <- df_long %>%
   filter(date >= Sys.Date(), date %in% meeting_months)
