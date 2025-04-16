@@ -249,7 +249,7 @@ for (m in unique(df_long$month_label)) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
   ggsave(
-    filename = paste0("figures/rate_probabilities_", gsub(" ", "_", m), ".png"),
+    filename = paste0("docs/rate_probabilities_", gsub(" ", "_", m), ".png"),
     plot = p,
     width = 6,
     height = 4,
