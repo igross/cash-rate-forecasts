@@ -53,6 +53,16 @@ if (file.exists("docs/rate_fan_chart.png")) {
   </div>'
 }
 
+# Optional fan chart
+line_chart_section <- ""
+if (file.exists("docs/line.png")) {
+  line_chart_section <- '
+  <h1 style="margin-top:60px;">Daily Forecasts for RBA Next Meeting</h1>
+  <div class="chart-card" style="max-width: 800px; margin: 0 auto;">
+    <img src="line.png" alt="Next RBA Meeting">
+  </div>'
+}
+
 # Compose main chart section
 meeting_section <- if (length(cards) > 0) {
   paste('<div class="grid">', paste(cards, collapse = "\n"), '</div>')
@@ -113,7 +123,7 @@ html <- sprintf('
 
 </body>
 </html>
-', intro_paragraph, meeting_section, fan_chart_section)
+', intro_paragraph, line_chart_section,meeting_section, fan_chart_section)
 
 
 # Write output
