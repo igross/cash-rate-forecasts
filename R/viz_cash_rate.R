@@ -205,7 +205,7 @@ forecast_df <- cash_rate %>%
   filter(date >= as.Date("2025-04-01"),
          date <= as.Date("2026-09-01"))
 
-)
+
 
 forecast_df <- forecast_df %>%
   left_join(meeting_dates, by = c("date" = "expiry"))
