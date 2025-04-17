@@ -47,7 +47,7 @@ meeting_schedule <- meeting_schedule %>%
 rba_meeting_dates <- meeting_schedule$meeting_date
 
 # Spread adjustment
-spread_bp     <- 0.01  # in percentage points
+spread     <- 0.01  # in percentage points
 
 
 
