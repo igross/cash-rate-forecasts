@@ -57,7 +57,7 @@ if (file.exists("docs/rate_fan_chart.png")) {
 line_chart_section <- ""
 if (file.exists("docs/line.png")) {
   line_chart_section <- '
-  <h1 style="margin-top:60px;">Forecasts for RBA Next Meeting</h1>
+  <h1 style="margin-top:60px;">Forecasts for the Next RBA Meeting</h1>
   <div class="chart-card" style="max-width: 800px; margin: 0 auto;">
     <img src="line.png" alt="Next RBA Meeting">
   </div>'
@@ -118,7 +118,7 @@ html <- sprintf('
 
   %s
   
-<h1>Expected Outcomes By RBA Meeting </h1>
+<h1>Cash Rate Target Probabilities By RBA Meeting </h1>
 
   %s
 
