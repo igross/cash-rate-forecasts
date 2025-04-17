@@ -46,33 +46,21 @@ are shown below:
     #> [1] "Apr 2025"
     #> Warning: Removed 19 rows containing missing values or values outside the scale range
     #> (`geom_bar()`).
-    #> Warning: Removed 1 row containing missing values or values outside the scale range
-    #> (`geom_segment()`).
     #> [1] "May 2025"
     #> Warning: Removed 19 rows containing missing values or values outside the scale range
     #> (`geom_bar()`).
-    #> Removed 1 row containing missing values or values outside the scale range
-    #> (`geom_segment()`).
     #> [1] "Jul 2025"
     #> Warning: Removed 19 rows containing missing values or values outside the scale range
     #> (`geom_bar()`).
-    #> Removed 1 row containing missing values or values outside the scale range
-    #> (`geom_segment()`).
     #> [1] "Aug 2025"
     #> Warning: Removed 19 rows containing missing values or values outside the scale range
     #> (`geom_bar()`).
-    #> Removed 1 row containing missing values or values outside the scale range
-    #> (`geom_segment()`).
     #> [1] "Sep 2025"
     #> Warning: Removed 19 rows containing missing values or values outside the scale range
     #> (`geom_bar()`).
-    #> Removed 1 row containing missing values or values outside the scale range
-    #> (`geom_segment()`).
     #> [1] "Nov 2025"
     #> Warning: Removed 19 rows containing missing values or values outside the scale range
     #> (`geom_bar()`).
-    #> Removed 1 row containing missing values or values outside the scale range
-    #> (`geom_segment()`).
     #> [1] "Dec 2025"
     #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     #> ℹ Please use `linewidth` instead.
