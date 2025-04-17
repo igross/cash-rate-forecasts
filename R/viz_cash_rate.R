@@ -390,15 +390,7 @@ ggplot(cut_probs, aes(x = scrape_date, y = prob*100, color = event)) +
   theme(
     legend.position   = "top",
     axis.text.x       = element_text(angle = 45, hjust = 1)
-  ) +
-  # Add a vertical dashed line at today's rate label
-  annotate("segment",
-           x = today, xend = today,
-           y = 0, yend = max(cut_probs$prob*100),
-           linetype = "dashed", color = "black", size = 0.6) +
-  annotate("text",
-           x = today, y = max(cut_probs$prob*100) + 2,
-           label = paste("Today:", current_lbl),
-           angle = 90, vjust = -0.5, hjust = 0, size = 3)
+  ) 
+                       
 
 
