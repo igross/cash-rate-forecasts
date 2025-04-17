@@ -47,53 +47,12 @@ intro_paragraph <- sprintf(
 )
 
 # --- Generate TOC ---
-toc_items <- mapply(function(slug, label) {
-  sprintf('<li><a href="#%s">%s</a></li>', slug, label)
-}, slugs, labels, USE.NAMES = FALSE)
-toc_html <- sprintf(
-  '<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <title>RBA Cash Rate Forecasts</title>
-  <link rel="icon" href="favicon.ico"/>
-  <style>
-    body { font-family:"Segoe UI", Roboto, sans-serif; background:#f5f7fa; color:#333; margin:0; padding:20px;}
-    header { text-align:center; margin-bottom:20px;}
-    header h1 { font-size:2.5rem; color:#2c3e50; margin:0;}
-    header nav { margin-top:5px;}
-    header nav a { margin:0 10px; color:#007acc; text-decoration:none;}
-    .update-banner { text-align:center; font-size:0.9rem; color:#555; margin-bottom:20px;}
-    .toc ul { list-style:none; padding:0; display:flex; justify-content:center; gap:15px; margin-bottom:30px;}
-    .toc a { color:#2c3e50; text-decoration:none; font-weight:500;}
-    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:30px; max-width:1200px; margin:0 auto;}
-    .chart-card { background:#fff; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.05); padding:15px; text-align:center;}
-    .chart-card img { width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:6px;}
-    h2 { text-align:center; color:#2c3e50; margin-top:60px;}
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Rate Outcome Probabilities by RBA Meeting</h1>
-    <nav>
-      <a href="index.html">Home</a> | <a href="https://github.com/igross/cash-rate-forecasts">GitHub Repo</a>
-    </nav>
-  </header>
-  <div class="update-banner">Updated: %s</div>
-  %s
-  %s
-  %s
-  %s
-  %s
-</body>
-</html>',
-  today_label,
-  intro_paragraph,
-  toc_html,
-  line_section,
-  meeting_section,
-  fan_section
-)'<nav class="toc"><ul>%s</ul></nav>', paste(toc_items, collapse = "\n"))
+# Build a simple nav list from the labels
+ toc_html <- sprintf(
+   '<nav class="toc"><ul>%s</ul></nav>',
+   paste(toc_items, collapse = "
+")
+ )
 
 # --- Build image cards ---
 cards <- mapply(function(file, slug, label) {
