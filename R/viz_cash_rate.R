@@ -9,6 +9,24 @@ suppressPackageStartupMessages({
   library(readrba)
           })
 
+RMSE_day <- c(
+  0.042179271, 0.042179271, 0.042179271, 0.042179271, 0.042179271,
+  0.042776679, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
+  0.046298074, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
+  0.046298074, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
+  0.046298074, 0.046298074, 0.046298074, 0.049190132, 0.055747377,
+  0.066188053, 0.076198602, 0.085952901, 0.095017305, 0.102963055,
+  0.108868503, 0.114587407, 0.120812307, 0.124727182, 0.126527307,
+  0.127130759, 0.130574217, 0.131907087, 0.131907087, 0.133101424,
+  0.133604684, 0.133604684, 0.133604684, 0.134157915, 0.134279318,
+  0.135105750, 0.135768693, 0.135768693, 0.135768693, 0.137844837,
+  0.141733602, 0.144384669, 0.151849631, 0.160263120, 0.170752101,
+  0.182983584, 0.187848605, 0.193679887, 0.201277676, 0.210711555,
+  0.216858302
+)
+names(RMSE_day) <- 0:60                   # label each element by its day index
+
+
 # Meeting schedule (expiry month first day, meeting dates)
 meeting_schedule <- tibble::tibble(
   expiry       = as.Date(c(
@@ -22,6 +40,11 @@ meeting_schedule <- tibble::tibble(
     "2025-11-04", "2025-12-09"
   ))
 )
+
+rba_meeting_dates <- as.Date(c(
+  "2025-04-01", "2025-05-20", "2025-07-08", "2025-08-12",
+  "2025-09-30", "2025-11-04", "2025-12-09"
+))
 
 # Spread adjustment
 spread_bp     <- 0.01  # in percentage points
@@ -52,10 +75,7 @@ rmse <- c(
   1.131569667, 1.211783477, 1.322739338, 1.359617226
 )
 
-rba_meeting_dates <- as.Date(c(
-  "2025-04-01", "2025-05-20", "2025-07-08", "2025-08-12",
-  "2025-09-30", "2025-11-04", "2025-12-09"
-))
+
 
 file.remove(list.files("docs", pattern = "\\.png$", full.names = TRUE))
 
@@ -202,8 +222,7 @@ viz_5 <- cash_rate |>
 forecast_df <- cash_rate %>%
   filter(scrape_date == max(scrape_date)) %>%
   select(date, forecast_rate = cash_rate) %>%
-  filter(date >= as.Date("2025-04-01"),
-         date <= as.Date("2026-09-01"))
+filter(date >= Sys.Date() %m-% months(1))
 
 
 
@@ -246,7 +265,7 @@ df_result <- bind_rows(results)
 df_result$stdev <- rmse[1:nrow(df_result)]
 
 # Bucket edges
-bucket_centers <- seq(0.10, 4.60, by = 0.25)
+bucket_centers <- seq(0.10, 5.1, by = 0.25)
 bucket_edges <- c(bucket_centers - 0.125, tail(bucket_centers, 1) + 0.125)
 
 # Probabilities
@@ -312,7 +331,7 @@ tryCatch({
 }
 
                        
-                       # Select latest forecast path
+ # Select latest forecast path
 fan_df <- cash_rate %>%
   filter(scrape_date == max(scrape_date)) %>%
   select(date, forecast_rate = cash_rate) %>%
@@ -345,9 +364,7 @@ viz_fan <- ggplot(fan_df, aes(x = date)) +
   ) +
   theme(panel.grid.minor = element_blank())
 
-                       ggsave("docs/rate_fan_chart.png", plot = viz_fan, width = 8, height = 5, dpi = 300)
-
-
+ggsave("docs/rate_fan_chart.png", plot = viz_fan, width = 8, height = 5, dpi = 300)
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -410,22 +427,6 @@ for (j in seq_along(unique_scrapes)) {
   )
 }
 
-RMSE_day <- c(
-  0.042179271, 0.042179271, 0.042179271, 0.042179271, 0.042179271,
-  0.042776679, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
-  0.046298074, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
-  0.046298074, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
-  0.046298074, 0.046298074, 0.046298074, 0.049190132, 0.055747377,
-  0.066188053, 0.076198602, 0.085952901, 0.095017305, 0.102963055,
-  0.108868503, 0.114587407, 0.120812307, 0.124727182, 0.126527307,
-  0.127130759, 0.130574217, 0.131907087, 0.131907087, 0.133101424,
-  0.133604684, 0.133604684, 0.133604684, 0.134157915, 0.134279318,
-  0.135105750, 0.135768693, 0.135768693, 0.135768693, 0.137844837,
-  0.141733602, 0.144384669, 0.151849631, 0.160263120, 0.170752101,
-  0.182983584, 0.187848605, 0.193679887, 0.201277676, 0.210711555,
-  0.216858302
-)
-names(RMSE_day) <- 0:60                   # label each element by its day index
 
 
 results <- results %>%
@@ -436,7 +437,7 @@ results <- results %>%
   select(-days_to_meeting)                # drop helper column if not needed
 
 ## ── 1.  Bucket definition ------------------------------------------------------
-bucket_centers <- seq(0.10, 6.60, by = 0.25)
+bucket_centers <- seq(0.10, 5.1, by = 0.25)
 bucket_edges   <- c(bucket_centers - 0.125,
                     tail(bucket_centers, 1) + 0.125)
 nbuckets <- length(bucket_centers)
@@ -540,8 +541,7 @@ stacked<-ggplot(top4, aes(x = scrape_date, y = probability, fill = bucket)) +
   theme_bw() +
   theme(legend.position = "right")
 
-
-                           ggsave("docs/stacked.png", plot = stacked, width = 8, height = 5, dpi = 300)
+ggsave("docs/stacked.png", plot = stacked, width = 8, height = 5, dpi = 300)
 
 line<-ggplot(top4,
        aes(x = scrape_date,
@@ -567,5 +567,5 @@ line<-ggplot(top4,
   theme_bw() +
   theme(legend.position = "right")
   
-    ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
+ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
 
