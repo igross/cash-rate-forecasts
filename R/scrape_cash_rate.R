@@ -13,12 +13,14 @@ new_data <- jsonlite::fromJSON(json_file) |>
   pluck("data", "items") |>
   as_tibble() |>
   mutate(dateExpiry = ymd(dateExpiry),
-         dateExpiry = floor_date(dateExpiry, "month")) |>
+         dateExpiry = floor_date(dateExpiry, "month"),
+         scrape_time = now(tzone = "Australia/Melbourne")) |>
   filter(pricePreviousSettlement != 0) |>
   mutate(cash_rate = 100 - pricePreviousSettlement) |>
   select(date = dateExpiry,
          cash_rate,
-         scrape_date = datePreviousSettlement)
+         scrape_date = datePreviousSettlement,
+         time        = scrape_time,  # new timestamp column)
 
 # Write a CSV of today's data
 write_csv(new_data, file.path("daily_data",
