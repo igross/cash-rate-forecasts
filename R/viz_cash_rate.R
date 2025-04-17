@@ -27,13 +27,8 @@ RMSE_day <- c(
 names(RMSE_day) <- 0:60                   # label each element by its day index
 
 
-# Meeting schedule (expiry month first day, meeting dates)
+# 1.  Define only the meeting dates
 meeting_schedule <- tibble::tibble(
-  expiry       = as.Date(c(
-    "2025-02-01", "2025-03-01", "2025-05-01",
-    "2025-07-01", "2025-08-01", "2025-09-01",
-    "2025-11-01", "2025-12-01"
-  )),
   meeting_date = as.Date(c(
     "2025-02-18", "2025-04-01", "2025-05-20",
     "2025-07-08", "2025-08-12", "2025-09-30",
@@ -41,10 +36,15 @@ meeting_schedule <- tibble::tibble(
   ))
 )
 
-rba_meeting_dates <- as.Date(c(
-  "2025-04-01", "2025-05-20", "2025-07-08", "2025-08-12",
-  "2025-09-30", "2025-11-04", "2025-12-09"
-))
+# 2.  Compute the expiry (first of month) automatically
+meeting_schedule <- meeting_schedule %>%
+  mutate(
+    expiry = floor_date(meeting_date, unit = "month")
+  ) %>%
+  select(expiry, meeting_date)
+
+# 3.  If you still need a vector of just the upcoming meeting dates:
+rba_meeting_dates <- meeting_schedule$meeting_date
 
 # Spread adjustment
 spread_bp     <- 0.01  # in percentage points
@@ -227,11 +227,11 @@ filter(date >= Sys.Date() %m-% months(1))
 
 
 forecast_df <- forecast_df %>%
-  left_join(meeting_dates, by = c("date" = "expiry"))
+  left_join(meeting_schedule, by = c("date" = "expiry"))
 
 # Iterative cash rate logic
 results <- list()
-rt <- forecast_df$forecast_rate[1]
+rt <- forecast_df$forecast_rate[1]+spread
 
 for (i in 1:nrow(forecast_df)) {
   row <- forecast_df[i, ]
@@ -239,12 +239,12 @@ for (i in 1:nrow(forecast_df)) {
   if (!is.na(row$meeting_date)) {
     nb <- (day(row$meeting_date) - 1) / dim
     na <- 1 - nb
-    r_tp1 <- (row$forecast_rate - rt * nb) / na
+    r_tp1 <- (row$forecast_rate+spread - rt * nb) / na
   } else {
     nb <- 1
     na <- 0
-    r_tp1 <- row$forecast_rate
-    rt <- row$forecast_rate
+    r_tp1 <- row$forecast_rate+spread
+    rt <- row$forecast_rate+spread
   }
 
   results[[i]] <- tibble(
@@ -260,7 +260,6 @@ for (i in 1:nrow(forecast_df)) {
 }
 
 df_result <- bind_rows(results)
-
 
 df_result$stdev <- rmse[1:nrow(df_result)]
 
