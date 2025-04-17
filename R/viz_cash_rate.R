@@ -320,72 +320,85 @@ viz_fan <- ggplot(fan_df, aes(x = date)) +
 
 
 
-# 1. Current official rate
-current_rate    <- read_rba(series_id="FIRMMCRTD") %>% filter(date == max(date)) %>% pull(value)
-current_lbl     <- paste0(formatC(current_rate, format="f", digits=2), "%")
-cut25_lbl       <- paste0(formatC(current_rate - 0.25, format="f", digits=2), "%")
-cut50_lbl       <- paste0(formatC(current_rate - 0.50, format="f", digits=2), "%")
-hike25_lbl      <- paste0(formatC(current_rate + 0.25, format="f", digits=2), "%")
-hike50_lbl      <- paste0(formatC(current_rate + 0.50, format="f", digits=2), "%")
+                       ## Graph for next meeting
 
-# 2. RBA meetings
+library(tidyverse)
+library(lubridate)
+
+# 1. Define your known RBA meeting dates
 meeting_dates <- tibble(
-  expiry       = as.Date(c("2025-02-01","2025-03-01","2025-05-01","2025-07-01",
-                          "2025-08-01","2025-09-01","2025-11-01","2025-12-01")),
-  meeting_date = as.Date(c("2025-02-17","2025-03-31","2025-05-20","2025-07-08",
-                           "2025-08-12","2025-09-30","2025-11-04","2025-12-09"))
+  expiry       = as.Date(c(
+    "2025-02-01","2025-03-01","2025-05-01","2025-07-01",
+    "2025-08-01","2025-09-01","2025-11-01","2025-12-01"
+  )),
+  meeting_date = as.Date(c(
+    "2025-02-17","2025-03-31","2025-05-20","2025-07-08",
+    "2025-08-12","2025-09-30","2025-11-04","2025-12-09"
+  ))
 )
 
-# 3. Window
-today         <- Sys.Date()
-prev_meeting  <- max(meeting_dates$meeting_date[meeting_dates$meeting_date < today])
-next_meeting  <- min(meeting_dates$meeting_date[meeting_dates$meeting_date > today])
+# 2. Figure out 'today' and the next meeting
+today          <- Sys.Date()
+next_meeting   <- min(meeting_dates$meeting_date[meeting_dates$meeting_date > today])
+next_expiry    <- meeting_dates$expiry[meeting_dates$meeting_date == next_meeting]
 
-# 4. Scrape dates in window
-scrapes       <- sort(unique(cash_rate$scrape_date))
-scrapes_w     <- scrapes[scrapes > prev_meeting & scrapes <= next_meeting]
+# 3. Rebuild your forecast path for that meeting
+#    (assuming 'cash_rate' is your full scraped tibble with scrape_date & cash_rate)
+#    and you want the very latest scrape
+latest_scrape  <- max(cash_rate$scrape_date)
+forecast_df    <- cash_rate %>%
+  filter(scrape_date == latest_scrape) %>%
+  select(date, forecast_rate = cash_rate) %>%
+  filter(date >= next_expiry) %>%
+  mutate(meeting_date = next_meeting)
 
-# 5. Compute probabilities for each event
-cut_probs <- df_long %>%
-  filter(scrape_date %in% scrapes_w) %>%
-  mutate(bucket = as.character(bucket)) %>%
-  group_by(scrape_date) %>%
-  summarise(
-    `0 bp (no change)`    = sum(probability[bucket == current_lbl],   na.rm=TRUE),
-    `25 bp cut`           = sum(probability[bucket == cut25_lbl],    na.rm=TRUE),
-    `50 bp cut`           = sum(probability[bucket == cut50_lbl],    na.rm=TRUE),
-    `25 bp hike`          = sum(probability[bucket == hike25_lbl],   na.rm=TRUE),
-    `50 bp hike`          = sum(probability[bucket == hike50_lbl],   na.rm=TRUE)
-  ) %>%
-  ungroup() %>%
-  pivot_longer(
-    cols = -scrape_date,
-    names_to  = "event",
-    values_to = "prob"
+# 4. Run your iterative logic to compute implied_r_tp1 at that meeting
+rt <- forecast_df$forecast_rate[1]
+results <- list()
+
+for(i in seq_len(nrow(forecast_df))) {
+  row <- forecast_df[i,]
+  dim <- days_in_month(row$date)
+  if (!is.na(row$meeting_date) && row$date == next_expiry) {
+    nb <- (day(row$meeting_date)-1)/dim
+    na <- 1 - nb
+    implied <- (row$forecast_rate - rt*nb)/na
+  } else {
+    implied <- row$forecast_rate
+  }
+  results[[i]] <- tibble(
+    date         = row$date,
+    meeting_date = row$meeting_date,
+    implied_r_tp1= implied
   )
+  rt <- implied
+}
 
-# 6. Plot all five series
-ggplot(cut_probs, aes(x = scrape_date, y = prob*100, color = event)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  scale_y_continuous(labels = label_number(suffix = "%", accuracy = 1)) +
-  scale_x_date(date_labels = "%d %b", date_breaks = "1 week") +
-  labs(
-    title    = "Market‑Implied Cash Rate Moves Over Time",
-    subtitle = sprintf("Between %s and %s", 
-                       format(prev_meeting, "%d %b %Y"),
-                       format(next_meeting, "%d %b %Y")),
-    x        = "Scrape Date",
-    y        = "Probability",
-    color    = "Event",
-    caption  = sprintf("Dashed line shows official rate: %s", current_lbl)
-  ) +
-  geom_hline(yintercept = 0, color = "gray70") +
-  theme_minimal() +
-  theme(
-    legend.position   = "top",
-    axis.text.x       = element_text(angle = 45, hjust = 1)
-  ) 
+df_next <- bind_rows(results)
+
+# 5. Bucket the next_meeting implied rate into your discrete buckets
+bucket_centers <- seq(0.10, 4.60, by = 0.25)
+bucket_edges   <- c(bucket_centers - 0.125, tail(bucket_centers,1) + 0.125)
+
+# Use your stored RMSE vector of same length
+stdevs <- rmse[1:nrow(df_next)]
+
+# Compute probabilities for that single meeting
+probs <- map2_dbl(bucket_edges[-length(bucket_edges)],
+                  bucket_edges[-1], ~{
+  pnorm(.y, mean = df_next$implied_r_tp1[nrow(df_next)], sd = stdevs[nrow(df_next)]) -
+  pnorm(.x, mean = df_next$implied_r_tp1[nrow(df_next)], sd = stdevs[nrow(df_next)])
+}) 
+
+# Assemble into a tibble
+next_meeting_probs <- tibble(
+  bucket      = paste0(formatC(bucket_centers, format="f", digits=2), "%"),
+  probability = probs / sum(probs)  # normalize
+)
+
+# 6. (Optional) Save or return
+write_csv(next_meeting_probs, file = file.path("docs", "next_meeting_probs.csv"))
+
                        
 
 saveRDS(all_data,
