@@ -67,3 +67,13 @@ are shown below:
     #> This warning is displayed once every 8 hours.
     #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     #> generated.
+    #> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+    #> ✔ forcats 1.0.0     ✔ stringr 1.5.1
+    #> ✔ purrr   1.0.4     ✔ tibble  3.2.1
+    #> ✔ readr   2.1.5     
+    #> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    #> ✖ readr::col_factor() masks scales::col_factor()
+    #> ✖ purrr::discard()    masks scales::discard()
+    #> ✖ dplyr::filter()     masks stats::filter()
+    #> ✖ dplyr::lag()        masks stats::lag()
+    #> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
