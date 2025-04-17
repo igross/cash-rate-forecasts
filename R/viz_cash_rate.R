@@ -215,7 +215,7 @@ forecast_df <- forecast_df %>%
 
 # Iterative cash rate logic
 results <- list()
-rt <- forecast_df$forecast_rate[1]+spread
+rt <- forecast_df$forecast_rate[1]
 
 for (i in 1:nrow(forecast_df)) {
   row <- forecast_df[i, ]
