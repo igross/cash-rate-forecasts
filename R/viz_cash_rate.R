@@ -399,8 +399,4 @@ next_meeting_probs <- tibble(
 # 6. (Optional) Save or return
 write_csv(next_meeting_probs, file = file.path("docs", "next_meeting_probs.csv"))
 
-                       
 
-saveRDS(all_data,
-        file = file.path("visual_data",
-                         "visual_data.Rds"))
