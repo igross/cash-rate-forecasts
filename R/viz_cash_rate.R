@@ -39,7 +39,7 @@ viz_1 <- cash_rate |>
                             min(cash_rate$date),
                             by = "-1 year")) +
   scale_y_continuous(labels = \(x) paste0(x, "%")) +
-  theme_minimal() +
+  theme_bw() +
   labs(subtitle = "Expected future cash rate",
        colour = "Expected\nas at:",
        x = "Date") +
@@ -74,7 +74,7 @@ viz_2 <- cash_rate |>
                             min(cash_rate$date),
                             by = "-6 months")) +
   scale_y_continuous(labels = \(x) paste0(x, "%")) +
-  theme_minimal() +
+  theme_bw() +
   theme(legend.position = "none") +
   labs(subtitle = "Expected future cash rate",
        x = "Date") +
@@ -86,7 +86,7 @@ viz_3 <- cash_rate |>
   filter(cash_rate == max(cash_rate)) |>
   ggplot(aes(x = scrape_date, y = cash_rate)) +
   geom_line() +
-  theme_minimal() +
+  theme_bw() +
   scale_x_date(date_labels = "%b\n%Y",
                date_breaks = "3 months") +
   labs(x = "Expected as at",
@@ -106,7 +106,7 @@ viz_4 <- cash_rate |>
               formula = y ~ x,
               span = 0.1,
               se = FALSE) +
-  theme_minimal() +
+  theme_bw() +
   scale_x_date(date_labels = "%b\n%Y",
                date_breaks = "3 months") +
   scale_y_date(date_labels = "%b\n%Y",
@@ -139,7 +139,7 @@ viz_5 <- cash_rate |>
                date_breaks = "3 months",
                limits = \(x) ymd("2024-01-01",
                                  x[2])) +
-  theme_minimal() +
+  theme_bw() +
   labs(subtitle = "Expected date of first rate cut",
        caption = "Refers to the first date at which futures pricing imply a 100% or greater chance of a 25bp cut relative to the then-current rate.")
 
@@ -518,7 +518,7 @@ stacked<-ggplot(top4, aes(x = scrape_date, y = probability, fill = bucket)) +
        x = "Scrape date",
        y = "Probability (stacked to 100 %)",
        fill = "Meeting‑day move") +
-  theme_minimal() +
+  theme_bw() +
   theme(legend.position = "right")
 
 
@@ -541,11 +541,11 @@ line<-ggplot(top4,
     )
   ) +
   scale_y_continuous(labels = scales::percent) +
-  labs(title  = "Top‑4 policy‑move probabilities over time",
-       x      = "Scrape date",
+  labs(  title  = glue::glue("Top‑4 policy‑move probabilities for next RBA meeting on {meeting_label}"),
+       x      = "Forecast date",
        y      = "Probability",
        colour = "Meeting‑day move") +
-  theme_minimal() +
+  theme_bw() +
   theme(legend.position = "right")
   
     ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
