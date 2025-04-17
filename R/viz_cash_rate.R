@@ -320,13 +320,8 @@ viz_fan <- ggplot(fan_df, aes(x = date)) +
 
 
 
-                       library(tidyverse)
-library(lubridate)
-library(readrba)
-library(scales)
-
 # 1. Current official rate
-current_rate    <- read_rba("FIRMMCRTD") %>% filter(date == max(date)) %>% pull(value)
+current_rate    <- read_rba(series_id="FIRMMCRTD") %>% filter(date == max(date)) %>% pull(value)
 current_lbl     <- paste0(formatC(current_rate, format="f", digits=2), "%")
 cut25_lbl       <- paste0(formatC(current_rate - 0.25, format="f", digits=2), "%")
 cut50_lbl       <- paste0(formatC(current_rate - 0.50, format="f", digits=2), "%")
@@ -393,4 +388,6 @@ ggplot(cut_probs, aes(x = scrape_date, y = prob*100, color = event)) +
   ) 
                        
 
-
+saveRDS(all_data,
+        file = file.path("visual_data",
+                         "visual_data.Rds"))
