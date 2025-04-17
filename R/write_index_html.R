@@ -33,8 +33,14 @@ labels    <- labels[ord]
 dates     <- dates[ord]
 
 # Build relative URL slugs for anchors
-to_slug <- function(x) str_replace_all(str_to_lower(x), "\\s+", "-")
 slugs <- to_slug(labels)
+
+# --- Generate TOC items ---
+# Create list items linking to each chart-card by slug
+ toc_items <- mapply(function(slug, label) {
+   sprintf('<li><a href="#%s">%s</a></li>', slug, label)
+ }, slugs, labels, USE.NAMES = FALSE)
+
 
 # Intro paragraph
 today_label <- format(Sys.Date(), "%d %B %Y")
