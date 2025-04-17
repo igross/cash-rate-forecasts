@@ -117,6 +117,8 @@ html <- sprintf('
 
   <h1>Cash Rate Forecasting</h1>
   %s
+  
+<h1>Expected Outcomes By RBA Meeting </h1>
 
   %s
 
@@ -124,7 +126,7 @@ html <- sprintf('
 
 </body>
 </html>
-', intro_paragraph, line_chart_section,meeting_section, fan_chart_section)
+', line_chart_section,meeting_section, intro_paragraph)
 
 
 # Write output
