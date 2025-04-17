@@ -8,7 +8,55 @@ suppressPackageStartupMessages({
   library(readabs)
   library(readrba)
           })
- 
+
+# Meeting schedule (expiry month first day, meeting dates)
+meeting_schedule <- tibble::tibble(
+  expiry       = as.Date(c(
+    "2025-02-01", "2025-03-01", "2025-05-01",
+    "2025-07-01", "2025-08-01", "2025-09-01",
+    "2025-11-01", "2025-12-01"
+  )),
+  meeting_date = as.Date(c(
+    "2025-02-18", "2025-04-01", "2025-05-20",
+    "2025-07-08", "2025-08-12", "2025-09-30",
+    "2025-11-04", "2025-12-09"
+  ))
+)
+
+# Spread adjustment
+spread_bp     <- 0.01  # in percentage points
+
+# Hard-coded RMSE lookup by days to meeting (0..60)
+rmse_lookup <- c(
+  0.042179271, 0.042179271, 0.042179271, 0.042179271, 0.042179271,
+  0.042776679, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
+  0.046298074, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
+  0.046298074, 0.046298074, 0.046298074, 0.046298074, 0.046298074,
+  0.046298074, 0.046298074, 0.046298074, 0.049190132, 0.055747377,
+  0.066188053, 0.076198602, 0.085952901, 0.095017305, 0.102963055,
+  0.108868503, 0.114587407, 0.120812307, 0.124727182, 0.126527307,
+  0.127130759, 0.130574217, 0.131907087, 0.131907087, 0.133101424,
+  0.133604684, 0.133604684, 0.133604684, 0.134157915, 0.134279318,
+  0.135105750, 0.135768693, 0.135768693, 0.135768693, 0.137844837,
+  0.141733602, 0.144384669, 0.151849631, 0.160263120, 0.170752101,
+  0.182983584, 0.187848605, 0.193679887, 0.201277676, 0.210711555,
+  0.216858302
+)
+names(rmse_lookup) <- 0:(length(rmse_lookup)-1)
+
+# Inject RMSE (manual)
+rmse <- c(
+  0.045551112, 0.102312111, 0.221970531, 0.327847512, 0.412946769,
+  0.468724693, 0.500403217, 0.557833521, 0.649794316, 0.69814153,
+  0.778152254, 0.860217121, 0.909074616, 0.997528424, 1.065491777,
+  1.131569667, 1.211783477, 1.322739338, 1.359617226
+)
+
+rba_meeting_dates <- as.Date(c(
+  "2025-04-01", "2025-05-20", "2025-07-08", "2025-08-12",
+  "2025-09-30", "2025-11-04", "2025-12-09"
+))
+
 file.remove(list.files("docs", pattern = "\\.png$", full.names = TRUE))
 
 cash_rate <- readRDS(file.path("combined_data", "all_data.Rds"))
@@ -157,16 +205,6 @@ forecast_df <- cash_rate %>%
   filter(date >= as.Date("2025-04-01"),
          date <= as.Date("2026-09-01"))
 
-# Inject known RBA meeting dates
-meeting_dates <- tibble(
-  expiry = as.Date(c(
-    "2025-02-01", "2025-03-01", "2025-05-01", "2025-07-01",
-    "2025-08-01", "2025-09-01", "2025-11-01", "2025-12-01"
-  )),
-  meeting_date = as.Date(c(
-    "2025-02-17", "2025-03-31", "2025-05-20", "2025-07-08",
-    "2025-08-12", "2025-09-30", "2025-11-04", "2025-12-09"
-  ))
 )
 
 forecast_df <- forecast_df %>%
@@ -204,13 +242,7 @@ for (i in 1:nrow(forecast_df)) {
 
 df_result <- bind_rows(results)
 
-# Inject RMSE (manual)
-rmse <- c(
-  0.045551112, 0.102312111, 0.221970531, 0.327847512, 0.412946769,
-  0.468724693, 0.500403217, 0.557833521, 0.649794316, 0.69814153,
-  0.778152254, 0.860217121, 0.909074616, 0.997528424, 1.065491777,
-  1.131569667, 1.211783477, 1.322739338, 1.359617226
-)
+
 df_result$stdev <- rmse[1:nrow(df_result)]
 
 # Bucket edges
@@ -236,10 +268,7 @@ df_long <- df_probs %>%
          month_label = format(date, "%b %Y"))
 
 # Filter only meeting months
-rba_meeting_dates <- as.Date(c(
-  "2025-04-01", "2025-05-20", "2025-07-08", "2025-08-12",
-  "2025-09-30", "2025-11-04", "2025-12-09"
-))
+
 meeting_months <- floor_date(rba_meeting_dates, "month")
 
 meeting_months <- meeting_months[meeting_months >= floor_date(Sys.Date(), "month")]
@@ -541,7 +570,7 @@ line<-ggplot(top4,
     )
   ) +
   scale_y_continuous(labels = scales::percent) +
-  labs(  title  = paste0(("Top‑4 policy‑move probabilities for next RBA meeting on {meeting_label}"),
+  labs(  title  = paste0("Top‑4 policy‑move probabilities for next RBA meeting on {meeting_label}"),
        x      = "Forecast date",
        y      = "Probability",
        colour = "Meeting‑day move") +
