@@ -353,10 +353,10 @@ ggsave("docs/rate_fan_chart.png", plot = viz_fan, width = 8, height = 5, dpi = 3
 # ────────────────────────────────────────────────────────────────────────────────
 # 2.  Identify the last and next meetings ---------------------------------------
 today <- Sys.Date()  
-last_meeting     <- max(meeting_dates$meeting_date[meeting_dates$meeting_date <= today])
-next_meeting_row <- meeting_dates            %>% filter(meeting_date >  today) %>% slice_min(meeting_date)
+last_meeting     <- max(meeting_schedule$meeting_date[meeting_schedule$meeting_date <= today])
+next_meeting_row <- meeting_schedule %>% filter(meeting_date >  today) %>% slice_min(meeting_date)
 
-last_expiry      <- meeting_dates$expiry [meeting_dates$meeting_date == last_meeting]
+last_expiry      <- meeting_schedule$expiry [meeting_schedule$meeting_date == last_meeting]
 next_expiry      <- next_meeting_row$expiry
 current_expiry <- next_meeting_row$expiry %m-% months(1)   # exactly 1 month earlier
 next_meeting     <- next_meeting_row$meeting_date      # scalar date
