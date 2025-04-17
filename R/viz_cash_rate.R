@@ -320,6 +320,82 @@ viz_fan <- ggplot(fan_df, aes(x = date)) +
 
 
 
-       
+     library(tidyverse)
+library(lubridate)
+
+# 1. Define your known RBA meeting dates
+meeting_dates <- tibble(
+  expiry       = as.Date(c(
+    "2025-02-01","2025-03-01","2025-05-01","2025-07-01",
+    "2025-08-01","2025-09-01","2025-11-01","2025-12-01"
+  )),
+  meeting_date = as.Date(c(
+    "2025-02-17","2025-03-31","2025-05-20","2025-07-08",
+    "2025-08-12","2025-09-30","2025-11-04","2025-12-09"
+  ))
+)
+
+# 2. Figure out 'today' and the next meeting
+today          <- Sys.Date()
+next_meeting   <- min(meeting_dates$meeting_date[meeting_dates$meeting_date > today])
+next_expiry    <- meeting_dates$expiry[meeting_dates$meeting_date == next_meeting]
+
+# 3. Rebuild your forecast path for that meeting
+#    (assuming 'cash_rate' is your full scraped tibble with scrape_date & cash_rate)
+#    and you want the very latest scrape
+latest_scrape  <- max(cash_rate$scrape_date)
+forecast_df    <- cash_rate %>%
+  filter(scrape_date == latest_scrape) %>%
+  select(date, forecast_rate = cash_rate) %>%
+  filter(date >= next_expiry) %>%
+  mutate(meeting_date = next_meeting)
+
+# 4. Run your iterative logic to compute implied_r_tp1 at that meeting
+rt <- forecast_df$forecast_rate[1]
+results <- list()
+
+for(i in seq_len(nrow(forecast_df))) {
+  row <- forecast_df[i,]
+  dim <- days_in_month(row$date)
+  if (!is.na(row$meeting_date) && row$date == next_expiry) {
+    nb <- (day(row$meeting_date)-1)/dim
+    na <- 1 - nb
+    implied <- (row$forecast_rate - rt*nb)/na
+  } else {
+    implied <- row$forecast_rate
+  }
+  results[[i]] <- tibble(
+    date         = row$date,
+    meeting_date = row$meeting_date,
+    implied_r_tp1= implied
+  )
+  rt <- implied
+}
+
+df_next <- bind_rows(results)
+
+# 5. Bucket the next_meeting implied rate into your discrete buckets
+bucket_centers <- seq(0.10, 4.60, by = 0.25)
+bucket_edges   <- c(bucket_centers - 0.125, tail(bucket_centers,1) + 0.125)
+
+# Use your stored RMSE vector of same length
+stdevs <- rmse[1:nrow(df_next)]
+
+# Compute probabilities for that single meeting
+probs <- map2_dbl(bucket_edges[-length(bucket_edges)],
+                  bucket_edges[-1], ~{
+  pnorm(.y, mean = df_next$implied_r_tp1[nrow(df_next)], sd = stdevs[nrow(df_next)]) -
+  pnorm(.x, mean = df_next$implied_r_tp1[nrow(df_next)], sd = stdevs[nrow(df_next)])
+}) 
+
+# Assemble into a tibble
+next_meeting_probs <- tibble(
+  bucket      = paste0(formatC(bucket_centers, format="f", digits=2), "%"),
+  probability = probs / sum(probs)  # normalize
+)
+
+# 6. (Optional) Save or return
+write_csv(next_meeting_probs, file = file.path("docs", "next_meeting_probs.csv"))
+  
 
 
