@@ -67,13 +67,37 @@ are shown below:
     #> This warning is displayed once every 8 hours.
     #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     #> generated.
-    #> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-    #> ✔ forcats 1.0.0     ✔ stringr 1.5.1
-    #> ✔ purrr   1.0.4     ✔ tibble  3.2.1
-    #> ✔ readr   2.1.5     
-    #> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    #> ✖ readr::col_factor() masks scales::col_factor()
-    #> ✖ purrr::discard()    masks scales::discard()
-    #> ✖ dplyr::filter()     masks stats::filter()
-    #> ✖ dplyr::lag()        masks stats::lag()
-    #> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+    #> # A tibble: 243 × 3
+    #>    scrape_date bucket probability
+    #>    <date>      <chr>        <dbl>
+    #>  1 2025-04-03  0.10%    1.56e-159
+    #>  2 2025-04-03  0.35%    9.73e-139
+    #>  3 2025-04-03  0.60%    2.06e-119
+    #>  4 2025-04-03  0.85%    1.48e-101
+    #>  5 2025-04-03  1.10%    3.60e- 85
+    #>  6 2025-04-03  1.35%    2.98e- 70
+    #>  7 2025-04-03  1.60%    8.40e- 57
+    #>  8 2025-04-03  1.85%    8.08e- 45
+    #>  9 2025-04-03  2.10%    2.66e- 34
+    #> 10 2025-04-03  2.35%    3.02e- 25
+    #> 11 2025-04-03  2.60%    1.19e- 17
+    #> 12 2025-04-03  2.85%    1.66e- 11
+    #> 13 2025-04-03  3.10%    8.31e-  7
+    #> 14 2025-04-03  3.35%    1.59e-  3
+    #> 15 2025-04-03  3.60%    1.32e-  1
+    #> 16 2025-04-03  3.85%    6.34e-  1
+    #> 17 2025-04-03  4.10%    2.27e-  1
+    #> 18 2025-04-03  4.35%    5.01e-  3
+    #> 19 2025-04-03  4.60%    5.02e-  6
+    #> 20 2025-04-03  4.85%    1.95e- 10
+    #> 21 2025-04-03  5.10%    2.22e- 16
+    #> 22 2025-04-03  5.35%    0        
+    #> 23 2025-04-03  5.60%    0        
+    #> 24 2025-04-03  5.85%    0        
+    #> 25 2025-04-03  6.10%    0        
+    #> 26 2025-04-03  6.35%    0        
+    #> 27 2025-04-03  6.60%    0        
+    #> 28 2025-04-04  0.10%    3.55e-153
+    #> 29 2025-04-04  0.35%    8.08e-133
+    #> 30 2025-04-04  0.60%    6.23e-114
+    #> # ℹ 213 more rows
