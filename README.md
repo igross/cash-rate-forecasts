@@ -29,7 +29,7 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 133 × 4
+    #> # A tibble: 266 × 4
     #>    date       bucket probability month_label
     #>    <date>     <chr>        <dbl> <chr>      
     #>  1 2025-04-01 0.1%             0 Apr 2025   
@@ -42,13 +42,25 @@ are shown below:
     #>  8 2025-04-01 1.85%            0 Apr 2025   
     #>  9 2025-04-01 2.1%             0 Apr 2025   
     #> 10 2025-04-01 2.35%            0 Apr 2025   
-    #> # ℹ 123 more rows
+    #> # ℹ 256 more rows
     #> [1] "Apr 2025"
+    #> Warning: Removed 19 rows containing missing values or values outside the scale range
+    #> (`geom_bar()`).
     #> [1] "May 2025"
+    #> Warning: Removed 19 rows containing missing values or values outside the scale range
+    #> (`geom_bar()`).
     #> [1] "Jul 2025"
+    #> Warning: Removed 19 rows containing missing values or values outside the scale range
+    #> (`geom_bar()`).
     #> [1] "Aug 2025"
+    #> Warning: Removed 19 rows containing missing values or values outside the scale range
+    #> (`geom_bar()`).
     #> [1] "Sep 2025"
+    #> Warning: Removed 19 rows containing missing values or values outside the scale range
+    #> (`geom_bar()`).
     #> [1] "Nov 2025"
+    #> Warning: Removed 19 rows containing missing values or values outside the scale range
+    #> (`geom_bar()`).
     #> [1] "Dec 2025"
     #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     #> ℹ Please use `linewidth` instead.
