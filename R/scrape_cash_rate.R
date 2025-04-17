@@ -41,7 +41,20 @@ all_data <- file.path("daily_data") |>
                                "2022-12-30",
                                "2022-12-29")) |>
   filter(!is.na(date),
-         !is.na(cash_rate))
+         !is.na(cash_rate)) |>
+  # ── NEW: give legacy rows a timestamp (midnight Melbourne time) ──
+  mutate(
+    time = as_datetime(
+      paste(scrape_date, "00:00:00"),
+      tz = "Australia/Melbourne"
+    )
+  ) |>
+  select(
+    date,
+    time,          # matches the `time` column in your new_data
+    cash_rate,
+    scrape_date
+  )
 
 saveRDS(all_data,
         file = file.path("combined_data",
