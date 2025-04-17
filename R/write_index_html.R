@@ -113,9 +113,10 @@ html <- sprintf('
 </head>
 <body>
 
-  %s
+ 
 
-  <h1>Cash Rate Outcome Probabilities by RBA Meeting</h1>
+  <h1>Cash Rate Forecasting</h1>
+  %s
 
   %s
 
