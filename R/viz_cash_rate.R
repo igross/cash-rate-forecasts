@@ -223,12 +223,12 @@ for (i in 1:nrow(forecast_df)) {
   if (!is.na(row$meeting_date)) {
     nb <- (day(row$meeting_date) - 1) / dim
     na <- 1 - nb
-    r_tp1 <- (row$forecast_rate+spread - rt * nb) / na
+    r_tp1 <- (row$forecast_rate - rt * nb) / na
   } else {
     nb <- 1
     na <- 0
-    r_tp1 <- row$forecast_rate+spread
-    rt <- row$forecast_rate+spread
+    r_tp1 <- row$forecast_rate
+    rt <- row$forecast_rate
   }
 
   results[[i]] <- tibble(
