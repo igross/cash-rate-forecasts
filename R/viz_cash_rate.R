@@ -223,7 +223,7 @@ for (i in 1:nrow(forecast_df)) {
   if (!is.na(row$meeting_date)) {
     nb <- (day(row$meeting_date) - 1) / dim
     na <- 1 - nb
-    r_tp1 <- (row$forecast_rate - rt * nb) / na
+    r_tp1 <- ( (row$forecast_rate+spread) - (rt+spread) * nb) / na
   } else {
     nb <- 1
     na <- 0
@@ -396,8 +396,8 @@ for (j in seq_along(unique_scrapes)) {
   nb  <- (day(next_meeting) - 1) / dim
   na  <- 1 - nb
   
-  r_tp1 <- ((row_next$cash_rate ) -
-              (row_current$cash_rate ) * nb) / na
+  r_tp1 <- ((row_next$cash_rate+spread ) -
+              (row_current$cash_rate+spread ) * nb) / na
   
   results <- add_row(
     results,
