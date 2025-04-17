@@ -509,7 +509,7 @@ bucket_probs <- bind_rows(prob_rows)
 ## ── 3. Keep the *top‑4* buckets per scrape ------------------------------------
 top4 <- bucket_probs %>%
   group_by(scrape_date) %>%
-  slice_max(order_by = probability, n = 4, with_ties = FALSE) %>%
+  slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   ungroup()
 
 
@@ -543,7 +543,7 @@ line<-ggplot(top4,
     )
   ) +
   scale_y_continuous(labels = scales::percent) +
-  labs(  title  = paste0("Top‑4 policy‑move probabilities for next RBA meeting on {meeting_label}"),
+  labs(  title  = paste0("Cash Rate probabilities for the next RBA meeting"),
        x      = "Forecast date",
        y      = "Probability",
        colour = "Meeting‑day move") +
