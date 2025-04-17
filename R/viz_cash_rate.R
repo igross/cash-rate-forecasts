@@ -258,7 +258,12 @@ for (m in unique(df_long$month_label)) {
   p <- ggplot(filter(df_long, month_label == m),
               aes(x = bucket, y = probability, fill = bucket)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
-  geom_vline(xintercept = current_rate_label, color = "black", linetype = "dashed", linewidth = 0.8) +
+  annotate("segment",
+         x = current_rate_label,
+         xend = current_rate_label,
+         y = 0,
+         yend = max(df_long$probability[df_long$month_label == m]),
+         color = "black", linetype = "dashed", linewidth = 0.8) +
      labs(
       title = paste("Cash Rate Outcome Probabilities -", m),
       caption = paste("Based on futures-implied rates as of", format(latest_scrape, "%d %B %Y")),
