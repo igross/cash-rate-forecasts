@@ -1,7 +1,13 @@
 
 on:
   schedule:
-    - cron: '*/30 00-01 * * *'
+    # 09:30 local
+    - cron: '30 9 * * *'
+      timezone: 'Australia/Melbourne'
+
+    # 10:00, 10:30, …, 16:00, 16:30 local
+    - cron: '0,30 10-16 * * *'
+      timezone: 'Australia/Melbourne'
   push:
     branches: [main, master]
   pull_request:
