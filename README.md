@@ -29,7 +29,7 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 294 × 4
+    #> # A tibble: 147 × 4
     #>    date       bucket probability month_label
     #>    <date>     <chr>        <dbl> <chr>      
     #>  1 2025-04-01 0.1%             0 Apr 2025   
@@ -42,32 +42,20 @@ are shown below:
     #>  8 2025-04-01 1.85%            0 Apr 2025   
     #>  9 2025-04-01 2.1%             0 Apr 2025   
     #> 10 2025-04-01 2.35%            0 Apr 2025   
-    #> # ℹ 284 more rows
+    #> # ℹ 137 more rows
     #> [1] "Apr 2025"
-    #> Warning: Removed 21 rows containing missing values or values outside the scale range
-    #> (`geom_bar()`).
     #> [1] "May 2025"
-    #> Warning: Removed 21 rows containing missing values or values outside the scale range
-    #> (`geom_bar()`).
     #> [1] "Jul 2025"
-    #> Warning: Removed 21 rows containing missing values or values outside the scale range
-    #> (`geom_bar()`).
     #> [1] "Aug 2025"
-    #> Warning: Removed 21 rows containing missing values or values outside the scale range
-    #> (`geom_bar()`).
     #> [1] "Sep 2025"
-    #> Warning: Removed 21 rows containing missing values or values outside the scale range
-    #> (`geom_bar()`).
     #> [1] "Nov 2025"
-    #> Warning: Removed 21 rows containing missing values or values outside the scale range
-    #> (`geom_bar()`).
     #> [1] "Dec 2025"
     #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     #> ℹ Please use `linewidth` instead.
     #> This warning is displayed once every 8 hours.
     #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     #> generated.
-    #> # A tibble: 189 × 3
+    #> # A tibble: 210 × 3
     #>    scrape_date bucket probability
     #>    <date>      <chr>        <dbl>
     #>  1 2025-04-03  0.10%    1.56e-159
@@ -100,4 +88,4 @@ are shown below:
     #> 28 2025-04-04  1.60%    4.49e- 53
     #> 29 2025-04-04  1.85%    1.58e- 41
     #> 30 2025-04-04  2.10%    1.90e- 31
-    #> # ℹ 159 more rows
+    #> # ℹ 180 more rows
