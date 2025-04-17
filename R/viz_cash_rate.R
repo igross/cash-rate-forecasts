@@ -541,7 +541,7 @@ line<-ggplot(top4,
     )
   ) +
   scale_y_continuous(labels = scales::percent) +
-  labs(  title  = glue::glue("Top‑4 policy‑move probabilities for next RBA meeting on {meeting_label}"),
+  labs(  title  = paste0(("Top‑4 policy‑move probabilities for next RBA meeting on {meeting_label}"),
        x      = "Forecast date",
        y      = "Probability",
        colour = "Meeting‑day move") +
