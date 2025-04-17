@@ -67,12 +67,3 @@ are shown below:
     #> This warning is displayed once every 8 hours.
     #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     #> generated.
-
-![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-2-4.png)<!-- -->
-
-    #> Warning: Removed 126 rows containing missing values or values outside the scale range
-    #> (`geom_point()`).
-    #> Warning: Removed 126 rows containing missing values or values outside the scale range
-    #> (`geom_line()`).
-
-![](README_files/figure-gfm/unnamed-chunk-2-5.png)<!-- -->
