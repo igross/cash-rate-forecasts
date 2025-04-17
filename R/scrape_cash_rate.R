@@ -41,5 +41,8 @@ all_data <- file.path("daily_data") |>
   filter(!is.na(date),
          !is.na(cash_rate))
 
+saveRDS(all_data,
+        file = file.path("combined_data",
+                         "all_data.Rds"))
 
 write_csv(all_data, file = "combined_data/cash_rate.csv")
