@@ -1,66 +1,48 @@
 library(conflicted)
 conflict_prefer_all("dplyr", quiet = TRUE)
-
 library(tidyverse)
-library(lubridate)
 library(jsonlite)
 
 json_url <- "https://asx.api.markitdigital.com/asx-research/1.0/derivatives/interest-rate/IB/futures?days=1&height=179&width=179"
 
 json_file <- tempfile()
-download.file(json_url, json_file, quiet = TRUE)
 
-# ── scrape today's data ────────────────────────────────────────────────
+download.file(json_url, json_file)
+
 new_data <- jsonlite::fromJSON(json_file) |>
   pluck("data", "items") |>
   as_tibble() |>
-  mutate(
-    dateExpiry  = ymd(dateExpiry) |> floor_date("month"),
-    scrape_time = now(tzone = "Australia/Melbourne"),
-    cash_rate   = 100 - pricePreviousSettlement
-  ) |>
+  mutate(dateExpiry = ymd(dateExpiry),
+         dateExpiry = floor_date(dateExpiry, "month")) |>
   filter(pricePreviousSettlement != 0) |>
-  mutate(scrape_date = as_date(scrape_time)) |>
-  select(
-    date  = dateExpiry,
-    time  = scrape_time,
-    cash_rate,
-    scrape_date
-  )
+  mutate(cash_rate = 100 - pricePreviousSettlement) |>
+  select(date = dateExpiry,
+         cash_rate,
+         scrape_date = datePreviousSettlement)
 
-write_csv(
-  new_data,
-  file.path("daily_data",
-            paste0("scraped_cash_rate_", Sys.Date(), ".csv"))
-)
+# Write a CSV of today's data
+write_csv(new_data, file.path("daily_data",
+                              paste0("scraped_cash_rate_", Sys.Date() - 1, ".csv")))
 
-# ── load legacy files and combine ──────────────────────────────────────
-all_old <- file.path("daily_data") |>
-  list.files(pattern = "\\.csv$", full.names = TRUE) |>
-  read_csv(col_types = cols(
-    date        = col_date(),
-    time        = col_datetime(),
-    cash_rate   = col_double(),
-    scrape_date = col_date()
-  )) |>
-  filter(
-    !scrape_date %in% ymd(
-      "2022-08-06", "2022-08-07", "2022-08-08",
-      "2023-01-18", "2023-01-24", "2023-01-31",
-      "2023-02-02", "2022-12-30", "2022-12-29"
-    ),
-    !is.na(date), !is.na(cash_rate)
-  ) |>
-  mutate(
-    time = coalesce(
-      time,
-      as_datetime(paste(scrape_date, "00:00:00"),
-                  tz = "Australia/Melbourne")
-    )
-  )
+# Load all existing data, combine with latest data
+all_data <- file.path("daily_data") |>
+  list.files(pattern = ".csv",
+             full.names = TRUE) |>
+  read_csv(col_types = "DdD") |>
+  filter(!scrape_date %in% ymd("2022-08-06",
+                               "2022-08-07",
+                               "2022-08-08",
+                               "2023-01-18",
+                               "2023-01-24",
+                               "2023-01-31",
+                               "2023-02-02",
+                               "2022-12-30",
+                               "2022-12-29")) |>
+  filter(!is.na(date),
+         !is.na(cash_rate))
 
-combined <- bind_rows(all_old, new_data)
+saveRDS(all_data,
+        file = file.path("combined_data",
+                         "all_data.Rds"))
 
-dir.create("combined_data", showWarnings = FALSE)
-saveRDS(combined, file = "combined_data/all_data.Rds")
-write_csv(combined, file = "combined_data/cash_rate.csv")
+write_csv(all_data, file = "combined_data/cash_rate.csv")
