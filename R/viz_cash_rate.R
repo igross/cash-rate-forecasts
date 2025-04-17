@@ -318,3 +318,87 @@ viz_fan <- ggplot(fan_df, aes(x = date)) +
 
                        ggsave("docs/rate_fan_chart.png", plot = viz_fan, width = 8, height = 5, dpi = 300)
 
+
+
+                       library(tidyverse)
+library(lubridate)
+library(readrba)
+library(scales)
+
+# 1. Current official rate
+current_rate    <- read_rba("FIRMMCRTD") %>% filter(date == max(date)) %>% pull(value)
+current_lbl     <- paste0(formatC(current_rate, format="f", digits=2), "%")
+cut25_lbl       <- paste0(formatC(current_rate - 0.25, format="f", digits=2), "%")
+cut50_lbl       <- paste0(formatC(current_rate - 0.50, format="f", digits=2), "%")
+hike25_lbl      <- paste0(formatC(current_rate + 0.25, format="f", digits=2), "%")
+hike50_lbl      <- paste0(formatC(current_rate + 0.50, format="f", digits=2), "%")
+
+# 2. RBA meetings
+meeting_dates <- tibble(
+  expiry       = as.Date(c("2025-02-01","2025-03-01","2025-05-01","2025-07-01",
+                          "2025-08-01","2025-09-01","2025-11-01","2025-12-01")),
+  meeting_date = as.Date(c("2025-02-17","2025-03-31","2025-05-20","2025-07-08",
+                           "2025-08-12","2025-09-30","2025-11-04","2025-12-09"))
+)
+
+# 3. Window
+today         <- Sys.Date()
+prev_meeting  <- max(meeting_dates$meeting_date[meeting_dates$meeting_date < today])
+next_meeting  <- min(meeting_dates$meeting_date[meeting_dates$meeting_date > today])
+
+# 4. Scrape dates in window
+scrapes       <- sort(unique(cash_rate$scrape_date))
+scrapes_w     <- scrapes[scrapes > prev_meeting & scrapes <= next_meeting]
+
+# 5. Compute probabilities for each event
+cut_probs <- df_long %>%
+  filter(scrape_date %in% scrapes_w) %>%
+  mutate(bucket = as.character(bucket)) %>%
+  group_by(scrape_date) %>%
+  summarise(
+    `0 bp (no change)`    = sum(probability[bucket == current_lbl],   na.rm=TRUE),
+    `25 bp cut`           = sum(probability[bucket == cut25_lbl],    na.rm=TRUE),
+    `50 bp cut`           = sum(probability[bucket == cut50_lbl],    na.rm=TRUE),
+    `25 bp hike`          = sum(probability[bucket == hike25_lbl],   na.rm=TRUE),
+    `50 bp hike`          = sum(probability[bucket == hike50_lbl],   na.rm=TRUE)
+  ) %>%
+  ungroup() %>%
+  pivot_longer(
+    cols = -scrape_date,
+    names_to  = "event",
+    values_to = "prob"
+  )
+
+# 6. Plot all five series
+ggplot(cut_probs, aes(x = scrape_date, y = prob*100, color = event)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = label_number(suffix = "%", accuracy = 1)) +
+  scale_x_date(date_labels = "%d %b", date_breaks = "1 week") +
+  labs(
+    title    = "Market‑Implied Cash Rate Moves Over Time",
+    subtitle = sprintf("Between %s and %s", 
+                       format(prev_meeting, "%d %b %Y"),
+                       format(next_meeting, "%d %b %Y")),
+    x        = "Scrape Date",
+    y        = "Probability",
+    color    = "Event",
+    caption  = sprintf("Dashed line shows official rate: %s", current_lbl)
+  ) +
+  geom_hline(yintercept = 0, color = "gray70") +
+  theme_minimal() +
+  theme(
+    legend.position   = "top",
+    axis.text.x       = element_text(angle = 45, hjust = 1)
+  ) +
+  # Add a vertical dashed line at today's rate label
+  annotate("segment",
+           x = today, xend = today,
+           y = 0, yend = max(cut_probs$prob*100),
+           linetype = "dashed", color = "black", size = 0.6) +
+  annotate("text",
+           x = today, y = max(cut_probs$prob*100) + 2,
+           label = paste("Today:", current_lbl),
+           angle = 90, vjust = -0.5, hjust = 0, size = 3)
+
+
