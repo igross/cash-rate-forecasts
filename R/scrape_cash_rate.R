@@ -28,33 +28,25 @@ write_csv(new_data, file.path("daily_data",
 
 # Load all existing data, combine with latest data
 all_data <- file.path("daily_data") |>
-  list.files(pattern = ".csv",
-             full.names = TRUE) |>
+  list.files(pattern = "\\.csv$", full.names = TRUE) |>
   read_csv(col_types = "DdD") |>
-  filter(!scrape_date %in% ymd("2022-08-06",
-                               "2022-08-07",
-                               "2022-08-08",
-                               "2023-01-18",
-                               "2023-01-24",
-                               "2023-01-31",
-                               "2023-02-02",
-                               "2022-12-30",
-                               "2022-12-29")) |>
-  filter(!is.na(date),
-         !is.na(cash_rate)) |>
-  # ── NEW: give legacy rows a timestamp (midnight Melbourne time) ──
+  filter(
+    !scrape_date %in% ymd(
+      "2022-08-06", "2022-08-07", "2022-08-08",
+      "2023-01-18", "2023-01-24", "2023-01-31",
+      "2023-02-02", "2022-12-30", "2022-12-29"
+    ),
+    !is.na(date),
+    !is.na(cash_rate)
+  ) |>
+  # give old rows a dummy timestamp so they match new_data
   mutate(
     time = as_datetime(
       paste(scrape_date, "00:00:00"),
       tz = "Australia/Melbourne"
     )
   ) |>
-  select(
-    date,
-    time,          # matches the `time` column in your new_data
-    cash_rate,
-    scrape_date
-  )
+  select(date, time, cash_rate, scrape_date)
 
 saveRDS(all_data,
         file = file.path("combined_data",
