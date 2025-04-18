@@ -199,7 +199,18 @@ tryCatch({
   message("❌ Failed to generate fan chart: ", e$message)
 })
   
+write.csv(df_result, "combined_data/df_result.csv", row.names = FALSE)
+write.csv(df_probs,  "combined_data/df_probs.csv",  row.names = FALSE)
+write.csv(df_long,   "combined_data/df_long.csv",   row.names = FALSE)
 
+# plus binary RDS backups if you want to reload them in R exactly
+saveRDS(df_result, "combined_data/df_result.rds")
+saveRDS(df_probs,  "combined_data/df_probs.rds")
+saveRDS(df_long,   "combined_data/df_long.rds")
+
+
+###
+  
 }
 
  # 1. grab the latest scrape date once
