@@ -65,6 +65,8 @@ file.remove(list.files("docs", pattern = "\\.png$", full.names = TRUE))
 
 cash_rate <- readRDS(file.path("combined_data", "all_data.Rds"))
 
+rmse_days <- readRDS(file.path("combined_data", "rmse_days"))
+
 current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
     filter(date == max(date)) %>%
     pull(value)
@@ -208,7 +210,7 @@ forecast_df <- cash_rate %>%
   select(date, forecast_rate = cash_rate) %>%
 filter(date >= Sys.Date() %m-% months(1))
 
-
+scrape_date <- max(cash_rate$scrape_date)) 
 
 forecast_df <- forecast_df %>%
   left_join(meeting_schedule, by = c("date" = "expiry"))
@@ -245,7 +247,15 @@ for (i in 1:nrow(forecast_df)) {
 
 df_result <- bind_rows(results)
 
-df_result$stdev <- rmse[1:nrow(df_result)]
+# df_result$stdev <- rmse[1:nrow(df_result)]
+
+df_result <- df_result %>%
+  mutate(
+    days_to_meeting = as.integer(meeting_date - scrape_date)    # difference in calendar days
+  ) %>%
+  left_join(rmse_days, by = "days_to_meeting") %>%       # brings in the 'rmse' column
+  rename(stdev = rmse) %>%                               # rename for clarity
+  select(date, meeting_date, forecast_rate, implied_r_tp1, stdev)
 
 # Bucket edges
 bucket_centers <- seq(0.10, 5.1, by = 0.25)
