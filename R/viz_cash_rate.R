@@ -65,7 +65,7 @@ file.remove(list.files("docs", pattern = "\\.png$", full.names = TRUE))
 
 cash_rate <- readRDS(file.path("combined_data", "all_data.Rds"))
 
-rmse_days <- readRDS(file.path("combined_data", "rmse_days.RData"))
+load("combined_data/rmse_days.RData")
 
 current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
     filter(date == max(date)) %>%
