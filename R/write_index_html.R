@@ -120,6 +120,9 @@ html <- sprintf('
   
 <h1>Cash Rate Target Probabilities By RBA Meeting </h1>
 
+<iframe src="docs/line_interactive.html"
+        style="border:none;width:100%;height:500px;"></iframe>
+
   %s
 
   %s
