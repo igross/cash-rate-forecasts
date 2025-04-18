@@ -126,6 +126,11 @@ html <- sprintf('
 
   %s
 
+
+<iframe src="figures/rate_forecast_interactive.html"
+        style="border:none;width:100%;height:600px;">
+</iframe>
+
 </body>
 </html>
 ', line_chart_section,meeting_section, intro_paragraph)
