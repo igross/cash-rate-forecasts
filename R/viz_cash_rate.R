@@ -308,7 +308,7 @@ fan_df <- cash_rate %>%
     forecast_rate = cash_rate,
     days_to_meeting = as.integer(date - scrape_latest)
   ) %>%
-  left_join(rmse_days, by = "day_to_meeting") %>%   # brings in finalrmse
+  left_join(rmse_days, by = "days_to_meeting") %>%   # brings in finalrmse
   mutate(
     stdev    = finalrmse,
     lower_95 = forecast_rate - qnorm(0.975) * stdev,
@@ -543,4 +543,29 @@ line<-ggplot(top4,
   theme(legend.position = "right")
   
 ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
+
+
+                       # 1. add a `text` aesthetic for custom hover info
+line_int <- line +
+  aes(text = paste0(
+    "Date: ", format(scrape_date, "%Y-%m-%d"),
+    "<br>Move: ", bucket,
+    "<br>Probability: ", scales::percent(probability, accuracy = 0.1)
+  ))
+
+# 2. convert to a plotly htmlwidget
+library(plotly)
+interactive_line <- ggplotly(line_int, tooltip = "text") %>%
+  layout(
+    hovermode = "x unified",
+    legend = list(x = 1.02, y = 1)
+  )
+
+# 3. save it as a self‑contained HTML (to embed via iframe or link on your site)
+htmlwidgets::saveWidget(
+  interactive_line,
+  "docs/line_interactive.html",
+  selfcontained = TRUE
+)
+
 
