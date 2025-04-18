@@ -245,6 +245,35 @@ bucket_matrix <- apply(bucket_matrix, 1, function(row) row / sum(row)) %>% t()
 colnames(bucket_matrix) <- paste0("p_", bucket_centers)
 df_probs <- cbind(df_result["date"], round(bucket_matrix * 100, 2))
 
+
+# 1. compute the raw pnorm‐differences matrix
+raw_pm <- sapply(1:(length(bucket_edges)-1), function(i) {
+  pnorm(bucket_edges[i+1],
+        mean = df_result$implied_r_tp1,
+        sd   = df_result$stdev) -
+  pnorm(bucket_edges[i],
+        mean = df_result$implied_r_tp1,
+        sd   = df_result$stdev)
+})
+# raw_pm is an N×M matrix (N = number of dates, M = number of buckets)
+
+# 2. row‐wise normalise so each row sums exactly to 1
+bucket_matrix <- prop.table(raw_pm, margin = 1)
+
+# 3. (optional) drop *very* small probs and renormalise
+bucket_matrix[bucket_matrix < 1e-3] <- 0
+bucket_matrix <- prop.table(bucket_matrix, margin = 1)
+
+# 4. turn into percentages
+bucket_pct <- round(bucket_matrix * 100, 2)
+
+# 5. build your df_probs exactly as before
+colnames(bucket_pct) <- paste0("p_", bucket_centers)
+df_probs <- cbind(date = df_result$date, bucket_pct)
+
+
+
+                       
 # Reshape
 df_long <- df_probs %>%
   rename_with(~ gsub("p_", "", .x), starts_with("p_")) %>%
