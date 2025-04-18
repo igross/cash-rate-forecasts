@@ -499,14 +499,20 @@ bucket_probs <- bind_rows(prob_rows)
 
 
 ## ── 3. Keep the *top‑4* buckets per scrape ------------------------------------
-top4 <- bucket_probs %>%
+top3_norm <- bucket_probs %>%
   group_by(scrape_date) %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
+  # re‐normalise so they sum to 1
+  mutate(
+    probability = probability / sum(probability),
+    pct         = probability * 100  # if you want 0–100%
+  ) %>%
   ungroup()
 
 
+
 ## ── 4. Stacked‑bar plot -------------------------------------------------------
-stacked<-ggplot(top4, aes(x = scrape_date, y = probability, fill = bucket)) +
+stacked<-ggplot(top3_norm, aes(x = scrape_date, y = probability, fill = bucket)) +
   geom_col(width = 0.9) +
   scale_y_continuous(labels = scales::percent) +
   labs(title = "Top‑4 policy‑move buckets per scrape date",
@@ -518,7 +524,7 @@ stacked<-ggplot(top4, aes(x = scrape_date, y = probability, fill = bucket)) +
 
 ggsave("docs/stacked.png", plot = stacked, width = 8, height = 5, dpi = 300)
 
-line<-ggplot(top4,
+line<-ggplot(top3_norm,
        aes(x = scrape_date,
            y = probability,
            colour = bucket,
