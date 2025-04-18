@@ -254,7 +254,7 @@ df_result <- df_result %>%
     days_to_meeting = as.integer(meeting_date - scrape_date)    # difference in calendar days
   ) %>%
   left_join(rmse_days, by = "days_to_meeting") %>%       # brings in the 'rmse' column
-  rename(stdev = rmse) %>%                               # rename for clarity
+  rename(stdev = finalrmse) %>%                               # rename for clarity
   select(date, meeting_date, forecast_rate, implied_r_tp1, stdev)
 
 # Bucket edges
