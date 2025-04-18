@@ -53,6 +53,11 @@ if (file.exists("docs/rate_fan_chart.png")) {
   </div>'
 }
 
+
+interactive_line_section <- '<iframe src="figures/rate_forecast_interactive.html"
+        style="border:none;width:100%;height:600px;">
+</iframe>'
+
 # Optional fan chart
 line_chart_section <- ""
 if (file.exists("docs/line.png")) {
@@ -120,20 +125,18 @@ html <- sprintf('
   
 <h1>Cash Rate Target Probabilities By RBA Meeting </h1>
 
-
-
-  %s
+%s
 
   %s
 
+  %s
 
-<iframe src="figures/rate_forecast_interactive.html"
-        style="border:none;width:100%;height:600px;">
-</iframe>
+
+
 
 </body>
 </html>
-', line_chart_section,meeting_section, intro_paragraph)
+', line_chart_section,meeting_section, interactive_line_section, intro_paragraph)
 
 
 # Write output
