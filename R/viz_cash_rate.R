@@ -295,24 +295,27 @@ tryCatch({
 
 }
 
-                       
- # Select latest forecast path
+ # 1. grab the latest scrape date once
+scrape_latest <- max(cash_rate$scrape_date)
+
+# 2. select your fan path, compute days_to_meeting, then join in rmse_days
 fan_df <- cash_rate %>%
-  filter(scrape_date == max(scrape_date)) %>%
-  select(date, forecast_rate = cash_rate) %>%
-  arrange(date)
-
-
-n_rows <- min(nrow(fan_df), length(rmse))
-
-fan_df <- fan_df[1:n_rows, ] %>%
+  filter(scrape_date == scrape_latest) %>%
+  arrange(date) %>%
+  transmute(
+    date,
+    forecast_rate = cash_rate,
+    days_to_meeting = as.integer(date - scrape_latest)
+  ) %>%
+  left_join(rmse_days, by = "day_to_meeting") %>%   # brings in finalrmse
   mutate(
-    stdev = rmse[1:n_rows],
+    stdev    = finalrmse,
     lower_95 = forecast_rate - qnorm(0.975) * stdev,
     upper_95 = forecast_rate + qnorm(0.975) * stdev,
     lower_65 = forecast_rate - qnorm(0.825) * stdev,
     upper_65 = forecast_rate + qnorm(0.825) * stdev
-  )
+  ) %>%
+  select(-days_to_meeting, -finalrmse)
 
 # Plot the fan chart
 viz_fan <- ggplot(fan_df, aes(x = date)) +
