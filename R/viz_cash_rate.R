@@ -423,11 +423,17 @@ for (j in seq_along(unique_scrapes)) {
 
 
 results <- results %>%
-  mutate(
-    days_to_meeting = as.integer(next_meeting - scrape_date),
-    RMSE            = RMSE_day[as.character(days_to_meeting)]
-  ) %>%
-  select(-days_to_meeting)                # drop helper column if not needed
+  # 1) compute the days-to-meeting
+  mutate(days_to_meeting = as.integer(next_meeting - scrape_date)) %>%
+  
+  # 2) join on your rmse_days lookup
+  left_join(rmse_days, by = "days_to_meeting") %>%
+  
+  # 3) rename the joined column
+  rename(RMSE = finalrmse) %>%
+  
+  # 4) (optional) drop the helper column
+  select(-days_to_meeting)
 
 ## ── 1.  Bucket definition ------------------------------------------------------
 bucket_centers <- seq(0.10, 5.1, by = 0.25)
