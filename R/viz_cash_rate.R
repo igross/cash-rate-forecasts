@@ -62,6 +62,10 @@ scrape_date <- max(cash_rate$scrape_date)
 forecast_df <- forecast_df %>%
   left_join(meeting_schedule, by = c("date" = "expiry"))
 
+
+forecast_df <- forecast_df %>%
+  distinct()
+
 # Iterative cash rate logic
 results <- list()
 rt <- forecast_df$forecast_rate[1]
