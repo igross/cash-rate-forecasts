@@ -29,20 +29,6 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 294 × 4
-    #>    date       bucket probability month_label
-    #>    <date>     <chr>        <dbl> <chr>      
-    #>  1 2025-04-01 1%              NA Apr 2025   
-    #>  2 2025-04-01 2%              NA Apr 2025   
-    #>  3 2025-04-01 3%              NA Apr 2025   
-    #>  4 2025-04-01 4%              NA Apr 2025   
-    #>  5 2025-04-01 5%              NA Apr 2025   
-    #>  6 2025-04-01 6%              NA Apr 2025   
-    #>  7 2025-04-01 7%              NA Apr 2025   
-    #>  8 2025-04-01 8%              NA Apr 2025   
-    #>  9 2025-04-01 9%              NA Apr 2025   
-    #> 10 2025-04-01 10%             NA Apr 2025   
-    #> # ℹ 284 more rows
     #> Warning: Position guide is perpendicular to the intended axis.
     #> ℹ Did you mean to specify a different guide `position`?
     #> Warning: Removed 42 rows containing missing values or values outside the scale range
