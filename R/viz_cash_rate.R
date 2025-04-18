@@ -7,7 +7,8 @@ suppressPackageStartupMessages({
   library(scales)
   library(readabs)
   library(readrba)
-          })
+library(plotly)
+})
 
 
 # 1.  Define only the meeting dates
