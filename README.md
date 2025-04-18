@@ -31,7 +31,7 @@ are shown below:
 
     #> Warning: Position guide is perpendicular to the intended axis.
     #> ℹ Did you mean to specify a different guide `position`?
-    #> Warning: Removed 42 rows containing missing values or values outside the scale range
+    #> Warning: Removed 21 rows containing missing values or values outside the scale range
     #> (`geom_bar()`).
     #> [1] "Apr 2025"
     #> [1] "May 2025"
