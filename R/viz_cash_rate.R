@@ -174,7 +174,7 @@ df_long <- df_probs %>%
     bucket        = paste0(sprintf("%.2f", bucket_centre), "%"),
     month_label   = format(date, "%b %Y")
   ) %>%
-  select(date, month_label, bucket, probability)ß
+  select(date, month_label, bucket, probability)
                        
 
 # Filter only meeting months
