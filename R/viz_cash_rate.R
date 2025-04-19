@@ -345,6 +345,9 @@ results <- results %>%
   # 4) (optional) drop the helper column
   select(-days_to_meeting)
 
+
+write.csv(results,   "combined_data/results.csv",   row.names = FALSE)
+                       
 ## ── 1.  Bucket definition ------------------------------------------------------
 bucket_centers <- seq(0.10, 5.1, by = 0.25)
 bucket_edges   <- c(bucket_centers - 0.125,
