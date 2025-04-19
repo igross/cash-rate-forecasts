@@ -54,8 +54,28 @@ if (file.exists("docs/rate_fan_chart.png")) {
 }
 
 
-interactive_line_section <- '  <h1 style="margin-top:60px;">Interactive Probability Chart</h1>
-  <iframe src="line_interactive.html"></iframe>'
+interactive_line_section <- '
+  <h1 style="margin-top:60px; text-align:center;">
+    Interactive Probability Chart
+  </h1>
+  <div style="
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    ">
+    <iframe
+      src="line_interactive.html"
+      style="
+        width: 90%;
+        height: 800px;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      "
+    ></iframe>
+  </div>
+'
+
 
 # Optional fan chart
 line_chart_section <- ""
