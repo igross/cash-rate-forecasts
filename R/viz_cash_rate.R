@@ -98,6 +98,7 @@ for (i in 1:nrow(forecast_df)) {
 
 df_result <- bind_rows(results) %>% distinct()
 
+write.csv(df_result, "combined_data/df_result2.csv", row.names = FALSE)
 
 # df_result$stdev <- rmse[1:nrow(df_result)]
 
