@@ -54,9 +54,8 @@ if (file.exists("docs/rate_fan_chart.png")) {
 }
 
 
-interactive_line_section <- '<iframe src="figures/line_interactive.html"
-        style="border:none;width:100%;height:600px;">
-</iframe>'
+interactive_line_section <- '  <h1 style="margin-top:60px;">Interactive Probability Chart</h1>
+  <iframe src="line_interactive.html"></iframe>'
 
 # Optional fan chart
 line_chart_section <- ""
