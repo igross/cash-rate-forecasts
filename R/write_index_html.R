@@ -54,7 +54,7 @@ if (file.exists("docs/rate_fan_chart.png")) {
 }
 
 
-interactive_line_section <- '<iframe src="figures/rate_forecast_interactive.html"
+interactive_line_section <- '<iframe src="figures/line_interactive.html"
         style="border:none;width:100%;height:600px;">
 </iframe>'
 
