@@ -434,6 +434,7 @@ for (j in seq_len(nrow(results))) {
 
 bucket_probs <- bind_rows(prob_rows)
 
+print(names(bucket_probs))
 write.csv(bucket_probs,   "combined_data/bucket_probs.csv",   row.names = FALSE)
 
 ## ── 3. Keep the *top‑4* buckets per scrape ------------------------------------
