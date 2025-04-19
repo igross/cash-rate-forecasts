@@ -474,8 +474,7 @@ ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
 line_int <- line +
   aes(text = paste0(
     "", format(scrape_date, "%Y-%m-%d"),
-    "<br>", bucket,
-    "<br>", scales::percent(probability, accuracy = 0.1)
+    "<br>", scales::percent(probability, accuracy = 1)
   ))
 
 # 2. convert to a plotly htmlwidget
