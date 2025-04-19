@@ -45,7 +45,7 @@ are shown below:
     #> This warning is displayed once every 8 hours.
     #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     #> generated.
-    #> # A tibble: 210 × 3
+    #> # A tibble: 231 × 3
     #>    scrape_date bucket probability
     #>    <date>      <chr>        <dbl>
     #>  1 2025-04-03  0.10%    2.30e- 97
@@ -78,4 +78,4 @@ are shown below:
     #> 28 2025-04-04  1.60%    1.65e- 35
     #> 29 2025-04-04  1.85%    6.42e- 28
     #> 30 2025-04-04  2.10%    2.75e- 21
-    #> # ℹ 180 more rows
+    #> # ℹ 201 more rows
