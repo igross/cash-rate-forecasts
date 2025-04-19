@@ -431,6 +431,7 @@ for (j in seq_len(nrow(results))) {
 
 bucket_probs <- bind_rows(prob_rows)
 
+write.csv(bucket_probs,   "combined_data/bucket_probs.csv",   row.names = FALSE)
 
 ## ── 3. Keep the *top‑4* buckets per scrape ------------------------------------
 top3_norm <- bucket_probs %>%
@@ -444,7 +445,7 @@ top3_norm <- bucket_probs %>%
   ungroup()
 
 
-write.csv(top3_norm,   "combined_data/top3.csv",   row.names = FALSE)
+write.csv(top3_norm,   "combined_data/top.csv",   row.names = FALSE)
 
                        
 line<-ggplot(top3_norm,
