@@ -456,9 +456,11 @@ stacked<-ggplot(top3_norm, aes(x = scrape_date, y = probability, fill = bucket))
   theme(legend.position = "right")
 
 ggsave("docs/stacked.png", plot = stacked, width = 8, height = 5, dpi = 300)
+write.csv(top3,   "combined_data/top3.csv",   row.names = FALSE)
 
+                       
 line<-ggplot(top3_norm,
-       aes(x = scrape_date,
+       aes(x = scrape_time,
            y = probability,
            colour = bucket,
            group  = bucket)) +
@@ -482,7 +484,6 @@ line<-ggplot(top3_norm,
   theme(legend.position = "right")
   
 ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
-
 
                        # 1. add a `text` aesthetic for custom hover info
 line_int <- line +
