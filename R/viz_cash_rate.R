@@ -456,7 +456,7 @@ stacked<-ggplot(top3_norm, aes(x = scrape_date, y = probability, fill = bucket))
   theme(legend.position = "right")
 
 ggsave("docs/stacked.png", plot = stacked, width = 8, height = 5, dpi = 300)
-write.csv(top3,   "combined_data/top3.csv",   row.names = FALSE)
+write.csv(top3_norm,   "combined_data/top3.csv",   row.names = FALSE)
 
                        
 line<-ggplot(top3_norm,
