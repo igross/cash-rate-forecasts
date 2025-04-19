@@ -40,17 +40,21 @@ files <- list.files(
   full.names = TRUE
 )
 
-# 2. read each one in, ensuring we end up with all four columns
 df_list <- files %>% map(function(f) {
   df <- read_csv(f, col_types = cols())
-  
-  # if it doesn’t already have scrape_time, add it as NA
+
   if (!"scrape_time" %in% names(df)) {
-    df$scrape_time <- NA_character_
+    # create a POSIXct NA in Melbourne time
+    df$scrape_time <- as.POSIXct(NA, tz = "Australia/Melbourne")
+  } else {
+    # parse any existing scrape_time strings into POSIXct in Melbourne time
+    df <- df %>%
+      mutate(scrape_time = ymd_hms(scrape_time, tz = "Australia/Melbourne"))
   }
-  
+
   df
 })
+
 
 # 3. bind them into one data‑frame
 all_data <- bind_rows(df_list) %>%
