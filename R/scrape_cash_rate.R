@@ -28,7 +28,6 @@ write_csv(
   file.path("daily_data", paste0("scraped_cash_rate_", Sys.Date() - 1, ".csv"))
 )
 
-# read + combine all snapshots
 all_data <- list.files(
     path       = "daily_data",
     pattern    = "\\.csv$",
@@ -38,9 +37,14 @@ all_data <- list.files(
     date        = col_date(),
     cash_rate   = col_double(),
     scrape_date = col_date(),
-    # ensure we parse using Melbourne tz
-    scrape_time = col_datetime(format = "", tz = "Australia/Melbourne")
+    # read scrape_time as naive datetime
+    scrape_time = col_datetime()
+    # — no tz here —
   )) %>%
+  # now force it into Melbourne time (including DST)
+  mutate(
+    scrape_time = force_tz(scrape_time, tzone = "Australia/Melbourne")
+  ) %>%
   filter(
     !scrape_date %in% ymd(c(
       "2022-08-06","2022-08-07","2022-08-08",
