@@ -13,19 +13,15 @@ new_data <- fromJSON(json_file) %>%
   pluck("data", "items") %>%
   as_tibble() %>%
   mutate(
-    dateExpiry   = ymd(dateExpiry) %>% floor_date("month"),
+    # define `date` straight away, floor to start of month
+    date         = ymd(dateExpiry) %>% floor_date("month"),
     scrape_date  = ymd(datePreviousSettlement),
-    # stamp with Melbourne timezone (automatically handles DST)
     scrape_time  = now(tzone = "Australia/Melbourne"),
     cash_rate    = 100 - pricePreviousSettlement
   ) %>%
   filter(pricePreviousSettlement != 0) %>%
-  select(
-    date,
-    cash_rate,
-    scrape_date,
-    scrape_time
-  )
+  select(date, cash_rate, scrape_date, scrape_time)
+
 
 write_csv(
   new_data,
@@ -53,6 +49,18 @@ all_data <- list.files(
     )),
     !is.na(date),
     !is.na(cash_rate)
+  )
+
+
+all_data <- all_data %>%
+  mutate(
+    scrape_time = if_else(
+      is.na(scrape_time),
+      # build a POSIXct at 12:00:00 on the scrape_date in Melbourne TZ
+      as.POSIXct(paste(scrape_date, "12:00:00"),
+                 tz = "Australia/Melbourne"),
+      scrape_time
+    )
   )
 
 # save for downstream work
