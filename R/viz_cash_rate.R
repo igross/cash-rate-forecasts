@@ -98,8 +98,6 @@ for (i in 1:nrow(forecast_df)) {
 
 df_result <- bind_rows(results) %>% distinct()
 
-write.csv(df_result, "combined_data/df_result2.csv", row.names = FALSE)
-
 # df_result$stdev <- rmse[1:nrow(df_result)]
 
 df_result <- df_result %>%
@@ -155,25 +153,21 @@ df_probs <- data.frame(
 ) %>%
   as_tibble()
 
-# 1) Make sure df_probs is a tibble (not a matrix)
+# ensure it’s a tibble
 df_probs <- as_tibble(df_probs)
 
-# 2) Pivot everything *but* date
 df_long <- df_probs %>%
   pivot_longer(
     cols      = -date,
     names_to  = "bucket_raw",
     values_to = "probability"
   ) %>%
-  
-  # 3) strip off the p_ prefix (if it’s there) and coerce to numeric
   mutate(
-    bucket_num = as.numeric(str_remove(bucket_raw, "^p_")),
-    bucket     = paste0(bucket_num, "%"),
+    # strip leading "p_" with base sub(), then coerce
+    bucket_num  = as.numeric(sub("^p_", "", bucket_raw)),
+    bucket      = paste0(bucket_num, "%"),
     month_label = format(date, "%b %Y")
   ) %>%
-  
-  # 4) drop the helper column
   select(date, month_label, bucket, probability)
 
 # Filter only meeting months
