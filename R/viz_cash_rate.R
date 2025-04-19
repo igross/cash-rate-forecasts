@@ -159,10 +159,21 @@ df_probs <- data.frame(
                        
 # Reshape
 df_long <- df_probs %>%
-  rename_with(~ gsub("p_", "", .x), starts_with("p_")) %>%
-  pivot_longer(cols = -date, names_to = "bucket", values_to = "probability") %>%
-  mutate(bucket = paste0(bucket, "%"),
-         month_label = format(date, "%b %Y"))
+  pivot_longer(
+    cols      = starts_with("p_"),
+    names_to  = "bucket_raw",
+    values_to = "probability"
+  ) %>%
+
+  # 2) convert bucket_raw ("p_0.10", "p_0.35", …) into a numeric
+  mutate(
+    bucket_num = as.numeric(str_remove(bucket_raw, "^p_")),
+    bucket     = paste0(bucket_num, "%"),
+    month_label = format(date, "%b %Y")
+  ) %>%
+
+  # 3) drop the helper
+  select(date, month_label, bucket, probability)
 
 # Filter only meeting months
 
