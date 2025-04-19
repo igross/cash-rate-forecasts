@@ -155,24 +155,25 @@ df_probs <- data.frame(
 ) %>%
   as_tibble()
 
+# 1) Make sure df_probs is a tibble (not a matrix)
+df_probs <- as_tibble(df_probs)
 
-                       
-# Reshape
+# 2) Pivot everything *but* date
 df_long <- df_probs %>%
   pivot_longer(
-    cols      = starts_with("p_"),
+    cols      = -date,
     names_to  = "bucket_raw",
     values_to = "probability"
   ) %>%
-
-  # 2) convert bucket_raw ("p_0.10", "p_0.35", …) into a numeric
+  
+  # 3) strip off the p_ prefix (if it’s there) and coerce to numeric
   mutate(
     bucket_num = as.numeric(str_remove(bucket_raw, "^p_")),
     bucket     = paste0(bucket_num, "%"),
     month_label = format(date, "%b %Y")
   ) %>%
-
-  # 3) drop the helper
+  
+  # 4) drop the helper column
   select(date, month_label, bucket, probability)
 
 # Filter only meeting months
