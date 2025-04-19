@@ -96,7 +96,8 @@ for (i in 1:nrow(forecast_df)) {
   }
 }
 
-df_result <- bind_rows(results)
+df_result <- bind_rows(results) %>% distinct()
+
 
 # df_result$stdev <- rmse[1:nrow(df_result)]
 
