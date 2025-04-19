@@ -292,11 +292,12 @@ forecast_df <- cash_rate %>%
    arrange(scrape_date, date)  %>% 
   distinct()                  
 
-unique_scrapes <- sort(unique(forecast_df$scrape_date))
+unique_scrapes <- sort(unique(forecast_df$scrape_time))
 results        <- vector("list", length(unique_scrapes))
 
 results <- tibble(
   scrape_date       = as.Date(character()),
+  scrape_time       = as.Date(character()),
   current_expiry    = as.Date(character()),
   next_expiry       = as.Date(character()),
   cash_rate_current = numeric(),
@@ -305,7 +306,7 @@ results <- tibble(
 )
 
 for (j in seq_along(unique_scrapes)) {
-  df_scr <- filter(forecast_df, scrape_date == unique_scrapes[j])
+  df_scr <- filter(forecast_df, scrape_time == unique_scrapes[j])
   
   row_next    <- filter(df_scr, date == next_expiry)
   row_current <- filter(df_scr, date == current_expiry)
@@ -320,7 +321,7 @@ for (j in seq_along(unique_scrapes)) {
   
   results <- add_row(
     results,
-    scrape_date       = unique_scrapes[j],
+    scrape_time      = unique_scrapes[j],
     current_expiry    = current_expiry,
     next_expiry       = next_expiry,
     cash_rate_current = row_current$cash_rate,
@@ -333,7 +334,7 @@ for (j in seq_along(unique_scrapes)) {
 
 results <- results %>%
   # 1) compute the days-to-meeting
-  mutate(days_to_meeting = as.integer(next_meeting - scrape_date)) %>%
+  mutate(days_to_meeting = as.integer(next_meeting - scrape_time)) %>%
   
   # 2) join on your rmse_days lookup
   left_join(rmse_days, by = "days_to_meeting") %>%
@@ -373,7 +374,7 @@ for (j in seq_len(nrow(results))) {
   probs <- probs / sum(probs)
   
   bucket_list[[j]] <- tibble(
-    scrape_date = results$scrape_date[j],
+    scrape_time = results$scrape_time[j],
     bucket      = sprintf("%.2f%%", bucket_centers),
     probability = probs
   )
@@ -422,7 +423,7 @@ for (j in seq_len(nrow(results))) {
   }
   
   prob_rows[[j]] <- tibble(
-    scrape_date = results$scrape_date[j],
+    scrape_time = results$scrape_time[j],
     bucket      = bucket_def$label,
     probability = probs / sum(probs)          # renormalise, tiny numerical drift
   )
@@ -433,7 +434,7 @@ bucket_probs <- bind_rows(prob_rows)
 
 ## ── 3. Keep the *top‑4* buckets per scrape ------------------------------------
 top3_norm <- bucket_probs %>%
-  group_by(scrape_date) %>%
+  group_by(scrape_time) %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   # re‐normalise so they sum to 1
   mutate(
@@ -443,19 +444,6 @@ top3_norm <- bucket_probs %>%
   ungroup()
 
 
-
-## ── 4. Stacked‑bar plot -------------------------------------------------------
-stacked<-ggplot(top3_norm, aes(x = scrape_date, y = probability, fill = bucket)) +
-  geom_col(width = 0.9) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(title = "Top‑4 policy‑move buckets per scrape date",
-       x = "Scrape date",
-       y = "Probability (stacked to 100 %)",
-       fill = "Meeting‑day move") +
-  theme_bw() +
-  theme(legend.position = "right")
-
-ggsave("docs/stacked.png", plot = stacked, width = 8, height = 5, dpi = 300)
 write.csv(top3_norm,   "combined_data/top3.csv",   row.names = FALSE)
 
                        
