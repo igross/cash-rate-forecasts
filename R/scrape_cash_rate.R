@@ -58,20 +58,17 @@ df_list <- files %>% map(function(f) {
 
 # 3. bind them into one data‑frame
 all_data <- bind_rows(df_list) %>%
-  # 4. parse types & back‑fill missing times to Melbourne noon
   mutate(
-    date        = as_date(date),
-    cash_rate   = as_double(cash_rate),
-    scrape_date = as_date(scrape_date),
-    scrape_time = case_when(
-      !is.na(scrape_time) ~ ymd_hms(scrape_time, tz = "Australia/Melbourne"),
-      TRUE ~ as.POSIXct(
-        paste(scrape_date, "12:00:00"),
-        tz = "Australia/Melbourne"
-      )
+    date        = as.Date(date),
+    cash_rate   = as.double(cash_rate),    # ← use as.double()
+    scrape_date = as.Date(scrape_date),
+    scrape_time = if_else(
+      is.na(scrape_time),
+      as.POSIXct(paste(scrape_date, "12:00:00"),
+                 tz = "Australia/Melbourne"),
+      scrape_time
     )
   ) %>%
-  # your old‑date exclusions
   filter(
     !scrape_date %in% ymd(c(
       "2022-08-06","2022-08-07","2022-08-08",
