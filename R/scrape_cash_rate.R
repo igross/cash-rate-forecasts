@@ -28,23 +28,46 @@ write_csv(
   file.path("daily_data", paste0("scraped_cash_rate_", Sys.Date() - 1, ".csv"))
 )
 
-all_data <- list.files(
-    path       = "daily_data",
-    pattern    = "\\.csv$",
-    full.names = TRUE
-  ) %>%
-  read_csv(col_types = cols(
-    date        = col_date(),
-    cash_rate   = col_double(),
-    scrape_date = col_date(),
-    # read scrape_time as naive datetime
-    scrape_time = col_datetime()
-    # — no tz here —
-  )) %>%
-  # now force it into Melbourne time (including DST)
+library(purrr)
+library(readr)
+library(dplyr)
+library(lubridate)
+
+# 1. list your files
+files <- list.files(
+  path       = "daily_data",
+  pattern    = "\\.csv$",
+  full.names = TRUE
+)
+
+# 2. read each one in, ensuring we end up with all four columns
+df_list <- files %>% map(function(f) {
+  df <- read_csv(f, col_types = cols())
+  
+  # if it doesn’t already have scrape_time, add it as NA
+  if (!"scrape_time" %in% names(df)) {
+    df$scrape_time <- NA_character_
+  }
+  
+  df
+})
+
+# 3. bind them into one data‑frame
+all_data <- bind_rows(df_list) %>%
+  # 4. parse types & back‑fill missing times to Melbourne noon
   mutate(
-    scrape_time = force_tz(scrape_time, tzone = "Australia/Melbourne")
+    date        = as_date(date),
+    cash_rate   = as_double(cash_rate),
+    scrape_date = as_date(scrape_date),
+    scrape_time = case_when(
+      !is.na(scrape_time) ~ ymd_hms(scrape_time, tz = "Australia/Melbourne"),
+      TRUE ~ as.POSIXct(
+        paste(scrape_date, "12:00:00"),
+        tz = "Australia/Melbourne"
+      )
+    )
   ) %>%
+  # your old‑date exclusions
   filter(
     !scrape_date %in% ymd(c(
       "2022-08-06","2022-08-07","2022-08-08",
@@ -55,18 +78,12 @@ all_data <- list.files(
     !is.na(cash_rate)
   )
 
+# 5. ensure the output folder exists
+if (!dir.exists("combined_data")) {
+  dir.create("combined_data", recursive = TRUE)
+}
 
-all_data <- all_data %>%
-  mutate(
-    scrape_time = if_else(
-      is.na(scrape_time),
-      # build a POSIXct at 12:00:00 on the scrape_date in Melbourne TZ
-      as.POSIXct(paste(scrape_date, "12:00:00"),
-                 tz = "Australia/Melbourne"),
-      scrape_time
-    )
-  )
-
-# save for downstream work
+# 6. save
 saveRDS(all_data, file = "combined_data/all_data.Rds")
-write_csv(all_data, file = "combined_data/cash_rate.csv")
+write_csv(all_data,  file = "combined_data/cash_rate.csv")
+
