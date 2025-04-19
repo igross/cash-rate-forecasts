@@ -473,9 +473,9 @@ ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
                        # 1. add a `text` aesthetic for custom hover info
 line_int <- line +
   aes(text = paste0(
-    "Date: ", format(scrape_date, "%Y-%m-%d"),
-    "<br>Move: ", bucket,
-    "<br>Probability: ", scales::percent(probability, accuracy = 0.1)
+    "", format(scrape_date, "%Y-%m-%d"),
+    "<br>", bucket,
+    "<br>", scales::percent(probability, accuracy = 0.1)
   ))
 
 # 2. convert to a plotly htmlwidget
