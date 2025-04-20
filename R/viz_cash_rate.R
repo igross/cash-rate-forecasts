@@ -293,63 +293,32 @@ forecast_df <- cash_rate %>%
     date         <= next_expiry           # stop at the month of the next meeting
   ) %>%
    arrange(scrape_date, date)  %>% 
-  distinct()                  
+  distinct()  %>%
+  select(scrape_date, date, cash_rate)                 
 
 print(forecast_df)
-                       
-unique_scrapes <- sort(unique(forecast_df$scrape_time))
-results        <- vector("list", length(unique_scrapes))
 
-results <- tibble(
-  scrape_date       = as.Date(character()),
-  scrape_time       = as.Date(character()),
-  current_expiry    = as.Date(character()),
-  next_expiry       = as.Date(character()),
-  cash_rate_current = numeric(),
-  cash_rate_next    = numeric(),
-  implied_r_tp1     = numeric()
-)
-
-for (j in seq_along(unique_scrapes)) {
-  df_scr <- filter(forecast_df, scrape_time == unique_scrapes[j])
-  
-  row_next    <- filter(df_scr, date == next_expiry)
-  row_current <- filter(df_scr, date == current_expiry)
-  if (nrow(row_next) == 0 || nrow(row_current) == 0) next  # skip incomplete scrape
-  
-  dim <- days_in_month(next_meeting)
-  nb  <- (day(next_meeting) - 1) / dim
-  na  <- 1 - nb
-  
-  r_tp1 <- ((row_next$cash_rate+spread ) -
-              (row_current$cash_rate+spread ) * nb) / na
-  
-  results <- add_row(
-    results,
-    scrape_time      = unique_scrapes[j],
-    current_expiry    = current_expiry,
-    next_expiry       = next_expiry,
-    cash_rate_current = row_current$cash_rate,
-    cash_rate_next    = row_next$cash_rate,
-    implied_r_tp1     = r_tp1
-  )
-}
-
-
-
-results <- results %>%
-  # 1) compute the days-to-meeting
-  mutate(days_to_meeting = as.integer(next_meeting - scrape_time)) %>%
-  
-  # 2) join on your rmse_days lookup
+                       # 2. Pivot so each scrape_date has one row with both rates
+results <- forecast_df %>%
+  pivot_wider(
+    names_from   = date,
+    values_from  = cash_rate,
+    names_prefix = "r_"
+  ) %>%
+  rename(
+    cash_rate_current = paste0("r_", current_expiry),
+    cash_rate_next    = paste0("r_", next_expiry)
+  ) %>%
+  mutate(
+    # fraction of month before next meeting
+    nb = (day(next_meeting) - 1) / days_in_month(next_meeting),
+    implied_r_tp1   = ((cash_rate_next + spread) - (cash_rate_current + spread) * nb) / (1 - nb),
+    days_to_meeting = as.integer(next_meeting - scrape_date)
+  ) %>%
   left_join(rmse_days, by = "days_to_meeting") %>%
-  
-  # 3) rename the joined column
   rename(RMSE = finalrmse) %>%
-  
-  # 4) (optional) drop the helper column
-  select(-days_to_meeting)
-
+  select(scrape_date, cash_rate_current, implied_r_tp1, RMSE)
+                  
                        
 ## ── 1.  Bucket definition ------------------------------------------------------
 bucket_centers <- seq(0.10, 5.1, by = 0.25)
