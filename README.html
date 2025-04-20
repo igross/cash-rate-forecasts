@@ -633,7 +633,7 @@ this data, which are shown below:</p>
 #&gt; [1] &quot;Sep 2025&quot;
 #&gt; [1] &quot;Nov 2025&quot;
 #&gt; [1] &quot;Dec 2025&quot;
-#&gt; # A tibble: 24 × 4
+#&gt; # A tibble: 26 × 4
 #&gt;    scrape_date scrape_time         date       cash_rate
 #&gt;    &lt;date&gt;      &lt;dttm&gt;              &lt;date&gt;         &lt;dbl&gt;
 #&gt;  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -646,7 +646,7 @@ this data, which are shown below:</p>
 #&gt;  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
 #&gt;  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
 #&gt; 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-#&gt; # ℹ 14 more rows
+#&gt; # ℹ 16 more rows
 #&gt; [1] 0.01
 #&gt; # A tibble: 730 × 2
 #&gt;    days_to_meeting finalrmse
@@ -662,7 +662,7 @@ this data, which are shown below:</p>
 #&gt;  9               9    0.0639
 #&gt; 10              10    0.0639
 #&gt; # ℹ 720 more rows
-#&gt; # A tibble: 12 × 7
+#&gt; # A tibble: 13 × 7
 #&gt;    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
 #&gt;    &lt;dttm&gt;                          &lt;dbl&gt;          &lt;dbl&gt; &lt;dbl&gt;         &lt;dbl&gt;
 #&gt;  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -677,6 +677,7 @@ this data, which are shown below:</p>
 #&gt; 10 2025-04-17 12:00:00              4.08           3.98 0.613          3.82
 #&gt; 11 2025-04-19 14:00:34              4.08           3.98 0.613          3.82
 #&gt; 12 2025-04-20 14:11:25              4.08           3.98 0.613          3.82
+#&gt; 13 2025-04-20 14:27:17              4.08           3.98 0.613          3.82
 #&gt;    days_to_meeting  RMSE
 #&gt;              &lt;int&gt; &lt;dbl&gt;
 #&gt;  1              47 0.175
@@ -691,7 +692,8 @@ this data, which are shown below:</p>
 #&gt; 10              33 0.116
 #&gt; 11              31 0.111
 #&gt; 12              30 0.109
-#&gt; # A tibble: 252 × 3
+#&gt; 13              30 0.109
+#&gt; # A tibble: 273 × 3
 #&gt;    scrape_time         bucket probability
 #&gt;    &lt;dttm&gt;              &lt;chr&gt;        &lt;dbl&gt;
 #&gt;  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -724,7 +726,13 @@ this data, which are shown below:</p>
 #&gt; 28 2025-04-04 12:00:00 1.60%    1.65e- 35
 #&gt; 29 2025-04-04 12:00:00 1.85%    6.42e- 28
 #&gt; 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-#&gt; # ℹ 222 more rows</code></pre>
+#&gt; # ℹ 243 more rows
+#&gt; Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
+#&gt; 3.5.0.
+#&gt; ℹ Please use the `legend.position.inside` argument of `theme()` instead.
+#&gt; This warning is displayed once every 8 hours.
+#&gt; Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#&gt; generated.</code></pre>
 
 </body>
 </html>
