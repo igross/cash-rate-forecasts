@@ -8,6 +8,7 @@ suppressPackageStartupMessages({
   library(readabs)
   library(readrba)
 library(plotly)
+  library(purrr)
 })
  
 
