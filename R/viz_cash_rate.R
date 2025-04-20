@@ -263,7 +263,7 @@ results <- forecast_df %>%
   left_join(rmse_days, by = "days_to_meeting") %>% 
   rename(RMSE = finalrmse) 
                         # %>%   select(cash_rate_current, implied_r_tp1, RMSE, scrape_time)
-print(rmse_days, n = 50, width = Inf)
+print(as_tibble(rmse_days))
 # Inspect
 print(results, n = 50, width = Inf)
                   
