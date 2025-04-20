@@ -369,7 +369,7 @@ line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group =
       "No change"   = "#BFBFBF",   # grey
       "+25 bp hike" = "#E07C7C",   # lighter red
       "+50 bp hike" = "#B50000"    # darkest red
-    ) +
+    ) )+
   labs(
     title  = "Cash Rate probabilities for the next RBA meeting",
     x      = "Forecast date",
