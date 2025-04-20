@@ -395,59 +395,42 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-# Define the five move buckets (relative to current rate)
-bucket_def <- tibble::tibble(
-  bucket = factor(
-    c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike"),
-    levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
-  ),
-  shift = c(-0.50, -0.25, 0.00, 0.25, 0.50)  # in percentage points
-)
-half_width <- 0.125  # ±12.5bp
+# 1) Define your buckets
+bucket_centers <- seq(0.10, 5.10, by = 0.25)         # e.g. 0.10%, 0.35%, ...
+half_width     <- 0.125                             # ±12.5bp
+bucket_labels  <- sprintf("%.2f%%", bucket_centers)
 
-# Preallocate
-prob_list <- vector("list", nrow(results))
+# 2) Starting from your `results` tibble:
+#    • scrape_time         (Date)
+#    • cash_rate_current   (current rate)
+#    • implied_r_tp1       (mean for next meeting)
+#    • RMSE                (stdev for next meeting)
 
-# Loop over each scrape
-for (j in seq_len(nrow(results))) {
-  mu     <- results$implied_r_tp1[j]
-  sigma  <- results$RMSE[j]
-  r_curr <- results$cash_rate_current[j]
-  scrape <- results$scrape_time[j]  # this is your date for each row
+move_probs <- results %>%
+  transmute(
+    scrape_date = scrape_time,
+    mu          = implied_r_tp1,
+    sigma       = RMSE,
+    r_curr      = cash_rate_current
+  ) %>%
+  # 3) For each row, compute the vector of bucket probabilities
+  mutate(
+    probs = map2(mu, sigma, ~ {
+      lowers <- bucket_centers - half_width
+      uppers <- bucket_centers + half_width
+      v <- pnorm(uppers, mean = .x, sd = .y) - pnorm(lowers, mean = .x, sd = .y)
+      v[v < 0] <- 0
+      v / sum(v)
+    })
+  ) %>%
+  # 4) Attach the bucket labels
+  mutate(bucket = list(bucket_labels)) %>%
+  # 5) Unnest into long form
+  unnest(c(bucket, probs)) %>%
+  rename(probability = probs)
 
-  if (is.na(mu) || is.na(sigma) || sigma <= 0) next
-
-  # Compute probabilities for each bucket
-  probs <- sapply(bucket_def$shift, function(shift_amt) {
-    lower <- r_curr + shift_amt - half_width
-    upper <- r_curr + shift_amt + half_width
-    pnorm(upper, mean = mu, sd = sigma) -
-      pnorm(lower, mean = mu, sd = sigma)
-  })
-  probs <- probs / sum(probs)
-
-  prob_list[[j]] <- tibble(
-    scrape_time = scrape,
-    bucket      = bucket_def$bucket,
-    probability = probs
-  )
-}
-
-# Combine into one data frame
-move_probs <- bind_rows(prob_list)
-
-# 1) inspect the column names
-print(names(move_probs))
-# should see: "scrape_date", "bucket", "probability"
-
-# 2) pick the top‐3 buckets per scrape_date and renormalise
-top3_norm <- move_probs %>%
-  group_by(scrape_date) %>%                         # use scrape_date directly
-  slice_max(order_by   = probability,
-            n          = 3,
-            with_ties  = FALSE) %>%
-  mutate(probability = probability / sum(probability)) %>%
-  ungroup()
+# Quick check
+print(move_probs, n = 15)
 
 # And plot
 line <- ggplot(move_probs, aes(x = scrape_date, y = probability, color = bucket, group = bucket)) +
