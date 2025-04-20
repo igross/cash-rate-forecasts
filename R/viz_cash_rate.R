@@ -480,7 +480,7 @@ ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
                        # 1. add a `text` aesthetic for custom hover info
 line_int <- line +
   aes(text = paste0(
-    "", format(scrape_date, "%Y-%m-%d"),
+    format(scrape_date, "%m-%d"),
     "<br>", scales::percent(probability, accuracy = 1)
   ))
 
