@@ -261,8 +261,8 @@ results <- forecast_df %>%
     days_to_meeting = as.integer(next_meeting - scrape_time)
   ) %>%
   left_join(rmse_days, by = "days_to_meeting") %>% 
-  rename(RMSE = finalrmse) %>%
-  select(cash_rate_current, implied_r_tp1, RMSE, scrape_time)
+  rename(RMSE = finalrmse) 
+                        # %>%   select(cash_rate_current, implied_r_tp1, RMSE, scrape_time)
 
 # Inspect
 print(results)
