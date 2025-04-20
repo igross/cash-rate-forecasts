@@ -295,6 +295,8 @@ forecast_df <- cash_rate %>%
    arrange(scrape_date, date)  %>% 
   distinct()                  
 
+print(forecast_df)
+                       
 unique_scrapes <- sort(unique(forecast_df$scrape_time))
 results        <- vector("list", length(unique_scrapes))
 
