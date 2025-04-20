@@ -348,8 +348,6 @@ results <- results %>%
   # 4) (optional) drop the helper column
   select(-days_to_meeting)
 
-
-write.csv(results,   "combined_data/results.csv",   row.names = FALSE)
                        
 ## ── 1.  Bucket definition ------------------------------------------------------
 bucket_centers <- seq(0.10, 5.1, by = 0.25)
@@ -461,7 +459,10 @@ line <- ggplot(move_probs, aes(x = scrape_date, y = probability, color = bucket,
 
 ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
 
-                       # 1. add a `text` aesthetic for custom hover info
+
+write.csv(move_probs,   "combined_data/move_probs.csv",   row.names = FALSE)
+
+# 1. add a `text` aesthetic for custom hover info
 line_int <- line +
   aes(text = paste0(
     format(scrape_date, "%m-%d"),
