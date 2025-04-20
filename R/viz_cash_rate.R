@@ -362,7 +362,14 @@ line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group =
   geom_line(linewidth = 1) +
   geom_point(size = 1.1) +
   scale_y_continuous(labels = label_percent(1)) +
-  scale_color_manual(values = my_cols) +
+   scale_color_manual(
+    values = c(
+      "-50 bp cut"  = "#004B8E",   # darkest blue
+      "-25 bp cut"  = "#5FA4D4",   # lighter blue
+      "No change"   = "#BFBFBF",   # grey
+      "+25 bp hike" = "#E07C7C",   # lighter red
+      "+50 bp hike" = "#B50000"    # darkest red
+    ) +
   labs(
     title  = "Cash Rate probabilities for the next RBA meeting",
     x      = "Forecast date",
@@ -370,7 +377,12 @@ line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group =
     colour = "Meeting‑day move"
   ) +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme(
+    axis.text.x        = element_text(angle = 45, hjust = 1),
+    legend.position    = c(1.02, 0.5),               # right & centered
+    legend.justification = c("left", "center"),
+    legend.background  = element_blank()
+  )
 
 ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
 
