@@ -352,29 +352,28 @@ top3_moves <- move_probs %>%
   mutate(probability = probability / sum(probability)) %>%
   ungroup()
 
-# quick check
-print(top3_moves)
+# build a named vector of colours keyed off your actual factor levels
+my_cols <- setNames(
+  c("#004B8E", "#5FA4D4", "#BFBFBF", "#E07C7C", "#B50000"),
+  levels(top3_moves$bucket)
+)
 
-# and plot
 line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
-  geom_line(linewidth = 1) + geom_point(size = 1.1) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.1) +
   scale_y_continuous(labels = label_percent(1)) +
-labs(  title  = paste0("Cash Rate probabilities for the next RBA meeting"),
-       x      = "Forecast date",
-       y      = "Probability",
-       colour = "Meeting‑day move") + scale_colour_manual(
-    values = c(
-      "-50 bp cut" = "#004B8E",  # deepest blue  (largest cut)
-      "-25 bp cut" = "#5FA4D4",  # lighter blue  (half‑size cut)
-      "No change"  = "#BFBFBF",  # neutral grey
-      "+25 bp hike"= "#E07C7C",  # lighter red   (half‑size hike)
-      "+50 bp hike"= "#B50000"   # deepest red   (largest hike)
-    )
+  scale_color_manual(values = my_cols) +
+  labs(
+    title  = "Cash Rate probabilities for the next RBA meeting",
+    x      = "Forecast date",
+    y      = "Probability",
+    colour = "Meeting‑day move"
   ) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
+
 
 
 # instead of `line + aes(...)` do:
