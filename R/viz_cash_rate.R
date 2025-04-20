@@ -441,7 +441,9 @@ bucket_probs <- bind_rows(prob_rows)
 print(dim(bucket_probs))       # should be (# of valid scrapes * 5) × 3
 print(head(bucket_probs))
 
-# Now you can group by scrape_time (or scrape_time + something else)
+bucket_probs <- bucket_probs %>%
+  rename(scrape_time = scrape_date)   # or rename(scrape_time = date) if it was called `date`
+
 top3_norm <- bucket_probs %>%
   group_by(scrape_time) %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
