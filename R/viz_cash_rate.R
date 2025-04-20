@@ -436,12 +436,13 @@ for (j in seq_len(nrow(results))) {
 # Combine into one data frame
 move_probs <- bind_rows(prob_list)
 
-# If you prefer rename to scrape_date:
-move_probs <- move_probs %>% rename(scrape_date = scrape_time)
+# 1) inspect the column names
+print(names(move_probs))
+# should see: "scrape_date", "bucket", "probability"
 
-# Now you can group_by(scrape_date) without error
+# 2) pick the top‐3 buckets per scrape_date and renormalise
 top3_norm <- move_probs %>%
-  group_by(scrape_date) %>%
+  group_by(scrape_date) %>%                         # use scrape_date directly
   slice_max(order_by   = probability,
             n          = 3,
             with_ties  = FALSE) %>%
