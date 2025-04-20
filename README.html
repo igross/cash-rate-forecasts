@@ -638,40 +638,11 @@ this data, which are shown below:</p>
 #&gt; This warning is displayed once every 8 hours.
 #&gt; Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
 #&gt; generated.
-#&gt; # A tibble: 231 × 3
-#&gt;    scrape_date bucket probability
-#&gt;    &lt;date&gt;      &lt;chr&gt;        &lt;dbl&gt;
-#&gt;  1 2025-04-03  0.10%    2.30e- 97
-#&gt;  2 2025-04-03  0.35%    8.89e- 85
-#&gt;  3 2025-04-03  0.60%    4.44e- 73
-#&gt;  4 2025-04-03  0.85%    2.87e- 62
-#&gt;  5 2025-04-03  1.10%    2.41e- 52
-#&gt;  6 2025-04-03  1.35%    2.62e- 43
-#&gt;  7 2025-04-03  1.60%    3.71e- 35
-#&gt;  8 2025-04-03  1.85%    6.85e- 28
-#&gt;  9 2025-04-03  2.10%    1.65e- 21
-#&gt; 10 2025-04-03  2.35%    5.26e- 16
-#&gt; 11 2025-04-03  2.60%    2.22e- 11
-#&gt; 12 2025-04-03  2.85%    1.25e-  7
-#&gt; 13 2025-04-03  3.10%    9.75e-  5
-#&gt; 14 2025-04-03  3.35%    1.08e-  2
-#&gt; 15 2025-04-03  3.60%    1.84e-  1
-#&gt; 16 2025-04-03  3.85%    5.21e-  1
-#&gt; 17 2025-04-03  4.10%    2.62e-  1
-#&gt; 18 2025-04-03  4.35%    2.23e-  2
-#&gt; 19 2025-04-03  4.60%    2.97e-  4
-#&gt; 20 2025-04-03  4.85%    5.70e-  7
-#&gt; 21 2025-04-03  5.10%    1.51e- 10
-#&gt; 22 2025-04-04  0.10%    3.11e-101
-#&gt; 23 2025-04-04  0.35%    7.13e- 88
-#&gt; 24 2025-04-04  0.60%    1.78e- 75
-#&gt; 25 2025-04-04  0.85%    4.84e- 64
-#&gt; 26 2025-04-04  1.10%    1.44e- 53
-#&gt; 27 2025-04-04  1.35%    4.65e- 44
-#&gt; 28 2025-04-04  1.60%    1.65e- 35
-#&gt; 29 2025-04-04  1.85%    6.42e- 28
-#&gt; 30 2025-04-04  2.10%    2.75e- 21
-#&gt; # ℹ 201 more rows</code></pre>
+#&gt; Warning: There was 1 warning in `mutate()`.
+#&gt; ℹ In argument: `days_to_meeting = as.integer(next_meeting - scrape_time)`.
+#&gt; Caused by warning:
+#&gt; ! Incompatible methods (&quot;-.Date&quot;, &quot;-.POSIXt&quot;) for &quot;-&quot;
+#&gt; # A tibble: 0 × 0</code></pre>
 
 </body>
 </html>
