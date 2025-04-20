@@ -356,7 +356,7 @@ top3_moves <- move_probs %>%
 print(top3_moves)
 
 # and plot
-ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
+line_top3 <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
   geom_line(linewidth = 1) + geom_point(size = 2) +
   scale_y_continuous(labels = label_percent(1)) +
   labs(
@@ -365,7 +365,8 @@ ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)
     y     = "Probability",
     color = "Move"
   ) +
-  theme_bw()
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("docs/line.png", plot = line_top3, width = 8, height = 5, dpi = 300)
 
