@@ -395,17 +395,21 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-# 1) Define your buckets
-bucket_centers <- seq(0.10, 5.10, by = 0.25)         # e.g. 0.10%, 0.35%, ...
-half_width     <- 0.125                             # ±12.5bp
-bucket_labels  <- sprintf("%.2f%%", bucket_centers)
+# 1) Define the five semantic buckets
+bucket_def <- tibble::tibble(
+  bucket = factor(
+    c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike"),
+    levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
+  ),
+  shift  = c(-0.50, -0.25, 0.00, 0.25, 0.50)  # in percentage pts
+)
+half_width <- 0.125  # ±12.5 bp
 
-# 2) Starting from your `results` tibble:
-#    • scrape_time         (Date)
-#    • cash_rate_current   (current rate)
-#    • implied_r_tp1       (mean for next meeting)
-#    • RMSE                (stdev for next meeting)
-
+# 2) Starting from `results` (one row per scrape_time):
+#    • scrape_time
+#    • cash_rate_current
+#    • implied_r_tp1
+#    • RMSE
 move_probs <- results %>%
   transmute(
     scrape_date = scrape_time,
@@ -416,35 +420,50 @@ move_probs <- results %>%
   # 3) For each row, compute the vector of bucket probabilities
   mutate(
     probs = map2(mu, sigma, ~ {
-      lowers <- bucket_centers - half_width
-      uppers <- bucket_centers + half_width
-      v <- pnorm(uppers, mean = .x, sd = .y) - pnorm(lowers, mean = .x, sd = .y)
+      lowers <- (bucket_def$shift + 0) - half_width
+      uppers <- (bucket_def$shift + 0) + half_width
+      v <- pnorm(uppers, mean = .x, sd = .y) -
+           pnorm(lowers, mean = .x, sd = .y)
       v[v < 0] <- 0
       v / sum(v)
     })
   ) %>%
-  # 4) Attach the bucket labels
-  mutate(bucket = list(bucket_labels)) %>%
+  # 4) Attach semantic labels
+  mutate(bucket = list(bucket_def$bucket)) %>%
   # 5) Unnest into long form
   unnest(c(bucket, probs)) %>%
   rename(probability = probs)
 
-# Quick check
-print(move_probs, n = 15)
+# 6) Extract top 3 semantic buckets per date, renormalise
+top3_moves <- move_probs %>%
+  group_by(scrape_date) %>%
+  slice_max(order_by   = probability,
+            n          = 3,
+            with_ties  = FALSE) %>%
+  mutate(probability = probability / sum(probability)) %>%
+  ungroup()
 
-# And plot
-line <- ggplot(move_probs, aes(x = scrape_date, y = probability, color = bucket, group = bucket)) +
+print(top3_moves, n = 15)
+
+# ── Plot only the top 3 semantic buckets over time ────────────────────────────
+line_top3 <- ggplot(top3_moves,
+                    aes(x = scrape_date,
+                        y = probability,
+                        color = bucket,
+                        group = bucket)) +
   geom_line(linewidth = 1) +
   geom_point(size = 2) +
-  scale_y_continuous(labels = scales::label_percent()) +
+  scale_y_continuous(labels = label_percent(accuracy = 1)) +
   labs(
-    title    = "Implied Move Probabilities Over Time",
-    subtitle = sprintf("Next meeting as of %s", format(scrape_latest, "%d %B %Y")),
+    title    = "Top 3 Implied Move Probabilities Over Time",
+    subtitle = sprintf("Next RBA meeting — as of %s",
+                       format(max(top3_moves$scrape_date), "%d %b %Y")),
     x        = "Forecast Date",
     y        = "Probability",
     color    = "Move"
   ) +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
 
