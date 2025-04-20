@@ -394,63 +394,62 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-## ── 1. Bucket definition relative to the current rate -------------------------
+# Define your shift buckets
 bucket_def <- tibble(
-  label = factor(c("-50 bp cut", "-25 bp cut", "No change",
-                   "+25 bp hike", "+50 bp hike"),
-                 levels = c("-50 bp cut", "-25 bp cut", "No change",
-                            "+25 bp hike", "+50 bp hike")),
-  shift = c(-0.50, -0.25, 0.00, +0.25, +0.50)   # shift in % pts (== 50/25 bp)
+  label = factor(
+    c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike"),
+    levels = c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike")
+  ),
+  shift = c(-0.50, -0.25, 0.00, +0.25, +0.50)  # percentage points
 )
-half_width <- 0.125                             # ±12.5 bp around each centre
+half_width <- 0.125  # ±12.5bp
 
-
-## ── 2. Compute bucket probabilities for every scrape (plain loops) ------------
+# Pre‐allocate list of the same length as your results table
 prob_rows <- vector("list", nrow(results))
 
+# Fill prob_rows
 for (j in seq_len(nrow(results))) {
   mu     <- results$implied_r_tp1[j]
   sigma  <- results$RMSE[j]
   r_curr <- results$cash_rate_current[j]
-  
-  # skip if NA or sigma == 0
+  scrape <- results$scrape_time[j]  # make sure this exists!
+
+  # Skip invalid
   if (is.na(mu) || is.na(sigma) || sigma == 0) next
-  
-  probs <- numeric(nrow(bucket_def))
-  
+
+  # Compute probs for each of the 5 buckets
+  probs <- vctrs::vec_init_double(nrow(bucket_def))
   for (k in seq_len(nrow(bucket_def))) {
     lower <- r_curr + bucket_def$shift[k] - half_width
     upper <- r_curr + bucket_def$shift[k] + half_width
     probs[k] <- pnorm(upper, mean = mu, sd = sigma) -
-      pnorm(lower, mean = mu, sd = sigma)
+                pnorm(lower, mean = mu, sd = sigma)
   }
-  
+  probs <- probs / sum(probs)  # renormalise
+
   prob_rows[[j]] <- tibble(
-    scrape_time = results$scrape_time[j],
+    scrape_time = scrape,
     bucket      = bucket_def$label,
-    probability = probs / sum(probs)          # renormalise, tiny numerical drift
+    probability = probs
   )
 }
 
+# Bind into one data frame
 bucket_probs <- bind_rows(prob_rows)
 
-print(names(bucket_probs))
-write.csv(bucket_probs,   "combined_data/bucket_probs.csv",   row.names = FALSE)
+# Quick check
+print(dim(bucket_probs))       # should be (# of valid scrapes * 5) × 3
+print(head(bucket_probs))
 
-## ── 3. Keep the *top‑4* buckets per scrape ------------------------------------
+# Now you can group by scrape_time (or scrape_time + something else)
 top3_norm <- bucket_probs %>%
   group_by(scrape_time) %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
-  # re‐normalise so they sum to 1
-  mutate(
-    probability = probability / sum(probability),
-    pct         = probability * 100  # if you want 0–100%
-  ) %>%
+  mutate(probability = probability / sum(probability)) %>%
   ungroup()
 
-
-write.csv(top3_norm,   "combined_data/top.csv",   row.names = FALSE)
-
+# Write out
+write_csv(top3_norm, "combined_data/top3_norm.csv")
                        
 line<-ggplot(top3_norm,
        aes(x = scrape_time,
