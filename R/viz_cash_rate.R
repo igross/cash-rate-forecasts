@@ -57,7 +57,9 @@ forecast_df <- cash_rate %>%
   select(date, forecast_rate = cash_rate) %>%
 filter(date >= Sys.Date() %m-% months(1))
 
-scrape_date <- max(cash_rate$scrape_date) 
+# scrape_date <- max(cash_rate$scrape_date) 
+scrape_latest <- max(cash_rate$scrape_date)
+
 
 forecast_df <- forecast_df %>%
   left_join(meeting_schedule, by = c("date" = "expiry"))
@@ -102,7 +104,7 @@ df_result <- bind_rows(results) %>% distinct()
 
 df_result <- df_result %>%
   mutate(
-    days_to_meeting = as.integer(meeting_date - scrape_date)    # difference in calendar days
+    days_to_meeting = as.integer(meeting_date - scrape_latest)    # difference in calendar days
   ) %>%
   left_join(rmse_days, by = "days_to_meeting") %>%       # brings in the 'rmse' column
   rename(stdev = finalrmse) %>%                               # rename for clarity
