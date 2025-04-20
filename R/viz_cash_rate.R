@@ -227,7 +227,7 @@ forecast_df <- cash_rate %>%
   ) %>%
    arrange(scrape_date, date)  %>% 
   distinct()  %>%
-  select(scrape_date, date, cash_rate)                 
+  select(scrape_date, scrape_time, date, cash_rate)                 
 
 print(forecast_df)
 print(spread)
