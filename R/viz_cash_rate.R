@@ -378,7 +378,7 @@ ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
 
 
 # instead of `line + aes(...)` do:
-
+ 
 line_int <- line +
   aes(text = paste0(
     format(scrape_date, "%Y-%m-%d"),
