@@ -34,7 +34,6 @@ rba_meeting_dates <- meeting_schedule$meeting_date
 # Spread adjustment
 spread     <- 0.01  # in percentage points
 
-
 file.remove(list.files("docs", pattern = "\\.png$", full.names = TRUE))
 
 cash_rate <- readRDS(file.path("combined_data", "all_data.Rds"))
@@ -45,36 +44,30 @@ current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
     filter(date == max(date)) %>%
     pull(value)
 
-
-
-
 # ============================
 # VIZ 6: BUCKETED RATE PROBABILITIES BY MEETING
 # ============================
 
 # Forecast path and RMSE
-forecast_df <- cash_rate %>%
-  filter(scrape_date == max(scrape_date)) %>%
-  select(date, forecast_rate = cash_rate) %>%
+meetingforecasts_df <- cash_rate %>%
+filter(scrape_date == max(scrape_date)) %>%
+select(date, forecast_rate = cash_rate) %>%
 filter(date >= Sys.Date() %m-% months(1))
 
 # scrape_date <- max(cash_rate$scrape_date) 
 scrape_latest <- max(cash_rate$scrape_date)
 
 
-forecast_df <- forecast_df %>%
-  left_join(meeting_schedule, by = c("date" = "expiry"))
-
-
-forecast_df <- forecast_df %>%
+meetingforecasts_df <- meetingforecasts_df %>%
+  left_join(meeting_schedule, by = c("date" = "expiry")) %>%
   distinct()
 
 # Iterative cash rate logic
 results <- list()
-rt <- forecast_df$forecast_rate[1]
+rt <- meetingforecasts_df$forecast_rate[1]
 
-for (i in 1:nrow(forecast_df)) {
-  row <- forecast_df[i, ]
+for (i in 1:nrow(meetingforecasts_df)) {
+  row <- meetingforecasts_df[i, ]
   dim <- days_in_month(row$date)
   if (!is.na(row$meeting_date)) {
     nb <- (day(row$meeting_date) - 1) / dim
@@ -100,8 +93,6 @@ for (i in 1:nrow(forecast_df)) {
 }
 
 df_result <- bind_rows(results) %>% distinct()
-
-# df_result$stdev <- rmse[1:nrow(df_result)]
 
 df_result <- df_result %>%
   mutate(
@@ -148,7 +139,6 @@ bucket_matrix <- prop.table(bucket_matrix, margin = 1)
 # 4. turn into percentages
 bucket_pct <- round(bucket_matrix * 100, 2)
 
-
 df_probs <- data.frame(
   date = df_result$date,
   bucket_pct,
@@ -183,24 +173,13 @@ df_long <- df_probs %>%
 # Filter only meeting months
 
 meeting_months <- floor_date(rba_meeting_dates, "month")
-
 meeting_months <- meeting_months[meeting_months >= floor_date(Sys.Date(), "month")]
 
 df_long <- df_long %>%
   filter(date %in% meeting_months)
 
 latest_scrape <- max(cash_rate$scrape_date)
-                       
-write.csv(df_result, "combined_data/df_result.csv", row.names = FALSE)
-write.csv(df_probs,  "combined_data/df_probs.csv",  row.names = FALSE)
-write.csv(df_long,   "combined_data/df_long.csv",   row.names = FALSE)
-
-# plus binary RDS backups if you want to reload them in R exactly
-saveRDS(df_result, "combined_data/df_result.rds")
-saveRDS(df_probs,  "combined_data/df_probs.rds")
-saveRDS(df_long,   "combined_data/df_long.rds")
-
-                       
+                                          
 # Save each chart
 for (m in unique(df_long$month_label)) {
   p <- ggplot(filter(df_long, month_label == m),
@@ -216,7 +195,6 @@ for (m in unique(df_long$month_label)) {
 
 
 tryCatch({
-
   ggsave(
     filename = paste0("docs/rate_probabilities_", gsub(" ", "_", m), ".png"),
     plot = p,
@@ -230,48 +208,6 @@ tryCatch({
 })
 }
 
-
-                       
- # 1. grab the latest scrape date once
-scrape_latest <- max(cash_rate$scrape_date)
-
-# 2. select your fan path, compute days_to_meeting, then join in rmse_days
-fan_df <- cash_rate %>%
-  filter(scrape_date == scrape_latest) %>%
-  arrange(date) %>%
-  transmute(
-    date,
-    forecast_rate = cash_rate,
-    days_to_meeting = as.integer(date - scrape_latest)
-  ) %>%
-  left_join(rmse_days, by = "days_to_meeting") %>%   # brings in finalrmse
-  mutate(
-    stdev    = finalrmse,
-    lower_95 = forecast_rate - qnorm(0.975) * stdev,
-    upper_95 = forecast_rate + qnorm(0.975) * stdev,
-    lower_65 = forecast_rate - qnorm(0.825) * stdev,
-    upper_65 = forecast_rate + qnorm(0.825) * stdev
-  ) %>%
-  select(-days_to_meeting, -finalrmse)
-
-# Plot the fan chart
-viz_fan <- ggplot(fan_df, aes(x = date)) +
-  geom_ribbon(aes(ymin = lower_95, ymax = upper_95), fill = "#a6cee3", alpha = 0.5) +  # 95% band — light blue
-  geom_ribbon(aes(ymin = lower_65, ymax = upper_65), fill = "#1f78b4", alpha = 0.6) +  # 65% band — stronger blue
-  geom_line(aes(y = forecast_rate), color = "#e31a1c", size = 1.2) +  # Mean path — bold red
-   scale_y_continuous(labels = label_percent(scale = 1), limits = c(0, NA)) +
-  scale_x_date(date_labels = "%b\n%Y", date_breaks = "3 months") +
-  theme_bw() +
-  labs(
-    title = "Mean Path of Cash Rate with Uncertainty Bands",
-    caption = paste("Shaded areas represent 65% and 95% confidence interval using historical forecast errors. Futures-implied path as of", format(max(cash_rate$scrape_date), "%d %B %Y")),
-    x = NULL, y = NULL
-  ) +
-  theme(panel.grid.minor = element_blank())
-
-ggsave("docs/rate_fan_chart.png", plot = viz_fan, width = 8, height = 5, dpi = 300)
-
-
 # ────────────────────────────────────────────────────────────────────────────────
 # 2.  Identify the last and next meetings ---------------------------------------
 today <- Sys.Date()  
@@ -283,9 +219,6 @@ next_expiry      <- next_meeting_row$expiry
 current_expiry <- next_meeting_row$expiry %m-% months(1)   # exactly 1 month earlier
 next_meeting     <- next_meeting_row$meeting_date      # scalar date
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 3.  Bring in every scrape since the last meeting, but only the months           #
-#     we need (from the month *after* the last meeting up to the next expiry).    #
 forecast_df <- cash_rate %>%
   filter(
     scrape_date  >  last_meeting+1,         # all scrapes since the last decision
