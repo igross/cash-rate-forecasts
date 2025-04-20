@@ -84,6 +84,8 @@ if (!dir.exists("combined_data")) {
   dir.create("combined_data", recursive = TRUE)
 }
 
+tail(all_data,20)
+
 # 6. save
 saveRDS(all_data, file = "combined_data/all_data.Rds")
 write_csv(all_data,  file = "combined_data/cash_rate.csv")
