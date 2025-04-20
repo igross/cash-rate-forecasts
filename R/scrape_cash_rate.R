@@ -25,7 +25,7 @@ new_data <- fromJSON(json_file) %>%
 
 write_csv(
   new_data,
-  file.path("daily_data", paste0("scraped_cash_rate_", Sys.Date() - 1, ".csv"))
+  file.path("daily_data", paste0("scraped_cash_rate_", new_data$scrape_time, ".csv"))
 )
 
 library(purrr)
