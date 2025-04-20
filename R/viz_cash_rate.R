@@ -258,7 +258,7 @@ results <- forecast_df %>%
       (cash_rate_next    + spread) -
       (cash_rate_current + spread) * nb
     ) / (1 - nb),
-    days_to_meeting = as.integer(next_meeting - scrape_time)
+    days_to_meeting = as.integer(next_meeting - as.Date(scrape_time))
   ) %>%
   left_join(rmse_days, by = "days_to_meeting") %>% 
   rename(RMSE = finalrmse) 
