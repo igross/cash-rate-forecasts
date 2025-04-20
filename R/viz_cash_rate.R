@@ -331,22 +331,22 @@ move_probs <- results %>%
     sigma       = RMSE,
     r_curr      = cash_rate_current
   ) %>%
-  # 3) For each row, compute the vector of bucket probabilities
   mutate(
     probs = map2(mu, sigma, ~ {
-      lowers <- (bucket_def$shift + 0) - half_width
-      uppers <- (bucket_def$shift + 0) + half_width
+      # CORRECTED: add r_curr to each bucket center
+      lowers <- r_curr + bucket_def$shift - half_width
+      uppers <- r_curr + bucket_def$shift + half_width
+
       v <- pnorm(uppers, mean = .x, sd = .y) -
            pnorm(lowers, mean = .x, sd = .y)
       v[v < 0] <- 0
       v / sum(v)
     })
   ) %>%
-  # 4) Attach semantic labels
   mutate(bucket = list(bucket_def$bucket)) %>%
-  # 5) Unnest into long form
   unnest(c(bucket, probs)) %>%
   rename(probability = probs)
+
 
 # 6) Extract top 3 semantic buckets per date, renormalise
 top3_moves <- move_probs %>%
