@@ -465,7 +465,7 @@ line_top3 <- ggplot(top3_moves,
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
+ggsave("docs/line.png", plot = line_top3, width = 8, height = 5, dpi = 300)
 
 
 write.csv(move_probs,   "combined_data/move_probs.csv",   row.names = FALSE)
