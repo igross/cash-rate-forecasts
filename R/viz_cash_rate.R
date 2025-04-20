@@ -356,7 +356,7 @@ top3_moves <- move_probs %>%
 print(top3_moves)
 
 # and plot
-line_top3 <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
+line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
   geom_line(linewidth = 1) + geom_point(size = 1.1) +
   scale_y_continuous(labels = label_percent(1)) +
 labs(  title  = paste0("Cash Rate probabilities for the next RBA meeting"),
@@ -374,18 +374,18 @@ labs(  title  = paste0("Cash Rate probabilities for the next RBA meeting"),
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave("docs/line.png", plot = line_top3, width = 8, height = 5, dpi = 300)
+ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
 
 
 # instead of `line + aes(...)` do:
 
-line_int <- line_top3 +
+line_int <- line +
   aes(text = paste0(
     format(scrape_date, "%Y-%m-%d"),
     "<br>", scales::percent(probability, accuracy = 1)
   ))
 
-interactive_line <- ggplotly(line_top3_int, tooltip = "text") %>%
+interactive_line <- ggplotly(line_int, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
     legend    = list(x = 1.02, y = 1)
@@ -393,6 +393,6 @@ interactive_line <- ggplotly(line_top3_int, tooltip = "text") %>%
 
 htmlwidgets::saveWidget(
   interactive_line,
-  "docs/line_top3_interactive.html",
+  "docs/line_interactive.html",
   selfcontained = TRUE
 )
