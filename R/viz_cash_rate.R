@@ -357,13 +357,19 @@ print(top3_moves)
 
 # and plot
 line_top3 <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
-  geom_line(linewidth = 1) + geom_point(size = 2) +
+  geom_line(linewidth = 1) + geom_point(size = 1.1) +
   scale_y_continuous(labels = label_percent(1)) +
-  labs(
-    title = "Top 3 Implied Move Probabilities Over Time",
-    x     = "Forecast Date",
-    y     = "Probability",
-    color = "Move"
+labs(  title  = paste0("Cash Rate probabilities for the next RBA meeting"),
+       x      = "Forecast date",
+       y      = "Probability",
+       colour = "Meeting‑day move") + scale_colour_manual(
+    values = c(
+      "-50 bp cut" = "#004B8E",  # deepest blue  (largest cut)
+      "-25 bp cut" = "#5FA4D4",  # lighter blue  (half‑size cut)
+      "No change"  = "#BFBFBF",  # neutral grey
+      "+25 bp hike"= "#E07C7C",  # lighter red   (half‑size hike)
+      "+50 bp hike"= "#B50000"   # deepest red   (largest hike)
+    )
   ) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -373,7 +379,7 @@ ggsave("docs/line.png", plot = line_top3, width = 8, height = 5, dpi = 300)
 
 # instead of `line + aes(...)` do:
 
-line_top3_int <- line_top3 +
+line_int <- line_top3 +
   aes(text = paste0(
     format(scrape_date, "%Y-%m-%d"),
     "<br>", scales::percent(probability, accuracy = 1)
