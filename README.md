@@ -45,6 +45,20 @@ are shown below:
     #> This warning is displayed once every 8 hours.
     #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
     #> generated.
+    #> # A tibble: 24 × 4
+    #>    date       cash_rate scrape_date scrape_time        
+    #>    <date>         <dbl> <date>      <dttm>             
+    #>  1 2025-04-01      4.08 2025-04-03  2025-04-03 12:00:00
+    #>  2 2025-05-01      4    2025-04-03  2025-04-03 12:00:00
+    #>  3 2025-04-01      4.08 2025-04-04  2025-04-04 12:00:00
+    #>  4 2025-05-01      3.97 2025-04-04  2025-04-04 12:00:00
+    #>  5 2025-04-01      4.05 2025-04-07  2025-04-07 12:00:00
+    #>  6 2025-05-01      3.92 2025-04-07  2025-04-07 12:00:00
+    #>  7 2025-04-01      4.07 2025-04-08  2025-04-08 12:00:00
+    #>  8 2025-05-01      3.94 2025-04-08  2025-04-08 12:00:00
+    #>  9 2025-04-01      4.05 2025-04-09  2025-04-09 12:00:00
+    #> 10 2025-05-01      3.88 2025-04-09  2025-04-09 12:00:00
+    #> # ℹ 14 more rows
     #> Warning: There was 1 warning in `mutate()`.
     #> ℹ In argument: `days_to_meeting = as.integer(next_meeting - scrape_time)`.
     #> Caused by warning:
