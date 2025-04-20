@@ -468,28 +468,22 @@ line_top3 <- ggplot(top3_moves,
 ggsave("docs/line.png", plot = line_top3, width = 8, height = 5, dpi = 300)
 
 
-write.csv(move_probs,   "combined_data/move_probs.csv",   row.names = FALSE)
+# instead of `line + aes(...)` do:
 
-# 1. add a `text` aesthetic for custom hover info
-line_int <- line +
+line_top3_int <- line_top3 +
   aes(text = paste0(
-    format(scrape_date, "%m-%d"),
+    format(scrape_date, "%Y-%m-%d"),
     "<br>", scales::percent(probability, accuracy = 1)
   ))
 
-# 2. convert to a plotly htmlwidget
-library(plotly)
-interactive_line <- ggplotly(line_int, tooltip = "text") %>%
+interactive_line <- ggplotly(line_top3_int, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
-    legend = list(x = 1.02, y = 1)
+    legend    = list(x = 1.02, y = 1)
   )
 
-# 3. save it as a self‑contained HTML (to embed via iframe or link on your site)
 htmlwidgets::saveWidget(
   interactive_line,
-  "docs/line_interactive.html",
+  "docs/line_top3_interactive.html",
   selfcontained = TRUE
 )
-
-
