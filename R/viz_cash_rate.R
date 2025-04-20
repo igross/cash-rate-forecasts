@@ -265,7 +265,7 @@ results <- forecast_df %>%
                         # %>%   select(cash_rate_current, implied_r_tp1, RMSE, scrape_time)
 
 # Inspect
-print(results)
+print(results, n = 50, width = Inf)
                   
                        
 ## ── 1.  Bucket definition ------------------------------------------------------
