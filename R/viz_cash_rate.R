@@ -395,28 +395,30 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-# Define the five move buckets (relative to the forecast_rate on scrape_latest)
+# Define the five move buckets (relative to current rate)
 bucket_def <- tibble::tibble(
   bucket = factor(
     c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike"),
     levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
   ),
-  shift = c(-0.50, -0.25, 0.00, 0.25, 0.50)  # percentage‐point shifts
+  shift = c(-0.50, -0.25, 0.00, 0.25, 0.50)  # in percentage points
 )
-half_width <- 0.125  # ±12.5 bp
+half_width <- 0.125  # ±12.5bp
 
-# Build a list of tibbles, one per row of df_result
-prob_list <- vector("list", nrow(df_result))
-for (j in seq_len(nrow(df_result))) {
-  mu     <- df_result$implied_r_tp1[j]
-  sigma  <- df_result$stdev[j]
-  r_curr <- df_result$forecast_rate[j]
-  scrape <- scrape_latest   # the scrape_date for all of these
+# Preallocate
+prob_list <- vector("list", nrow(results))
+
+# Loop over each scrape
+for (j in seq_len(nrow(results))) {
+  mu     <- results$implied_r_tp1[j]
+  sigma  <- results$RMSE[j]
+  r_curr <- results$cash_rate_current[j]
+  scrape <- results$scrape_time[j]  # this is your date for each row
 
   if (is.na(mu) || is.na(sigma) || sigma <= 0) next
 
-  # compute raw probabilities
-  probs <- map_dbl(bucket_def$shift, function(shift_amt) {
+  # Compute probabilities for each bucket
+  probs <- sapply(bucket_def$shift, function(shift_amt) {
     lower <- r_curr + shift_amt - half_width
     upper <- r_curr + shift_amt + half_width
     pnorm(upper, mean = mu, sd = sigma) -
@@ -425,14 +427,17 @@ for (j in seq_len(nrow(df_result))) {
   probs <- probs / sum(probs)
 
   prob_list[[j]] <- tibble(
-    scrape_date = scrape,       # <–– correct column name here
+    scrape_time = scrape,
     bucket      = bucket_def$bucket,
     probability = probs
   )
 }
 
-# Combine into one data.frame
+# Combine into one data frame
 move_probs <- bind_rows(prob_list)
+
+# If you prefer rename to scrape_date:
+move_probs <- move_probs %>% rename(scrape_date = scrape_time)
 
 # Now you can group_by(scrape_date) without error
 top3_norm <- move_probs %>%
