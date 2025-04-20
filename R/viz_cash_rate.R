@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
   library(scales)
   library(readabs)
   library(readrba)
-library(plotly)
+  library(plotly)
   library(purrr)
 })
  
@@ -297,7 +297,7 @@ forecast_df <- cash_rate %>%
   select(scrape_date, date, cash_rate)                 
 
 print(forecast_df)
-
+print(spread)
                        # 2. Pivot so each scrape_date has one row with both rates
 results <- forecast_df %>%
   pivot_wider(
@@ -376,11 +376,6 @@ bucket_def <- tibble::tibble(
 )
 half_width <- 0.125  # ±12.5 bp
 
-# 2) Starting from `results` (one row per scrape_time):
-#    • scrape_time
-#    • cash_rate_current
-#    • implied_r_tp1
-#    • RMSE
 move_probs <- results %>%
   transmute(
     scrape_date = scrape_time,
