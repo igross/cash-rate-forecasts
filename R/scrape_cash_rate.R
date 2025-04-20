@@ -23,10 +23,28 @@ new_data <- fromJSON(json_file) %>%
   select(date, cash_rate, scrape_date, scrape_time)
 
 
-write_csv(
-  new_data,
-  file.path("daily_data", paste0("scraped_cash_rate_", new_data$scrape_time, ".csv"))
+# after you have new_data
+
+# 1. Grab the single scrape_time (they should all be the same)
+scrape_dt <- unique(new_data$scrape_time)
+
+# 2. If for some reason there's more than one, fall back to Sys.Date()-1
+if (length(scrape_dt) != 1) {
+  scrape_dt <- Sys.Date() - 1
+}
+
+# 3. Format as YYYY-MM-DD
+scrape_str <- format(scrape_dt, "%Y-%m-%d")
+
+# 4. Build a single file name
+out_file <- file.path(
+  "daily_data",
+  paste0("scraped_cash_rate_", scrape_str, ".csv")
 )
+
+# 5. Write the CSV once
+write_csv(new_data, out_file)
+
 
 library(purrr)
 library(readr)
