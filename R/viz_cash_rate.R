@@ -231,26 +231,41 @@ forecast_df <- cash_rate %>%
 
 print(forecast_df)
 print(spread)
-                       # 2. Pivot so each scrape_date has one row with both rates
+                       
+# ── Build `results` with spread in one go ──────────────────────────────────────
+
 results <- forecast_df %>%
+  # only the two expiries per scrape_date
+  filter(date %in% c(current_expiry, next_expiry)) %>%
+  # widen so each scrape_date is one row
   pivot_wider(
+    id_cols      = scrape_date,
     names_from   = date,
     values_from  = cash_rate,
-    names_prefix = "r_"
+    names_prefix = "r_",
+    values_fn    = mean,        # collapse duplicates by taking the mean
+    values_fill  = NA_real_
   ) %>%
+  # rename into meaningful names
   rename(
     cash_rate_current = paste0("r_", current_expiry),
     cash_rate_next    = paste0("r_", next_expiry)
   ) %>%
+  # now compute implied next‐meeting rate WITH spread
   mutate(
-    # fraction of month before next meeting
     nb = (day(next_meeting) - 1) / days_in_month(next_meeting),
-    implied_r_tp1   = ((cash_rate_next + spread) - (cash_rate_current + spread) * nb) / (1 - nb),
+    implied_r_tp1 = (
+      (cash_rate_next    + spread) -
+      (cash_rate_current + spread) * nb
+    ) / (1 - nb),
     days_to_meeting = as.integer(next_meeting - scrape_date)
   ) %>%
-  left_join(rmse_days, by = "days_to_meeting") %>%
+  left_join(rmse_days, by = "days_to_meeting") %>% 
   rename(RMSE = finalrmse) %>%
   select(scrape_date, cash_rate_current, implied_r_tp1, RMSE)
+
+# Inspect
+print(results)
                   
                        
 ## ── 1.  Bucket definition ------------------------------------------------------
