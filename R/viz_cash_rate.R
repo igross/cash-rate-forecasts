@@ -396,89 +396,68 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-# Define your shift buckets
-bucket_def <- tibble(
-  label = factor(
+# Define the five move buckets (relative to the forecast_rate on scrape_latest)
+bucket_def <- tibble::tibble(
+  bucket = factor(
     c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike"),
-    levels = c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike")
+    levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
   ),
-  shift = c(-0.50, -0.25, 0.00, +0.25, +0.50)  # percentage points
+  shift = c(-0.50, -0.25, 0.00, 0.25, 0.50)  # percentage‐point shifts
 )
-half_width <- 0.125  # ±12.5bp
+half_width <- 0.125  # ±12.5 bp
 
-# Pre‐allocate list of the same length as your results table
-prob_rows <- vector("list", nrow(results))
+# Build a list of tibbles, one per row of df_result
+prob_list <- vector("list", nrow(df_result))
+for (j in seq_len(nrow(df_result))) {
+  mu     <- df_result$implied_r_tp1[j]
+  sigma  <- df_result$stdev[j]
+  r_curr <- df_result$forecast_rate[j]
+  scrape <- scrape_latest   # the scrape_date for all of these
 
-# Fill prob_rows
-for (j in seq_len(nrow(results))) {
-  mu     <- results$implied_r_tp1[j]
-  sigma  <- results$RMSE[j]
-  r_curr <- results$cash_rate_current[j]
-  scrape <- results$scrape_time[j]  # make sure this exists!
+  if (is.na(mu) || is.na(sigma) || sigma <= 0) next
 
-  # Skip invalid
-  if (is.na(mu) || is.na(sigma) || sigma == 0) next
+  # compute raw probabilities
+  probs <- map_dbl(bucket_def$shift, function(shift_amt) {
+    lower <- r_curr + shift_amt - half_width
+    upper <- r_curr + shift_amt + half_width
+    pnorm(upper, mean = mu, sd = sigma) -
+      pnorm(lower, mean = mu, sd = sigma)
+  })
+  probs <- probs / sum(probs)
 
-  # Compute probs for each of the 5 buckets
-  probs <- vctrs::vec_init_double(nrow(bucket_def))
-  for (k in seq_len(nrow(bucket_def))) {
-    lower <- r_curr + bucket_def$shift[k] - half_width
-    upper <- r_curr + bucket_def$shift[k] + half_width
-    probs[k] <- pnorm(upper, mean = mu, sd = sigma) -
-                pnorm(lower, mean = mu, sd = sigma)
-  }
-  probs <- probs / sum(probs)  # renormalise
-
-  prob_rows[[j]] <- tibble(
-    scrape_time = scrape,
-    bucket      = bucket_def$label,
+  prob_list[[j]] <- tibble(
+    scrape_date = scrape,       # <–– correct column name here
+    bucket      = bucket_def$bucket,
     probability = probs
   )
 }
 
-# Bind into one data frame
-bucket_probs <- bind_rows(prob_rows)
+# Combine into one data.frame
+move_probs <- bind_rows(prob_list)
 
-# Quick check
-print(dim(bucket_probs))       # should be (# of valid scrapes * 5) × 3
-print(head(bucket_probs))
-
-bucket_probs <- bucket_probs %>%
-  rename(scrape_time = scrape_date)   # or rename(scrape_time = date) if it was called `date`
-
-top3_norm <- bucket_probs %>%
-  group_by(scrape_time) %>%
-  slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
+# Now you can group_by(scrape_date) without error
+top3_norm <- move_probs %>%
+  group_by(scrape_date) %>%
+  slice_max(order_by   = probability,
+            n          = 3,
+            with_ties  = FALSE) %>%
   mutate(probability = probability / sum(probability)) %>%
   ungroup()
 
-# Write out
-write_csv(top3_norm, "combined_data/top3_norm.csv")
-                       
-line<-ggplot(top3_norm,
-       aes(x = scrape_time,
-           y = probability,
-           colour = bucket,
-           group  = bucket)) +
-  geom_line(size = 1) +
+# And plot
+line <- ggplot(move_probs, aes(x = scrape_date, y = probability, color = bucket, group = bucket)) +
+  geom_line(linewidth = 1) +
   geom_point(size = 2) +
-  scale_colour_manual(
-    values = c(
-      "-50 bp cut" = "#004B8E",  # deepest blue  (largest cut)
-      "-25 bp cut" = "#5FA4D4",  # lighter blue  (half‑size cut)
-      "No change"  = "#BFBFBF",  # neutral grey
-      "+25 bp hike"= "#E07C7C",  # lighter red   (half‑size hike)
-      "+50 bp hike"= "#B50000"   # deepest red   (largest hike)
-    )
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(
+    title    = "Implied Move Probabilities Over Time",
+    subtitle = sprintf("Next meeting as of %s", format(scrape_latest, "%d %B %Y")),
+    x        = "Forecast Date",
+    y        = "Probability",
+    color    = "Move"
   ) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(  title  = paste0("Cash Rate probabilities for the next RBA meeting"),
-       x      = "Forecast date",
-       y      = "Probability",
-       colour = "Meeting‑day move") +
-  theme_bw() +
-  theme(legend.position = "right")
-  
+  theme_bw()
+
 ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
 
                        # 1. add a `text` aesthetic for custom hover info
