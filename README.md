@@ -50,3 +50,26 @@ are shown below:
     #> Caused by warning:
     #> ! Incompatible methods ("-.Date", "-.POSIXt") for "-"
     #> # A tibble: 0 × 0
+    #> # A tibble: 252 × 6
+    #>    scrape_date            mu sigma r_curr probability bucket
+    #>    <dttm>              <dbl> <dbl>  <dbl>       <dbl> <chr> 
+    #>  1 2025-04-03 12:00:00  3.88    NA   4.08          NA 0.10% 
+    #>  2 2025-04-03 12:00:00  3.88    NA   4.08          NA 0.35% 
+    #>  3 2025-04-03 12:00:00  3.88    NA   4.08          NA 0.60% 
+    #>  4 2025-04-03 12:00:00  3.88    NA   4.08          NA 0.85% 
+    #>  5 2025-04-03 12:00:00  3.88    NA   4.08          NA 1.10% 
+    #>  6 2025-04-03 12:00:00  3.88    NA   4.08          NA 1.35% 
+    #>  7 2025-04-03 12:00:00  3.88    NA   4.08          NA 1.60% 
+    #>  8 2025-04-03 12:00:00  3.88    NA   4.08          NA 1.85% 
+    #>  9 2025-04-03 12:00:00  3.88    NA   4.08          NA 2.10% 
+    #> 10 2025-04-03 12:00:00  3.88    NA   4.08          NA 2.35% 
+    #> 11 2025-04-03 12:00:00  3.88    NA   4.08          NA 2.60% 
+    #> 12 2025-04-03 12:00:00  3.88    NA   4.08          NA 2.85% 
+    #> 13 2025-04-03 12:00:00  3.88    NA   4.08          NA 3.10% 
+    #> 14 2025-04-03 12:00:00  3.88    NA   4.08          NA 3.35% 
+    #> 15 2025-04-03 12:00:00  3.88    NA   4.08          NA 3.60% 
+    #> # ℹ 237 more rows
+    #> Warning: Removed 252 rows containing missing values or values outside the scale range
+    #> (`geom_line()`).
+    #> Warning: Removed 252 rows containing missing values or values outside the scale range
+    #> (`geom_point()`).
