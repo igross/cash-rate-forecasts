@@ -239,7 +239,7 @@ results <- forecast_df %>%
   filter(date %in% c(current_expiry, next_expiry)) %>%
   # widen so each scrape_date is one row
   pivot_wider(
-    id_cols      = scrape_date,
+    id_cols      = scrape_time,
     names_from   = date,
     values_from  = cash_rate,
     names_prefix = "r_",
@@ -258,11 +258,11 @@ results <- forecast_df %>%
       (cash_rate_next    + spread) -
       (cash_rate_current + spread) * nb
     ) / (1 - nb),
-    days_to_meeting = as.integer(next_meeting - scrape_date)
+    days_to_meeting = as.integer(next_meeting - scrape_time)
   ) %>%
   left_join(rmse_days, by = "days_to_meeting") %>% 
   rename(RMSE = finalrmse) %>%
-  select(scrape_date, cash_rate_current, implied_r_tp1, RMSE, scrape_time)
+  select(cash_rate_current, implied_r_tp1, RMSE, scrape_time)
 
 # Inspect
 print(results)
