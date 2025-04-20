@@ -633,29 +633,40 @@ this data, which are shown below:</p>
 #&gt; [1] &quot;Sep 2025&quot;
 #&gt; [1] &quot;Nov 2025&quot;
 #&gt; [1] &quot;Dec 2025&quot;
-#&gt; Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-#&gt; ℹ Please use `linewidth` instead.
-#&gt; This warning is displayed once every 8 hours.
-#&gt; Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-#&gt; generated.
 #&gt; # A tibble: 24 × 4
-#&gt;    date       cash_rate scrape_date scrape_time        
-#&gt;    &lt;date&gt;         &lt;dbl&gt; &lt;date&gt;      &lt;dttm&gt;             
-#&gt;  1 2025-04-01      4.08 2025-04-03  2025-04-03 12:00:00
-#&gt;  2 2025-05-01      4    2025-04-03  2025-04-03 12:00:00
-#&gt;  3 2025-04-01      4.08 2025-04-04  2025-04-04 12:00:00
-#&gt;  4 2025-05-01      3.97 2025-04-04  2025-04-04 12:00:00
-#&gt;  5 2025-04-01      4.05 2025-04-07  2025-04-07 12:00:00
-#&gt;  6 2025-05-01      3.92 2025-04-07  2025-04-07 12:00:00
-#&gt;  7 2025-04-01      4.07 2025-04-08  2025-04-08 12:00:00
-#&gt;  8 2025-05-01      3.94 2025-04-08  2025-04-08 12:00:00
-#&gt;  9 2025-04-01      4.05 2025-04-09  2025-04-09 12:00:00
-#&gt; 10 2025-05-01      3.88 2025-04-09  2025-04-09 12:00:00
+#&gt;    scrape_date scrape_time         date       cash_rate
+#&gt;    &lt;date&gt;      &lt;dttm&gt;              &lt;date&gt;         &lt;dbl&gt;
+#&gt;  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
+#&gt;  2 2025-04-03  2025-04-03 12:00:00 2025-05-01      4   
+#&gt;  3 2025-04-04  2025-04-04 12:00:00 2025-04-01      4.08
+#&gt;  4 2025-04-04  2025-04-04 12:00:00 2025-05-01      3.97
+#&gt;  5 2025-04-07  2025-04-07 12:00:00 2025-04-01      4.05
+#&gt;  6 2025-04-07  2025-04-07 12:00:00 2025-05-01      3.92
+#&gt;  7 2025-04-08  2025-04-08 12:00:00 2025-04-01      4.07
+#&gt;  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
+#&gt;  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
+#&gt; 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
 #&gt; # ℹ 14 more rows
+#&gt; [1] 0.01
 #&gt; Warning: There was 1 warning in `mutate()`.
 #&gt; ℹ In argument: `days_to_meeting = as.integer(next_meeting - scrape_time)`.
 #&gt; Caused by warning:
 #&gt; ! Incompatible methods (&quot;-.Date&quot;, &quot;-.POSIXt&quot;) for &quot;-&quot;
+#&gt; # A tibble: 12 × 4
+#&gt;    cash_rate_current implied_r_tp1  RMSE scrape_time        
+#&gt;                &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt; &lt;dttm&gt;             
+#&gt;  1              4.08          3.88    NA 2025-04-03 12:00:00
+#&gt;  2              4.08          3.80    NA 2025-04-04 12:00:00
+#&gt;  3              4.05          3.72    NA 2025-04-07 12:00:00
+#&gt;  4              4.07          3.76    NA 2025-04-08 12:00:00
+#&gt;  5              4.05          3.64    NA 2025-04-09 12:00:00
+#&gt;  6              4.08          3.79    NA 2025-04-10 12:00:00
+#&gt;  7              4.08          3.76    NA 2025-04-11 12:00:00
+#&gt;  8              4.08          3.75    NA 2025-04-14 12:00:00
+#&gt;  9              4.08          3.79    NA 2025-04-16 12:00:00
+#&gt; 10              4.08          3.82    NA 2025-04-17 12:00:00
+#&gt; 11              4.08          3.82    NA 2025-04-19 14:00:34
+#&gt; 12              4.08          3.82    NA 2025-04-20 12:59:01
 #&gt; # A tibble: 0 × 0
 #&gt; # A tibble: 36 × 6
 #&gt;    scrape_date            mu sigma r_curr probability bucket    
