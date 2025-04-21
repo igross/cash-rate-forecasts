@@ -188,6 +188,14 @@ for (m in unique(df_long$month_label)) {
       diff       = bucket_num - current_rate   # deviation from today’s rate
     )
 
+power_trans <- function(p) {
+  trans_new(
+    name      = paste0("signed-", p),
+    transform = function(x) sign(x) * abs(x)^p,
+    inverse   = function(x) sign(x) * abs(x)^(1/p)
+  )
+}
+  
   # find the bucket *string* and its *position* in the factor levels
   current_bucket_num   <- dfm$bucket_num[which.min(abs(dfm$bucket_num - current_rate))]
   current_bucket_label <- sprintf("%.2f%%", current_bucket_num)
@@ -202,14 +210,14 @@ for (m in unique(df_long$month_label)) {
                linetype = "dashed", 
                linewidth = 0.8) +
     
-    scale_fill_gradient2(
-      midpoint = 0, 
-      low      = "#0000FF", 
-      mid      = "grey80",
-      high     = "#FF0000",
-      limits   = range(dfm$diff),
-      trans    = sqrt_trans()
-    ) +
+  scale_fill_gradient2(
+    midpoint = 0,
+    low      = "#0000FF",
+    mid      = "grey80",
+    high     = "#FF0000",
+    limits   = range(dfm$diff),
+    trans    = power_trans(0.25)  # fourth‐root transform
+  ) +
     labs(
       title   = paste("Cash Rate Outcome Probabilities –", m),
       caption = paste("Based on futures‑implied rates as of", 
@@ -382,7 +390,6 @@ my_cols <- setNames(
 
 line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
   geom_line(linewidth = 1) +
-  geom_point(size = 1.05) +
   scale_y_continuous(labels = label_percent(1)) +
    scale_color_manual(
     values = c(
