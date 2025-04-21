@@ -392,11 +392,14 @@ my_cols <- setNames(
   levels(top3_moves$bucket)
 )
 
-# 1) build the ggplot with text only on the points
-p <- ggplot(top3_moves,
-            aes(x = scrape_date, y = probability, colour = bucket, group = bucket)) +
-  geom_line(linewidth = 1) +   # lines have no hover text
+# assume top3_moves has: scrape_date, bucket (factor), probability (0–1)
 
+# 1) Build your ggplot with hover‐text on the lines, no geom_point:
+p <- ggplot(top3_moves, aes(x = scrape_date, y = probability, colour = bucket,
+                            text = paste0(bucket, ": ", percent(probability, 1)))) +
+  geom_line(linewidth = 1) +
+  # invisible points to give Plotly a single marker per series:
+  geom_point(size = 8, alpha = 0) +
   scale_colour_manual(values = c(
     "-50 bp cut"  = "#004B8E",
     "-25 bp cut"  = "#5FA4D4",
@@ -419,15 +422,19 @@ p <- ggplot(top3_moves,
     legend.background   = element_blank()
   )
 
-# 2) convert to plotly, only use the 'text' aesthetic as tooltip:
+# 2) Convert to Plotly, only using the `text` aesthetic for hover,
+#    disable the bar (modebar) and explicitly size:
 fig <- ggplotly(p, tooltip = "text") %>%
-  layout(hovermode = "x unified")
+  style(hoverinfo = "none", traces = which(sapply(.$x$data, `[[`, "mode")=="markers")) %>% 
+  # above: hide hoverinfo on the invisible points so only the lines trigger hover
+  layout(
+    hovermode        = "x unified",
+    legend           = list(x = 1.02, y = 0.5),
+    width            = 900,
+    height           = 500
+  ) %>%
+  config(displayModeBar = FALSE)
 
-# 3) strip out hover on the lines (so they don't contribute empty entries)
-for(i in seq_along(fig$x$data)) {
-  if (fig$x$data[[i]]$mode == "lines")
-    fig$x$data[[i]]$hoverinfo <- "skip"
-}
-
-# 4) save
+# 3) Save
 htmlwidgets::saveWidget(fig, "docs/line_interactive.html", selfcontained = TRUE)
+                       
