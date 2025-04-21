@@ -199,7 +199,7 @@ for (m in unique(df_long$month_label)) {
     
     # the main bars, coloured by our signed‐power
     geom_col(aes(fill = diff_s), show.legend = FALSE) +
-    
+     
     
     
     # dashed line down the middle of that same bar
