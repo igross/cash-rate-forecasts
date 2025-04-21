@@ -29,11 +29,18 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
+    #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+    #> ℹ Please use `linewidth` instead.
+    #> This warning is displayed once every 8 hours.
+    #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    #> generated.
     #> Warning: Position guide is perpendicular to the intended axis.
     #> ℹ Did you mean to specify a different guide `position`?
     #> Warning: Removed 21 rows containing missing values or values outside the scale range
     #> (`geom_col()`).
-    #> # A tibble: 60 × 4
+    #> Warning: Removed 1 row containing missing values or values outside the scale range
+    #> (`geom_col()`).
+    #> # A tibble: 62 × 4
     #>    scrape_date scrape_time         date       cash_rate
     #>    <date>      <dttm>              <date>         <dbl>
     #>  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -46,7 +53,7 @@ are shown below:
     #>  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
     #>  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
     #> 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-    #> # ℹ 50 more rows
+    #> # ℹ 52 more rows
     #> [1] 0.01
     #> # A tibble: 730 × 2
     #>    days_to_meeting finalrmse
@@ -62,7 +69,7 @@ are shown below:
     #>  9               9    0.0639
     #> 10              10    0.0639
     #> # ℹ 720 more rows
-    #> # A tibble: 30 × 7
+    #> # A tibble: 31 × 7
     #>    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
     #>    <dttm>                          <dbl>          <dbl> <dbl>         <dbl>
     #>  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -94,7 +101,8 @@ are shown below:
     #> 27 2025-04-21 07:00:02              4.08           3.98 0.613          3.82
     #> 28 2025-04-21 07:12:47              4.08           3.98 0.613          3.82
     #> 29 2025-04-21 07:19:31              4.08           3.98 0.613          3.82
-    #> 30 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
+    #> 30 2025-04-21 07:27:53              4.08           3.98 0.613          3.82
+    #> 31 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
     #>    days_to_meeting  RMSE
     #>              <int> <dbl>
     #>  1              47 0.175
@@ -127,7 +135,8 @@ are shown below:
     #> 28              30 0.109
     #> 29              30 0.109
     #> 30              30 0.109
-    #> # A tibble: 630 × 3
+    #> 31              30 0.109
+    #> # A tibble: 651 × 3
     #>    scrape_time         bucket probability
     #>    <dttm>              <chr>        <dbl>
     #>  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -160,7 +169,7 @@ are shown below:
     #> 28 2025-04-04 12:00:00 1.60%    1.65e- 35
     #> 29 2025-04-04 12:00:00 1.85%    6.42e- 28
     #> 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-    #> # ℹ 600 more rows
+    #> # ℹ 621 more rows
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
