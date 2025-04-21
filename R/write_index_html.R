@@ -16,8 +16,8 @@ labels <- png_files |>
 
 intro_paragraph <- '
   <p style="max-width: 800px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
-    This website is by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia\'s cash rate,
-    based on ASX 30-day interbank futures data and historical data. These expectations update automatically using code provided by Matt Cowgill.
+    This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia\'s cash rate,
+    based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
   </p>'
 
 # Parse to dates (assume 1st of each month)
