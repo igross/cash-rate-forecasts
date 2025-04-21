@@ -201,7 +201,7 @@ for (m in unique(df_long$month_label)) {
     scale_fill_gradient2(
       midpoint = 0,            # zero deviation = current rate
       low      = "#0000FF",    # pure blue for negative diffs
-      mid      = "grey30",
+      mid      = "grey80",
       high     = "#FF0000",    # pure red for positive diffs
       limits   = c(min(dfm$diff), max(dfm$diff)),
       trans    = "sqrt"       # sqrt transform: small diffs expand
