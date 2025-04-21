@@ -221,7 +221,7 @@ for (m in unique(df_long$month_label)) {
     scale_fill_gradient2(
       midpoint = 0,
       low      = "#0022FF",   # very vivid blue below
-      mid      = "#FFFFFF",   # pure white at zero
+      mid      = "#E0E0E0",   # pure white at zero
       high     = "#FF2200",   # very vivid red above
       limits   = range(dfm$diff_s)
     ) +
