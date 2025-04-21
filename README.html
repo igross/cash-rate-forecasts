@@ -622,11 +622,11 @@ repo.</p>
 <h1 id="graphs">Graphs!</h1>
 <p>The file <code>R/viz_cash_rate.R</code> produces visualisations of
 this data, which are shown below:</p>
-<pre><code>#&gt; Warning: Position guide is perpendicular to the intended axis.
-#&gt; ℹ Did you mean to specify a different guide `position`?
-#&gt; Warning: Removed 21 rows containing missing values or values outside the scale range
+<pre><code>#&gt; Warning: Removed 21 rows containing missing values or values outside the scale range
 #&gt; (`geom_col()`).
-#&gt; # A tibble: 32 × 4
+#&gt; Warning: Removed 1 row containing missing values or values outside the scale range
+#&gt; (`geom_segment()`).
+#&gt; # A tibble: 34 × 4
 #&gt;    scrape_date scrape_time         date       cash_rate
 #&gt;    &lt;date&gt;      &lt;dttm&gt;              &lt;date&gt;         &lt;dbl&gt;
 #&gt;  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -639,7 +639,7 @@ this data, which are shown below:</p>
 #&gt;  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
 #&gt;  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
 #&gt; 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-#&gt; # ℹ 22 more rows
+#&gt; # ℹ 24 more rows
 #&gt; [1] 0.01
 #&gt; # A tibble: 730 × 2
 #&gt;    days_to_meeting finalrmse
@@ -655,7 +655,7 @@ this data, which are shown below:</p>
 #&gt;  9               9    0.0639
 #&gt; 10              10    0.0639
 #&gt; # ℹ 720 more rows
-#&gt; # A tibble: 16 × 7
+#&gt; # A tibble: 17 × 7
 #&gt;    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
 #&gt;    &lt;dttm&gt;                          &lt;dbl&gt;          &lt;dbl&gt; &lt;dbl&gt;         &lt;dbl&gt;
 #&gt;  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -673,7 +673,8 @@ this data, which are shown below:</p>
 #&gt; 13 2025-04-21 03:26:37              4.08           3.98 0.613          3.82
 #&gt; 14 2025-04-21 03:53:59              4.08           3.98 0.613          3.82
 #&gt; 15 2025-04-21 04:02:19              4.08           3.98 0.613          3.82
-#&gt; 16 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
+#&gt; 16 2025-04-21 04:10:46              4.08           3.98 0.613          3.82
+#&gt; 17 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
 #&gt;    days_to_meeting  RMSE
 #&gt;              &lt;int&gt; &lt;dbl&gt;
 #&gt;  1              47 0.175
@@ -692,7 +693,8 @@ this data, which are shown below:</p>
 #&gt; 14              30 0.109
 #&gt; 15              30 0.109
 #&gt; 16              30 0.109
-#&gt; # A tibble: 336 × 3
+#&gt; 17              30 0.109
+#&gt; # A tibble: 357 × 3
 #&gt;    scrape_time         bucket probability
 #&gt;    &lt;dttm&gt;              &lt;chr&gt;        &lt;dbl&gt;
 #&gt;  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -725,7 +727,7 @@ this data, which are shown below:</p>
 #&gt; 28 2025-04-04 12:00:00 1.60%    1.65e- 35
 #&gt; 29 2025-04-04 12:00:00 1.85%    6.42e- 28
 #&gt; 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-#&gt; # ℹ 306 more rows
+#&gt; # ℹ 327 more rows
 #&gt; Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
 #&gt; 3.5.0.
 #&gt; ℹ Please use the `legend.position.inside` argument of `theme()` instead.
