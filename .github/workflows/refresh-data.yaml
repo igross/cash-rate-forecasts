@@ -1,13 +1,10 @@
 
 on:
   schedule:
-    # 09:30 local
-    - cron: '30 9 * * *'
-      timezone: 'Australia/Melbourne'
-
-    # 10:00, 10:30, …, 16:00, 16:30 local
-    - cron: '0,30 10-16 * * *'
-      timezone: 'Australia/Melbourne'
+    # 09:30 AEST → 23:30 UTC
+    - cron: '30 23 * * *'
+    # 10:00–16:30 AEST → 00:00–06:30 UTC, every half hour
+    - cron: '0,30 0-6 * * *'
   push:
     branches: [main, master]
   pull_request:
