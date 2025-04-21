@@ -443,7 +443,12 @@ line_int <- line +
 interactive_line <- ggplotly(line_int, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
-    legend    = list(x = 1.02, y = 1)
+    legend = list(
+      x = 1.02,        # just outside the plotting area
+      xanchor = "left",
+      y = 0.5,         # halfway up
+      yanchor = "middle"
+    )
   )
 
 htmlwidgets::saveWidget(
