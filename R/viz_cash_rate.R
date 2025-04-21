@@ -425,7 +425,7 @@ line_int <- line +
     format(scrape_date, "%Y-%m-%d"),
     "<br>", scales::percent(probability, accuracy = 1)
   ))
-
+ 
 interactive_line <- ggplotly(line_int, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
