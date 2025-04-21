@@ -392,27 +392,19 @@ my_cols <- setNames(
   levels(top3_moves$bucket)
 )
 
-# 1. Build your ggplot *without* any date in the text:
-line_hover <- ggplot(top3_moves, 
-                     aes(x = scrape_date,
-                         y = probability,
-                         color = bucket,
-                         group = bucket)) +
-  geom_line(linewidth = 1) +
-  geom_point(aes(text = paste0(
-                    bucket, ": ", percent(probability, accuracy = 1)
-                 )),
-             size = 3,
-             show.legend = FALSE) +
-  scale_color_manual(
-    values = c(
-      "-50 bp cut"  = "#004B8E",
-      "-25 bp cut"  = "#5FA4D4",
-      "No change"   = "#BFBFBF",
-      "+25 bp hike" = "#E07C7C",
-      "+50 bp hike" = "#B50000"
-    )
-  ) +
+# 1) build the ggplot with text only on the points
+p <- ggplot(top3_moves,
+            aes(x = scrape_date, y = probability, colour = bucket, group = bucket)) +
+  geom_line(linewidth = 1) +   # lines have no hover text
+  geom_point(aes(text = paste0(bucket, ": ", percent(probability, accuracy = 1))),
+             size = 4) +       # only these markers get hover‐text
+  scale_colour_manual(values = c(
+    "-50 bp cut"  = "#004B8E",
+    "-25 bp cut"  = "#5FA4D4",
+    "No change"   = "#BFBFBF",
+    "+25 bp hike" = "#E07C7C",
+    "+50 bp hike" = "#B50000"
+  )) +
   scale_y_continuous(labels = percent_format(1)) +
   labs(
     title  = "Cash Rate probabilities for the next RBA meeting",
@@ -422,26 +414,21 @@ line_hover <- ggplot(top3_moves,
   ) +
   theme_bw() +
   theme(
-    axis.text.x        = element_text(angle = 45, hjust = 1),
-    legend.position    = c(1.02, 0.5),
-    legend.justification = c("left","center"),
-    legend.background  = element_blank()
+    axis.text.x         = element_text(angle = 45, hjust = 1),
+    legend.position     = c(1.02, 0.5),
+    legend.justification= c("left","center"),
+    legend.background   = element_blank()
   )
 
-# 2. Convert to plotly, using only our `text` aesthetic as tooltip:
-interactive_line <- ggplotly(
-  line_hover,
-  tooltip = "text"
-) %>%
-  layout(
-    hovermode = "x unified",
-    width     = 800,
-    height    = 400
-  )
+# 2) convert to plotly, only use the 'text' aesthetic as tooltip:
+fig <- ggplotly(p, tooltip = "text") %>%
+  layout(hovermode = "x unified")
 
-# 3. Save out
-htmlwidgets::saveWidget(
-  interactive_line,
-  "docs/line_interactive.html",
-  selfcontained = TRUE
-)
+# 3) strip out hover on the lines (so they don't contribute empty entries)
+for(i in seq_along(fig$x$data)) {
+  if (fig$x$data[[i]]$mode == "lines")
+    fig$x$data[[i]]$hoverinfo <- "skip"
+}
+
+# 4) save
+htmlwidgets::saveWidget(fig, "docs/line_interactive.html", selfcontained = TRUE)
