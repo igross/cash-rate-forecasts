@@ -415,7 +415,7 @@ line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group =
       "+50 bp hike" = "#B50000"    # darkest red
     ) )+
   labs(
-    title  = "Cash Rate probabilities for the next RBA meeting",
+    title  = "Potential Cash Rate Changes for the next RBA meeting",
     x      = "Forecast date",
     y      = "Probability",
     colour = "Meeting‑day move"
