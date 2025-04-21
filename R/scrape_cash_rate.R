@@ -34,7 +34,7 @@ if (length(scrape_dt) != 1) {
 }
 
 # 3. Format as YYYY-MM-DD
-scrape_str <- format(scrape_dt, "%Y-%m-%d")
+scrape_str <- format(scrape_dt, "%Y-%m-%d_%H%M")
 
 # 4. Build a single file name
 out_file <- file.path(
