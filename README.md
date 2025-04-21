@@ -33,7 +33,7 @@ are shown below:
     #> ℹ Did you mean to specify a different guide `position`?
     #> Warning: Removed 21 rows containing missing values or values outside the scale range
     #> (`geom_col()`).
-    #> # A tibble: 70 × 4
+    #> # A tibble: 72 × 4
     #>    scrape_date scrape_time         date       cash_rate
     #>    <date>      <dttm>              <date>         <dbl>
     #>  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -46,7 +46,7 @@ are shown below:
     #>  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
     #>  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
     #> 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-    #> # ℹ 60 more rows
+    #> # ℹ 62 more rows
     #> [1] 0.01
     #> # A tibble: 730 × 2
     #>    days_to_meeting finalrmse
@@ -62,7 +62,7 @@ are shown below:
     #>  9               9    0.0639
     #> 10              10    0.0639
     #> # ℹ 720 more rows
-    #> # A tibble: 35 × 7
+    #> # A tibble: 36 × 7
     #>    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
     #>    <dttm>                          <dbl>          <dbl> <dbl>         <dbl>
     #>  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -99,7 +99,8 @@ are shown below:
     #> 32 2025-04-21 07:34:04              4.08           3.98 0.613          3.82
     #> 33 2025-04-21 08:14:06              4.08           3.98 0.613          3.82
     #> 34 2025-04-21 08:19:34              4.08           3.98 0.613          3.82
-    #> 35 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
+    #> 35 2025-04-21 08:22:52              4.08           3.98 0.613          3.82
+    #> 36 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
     #>    days_to_meeting  RMSE
     #>              <int> <dbl>
     #>  1              47 0.175
@@ -137,7 +138,8 @@ are shown below:
     #> 33              30 0.109
     #> 34              30 0.109
     #> 35              30 0.109
-    #> # A tibble: 735 × 3
+    #> 36              30 0.109
+    #> # A tibble: 756 × 3
     #>    scrape_time         bucket probability
     #>    <dttm>              <chr>        <dbl>
     #>  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -170,9 +172,9 @@ are shown below:
     #> 28 2025-04-04 12:00:00 1.60%    1.65e- 35
     #> 29 2025-04-04 12:00:00 1.85%    6.42e- 28
     #> 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-    #> # ℹ 705 more rows
-    #> Warning in geom_point(aes(text = paste0("Date: ", format(scrape_date, "%d %b
-    #> %Y"), : Ignoring unknown aesthetics: text
+    #> # ℹ 726 more rows
+    #> Warning in geom_point(aes(text = paste0(bucket, ": ", percent(probability, :
+    #> Ignoring unknown aesthetics: text
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
