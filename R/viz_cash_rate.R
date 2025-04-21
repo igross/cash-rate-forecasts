@@ -387,12 +387,31 @@ move_probs <- results %>%
   unnest(c(bucket, probs)) %>%
   rename(probability = probs)
 
-# now slice out top‑3
-top3_moves <- move_probs %>%
-  group_by(scrape_date) %>%
-  slice_max(probability, n = 3, with_ties = FALSE) %>%
-  mutate(probability = probability / sum(probability)) %>%
-  ungroup()
+                       # 1) find the most recent scrape_time
+latest_time <- max(results$scrape_time)
+
+# 2) show the raw inputs for that date: today's cash rate, implied mean, and RMSE
+latest_stats <- results %>%
+  filter(scrape_time == latest_time) %>%
+  transmute(
+    scrape_time,
+    cash_rate_current,
+    implied_mean = implied_r_tp1,
+    rmse = RMSE
+  )
+print(latest_stats)
+
+# 3) show the top‑3 move buckets (with their exact probabilities)
+latest_moves <- move_probs %>%
+  filter(scrape_date == latest_time) %>%
+  arrange(desc(probability)) %>%
+  slice_head(n = 3) %>%
+  transmute(
+    scrape_date    = scrape_date,
+    move           = bucket,
+    probability_pct = round(probability * 100, 1)
+  )
+print(latest_moves)
 
 # now slice out top‑3
 top3_moves <- move_probs %>%
@@ -400,6 +419,8 @@ top3_moves <- move_probs %>%
   slice_max(probability, n = 3, with_ties = FALSE) %>%
   mutate(probability = probability / sum(probability)) %>%
   ungroup()
+
+
 
 # quick check
 print(top3_moves)
