@@ -360,7 +360,7 @@ my_cols <- setNames(
 
 line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
   geom_line(linewidth = 1) +
-  geom_point(size = 1.1) +
+  geom_point(size = 1.05) +
   scale_y_continuous(labels = label_percent(1)) +
    scale_color_manual(
     values = c(
