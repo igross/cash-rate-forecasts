@@ -1,10 +1,9 @@
 
 on:
   schedule:
-    # 09:30 AEST → 23:30 UTC
-    - cron: '30 23 * * *'
-    # 10:00–16:30 AEST → 00:00–06:30 UTC, every half hour
-    - cron: '0,30 0-6 * * *'
+  # Covers 10:00–16:00 AEST (UTC+10) and 10:00–16:00 AEDT (UTC+11)
+  # → 23:00–06:00 UTC
+  - cron: '*/15 23-6 * * *'
   push:
     branches: [main, master]
   pull_request:
