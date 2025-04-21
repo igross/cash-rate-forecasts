@@ -1,9 +1,12 @@
 
 on:
+on:
   schedule:
-  # Covers 10:00–16:00 AEST (UTC+10) and 10:00–16:00 AEDT (UTC+11)
-  # → 23:00–06:00 UTC
-  - cron: '*/15 23-6 * * *'
+    # every 15 minutes from 23:00–23:59
+    - cron:  '*/15 23 * * *'
+    # every 15 minutes from 00:00–06:00
+    - cron:  '*/15 0-6 * * *'
+
   push:
     branches: [main, master]
   pull_request:
