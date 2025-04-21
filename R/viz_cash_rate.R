@@ -204,7 +204,7 @@ for (m in unique(df_long$month_label)) {
       mid      = "grey80",
       high     = "#FF0000",    # pure red for positive diffs
       limits   = c(min(dfm$diff), max(dfm$diff)),
-      trans    = scales::power_trans(2))       # sqrt transform: small diffs expand
+      trans    = scales::power_trans(10))       # sqrt transform: small diffs expand
     ) +
     labs(
       title   = paste("Cash Rate Outcome Probabilities –", m),
