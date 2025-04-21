@@ -190,14 +190,7 @@ for (m in unique(df_long$month_label)) {
   
   p <- ggplot(dfm, aes(x = bucket, y = probability, fill = diff)) +
     geom_col(show.legend = FALSE) +
-    annotate("segment",
-             x     = as.character(current_rate),
-             xend  = as.character(current_rate),
-             y     = 0,
-             yend  = max(dfm$probability),
-             colour = "black",
-             linetype = "dashed",
-             linewidth = 0.8) +
+
     scale_fill_gradient2(
       midpoint = 0,            # zero deviation = current rate
       low      = "#0000FF",    # pure blue for negative diffs
