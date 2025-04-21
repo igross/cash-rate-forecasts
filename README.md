@@ -29,39 +29,11 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> Warning in transform$transform(limits): NaNs produced
-    #> Warning in transformation$transform(x): NaNs produced
-    #> Warning in scale_fill_gradient2(midpoint = 0, low = "#0000FF", mid = "grey80",
-    #> : sqrt transformation introduced infinite values.
     #> Warning: Position guide is perpendicular to the intended axis.
     #> ℹ Did you mean to specify a different guide `position`?
     #> Warning: Removed 21 rows containing missing values or values outside the scale range
     #> (`geom_col()`).
-    #> Warning in transform$transform(limits): NaNs produced
-    #> Warning in transformation$transform(x): NaNs produced
-    #> Warning in scale_fill_gradient2(midpoint = 0, low = "#0000FF", mid = "grey80",
-    #> : sqrt transformation introduced infinite values.
-    #> Warning in transform$transform(limits): NaNs produced
-    #> Warning in transformation$transform(x): NaNs produced
-    #> Warning in scale_fill_gradient2(midpoint = 0, low = "#0000FF", mid = "grey80",
-    #> : sqrt transformation introduced infinite values.
-    #> Warning in transform$transform(limits): NaNs produced
-    #> Warning in transformation$transform(x): NaNs produced
-    #> Warning in scale_fill_gradient2(midpoint = 0, low = "#0000FF", mid = "grey80",
-    #> : sqrt transformation introduced infinite values.
-    #> Warning in transform$transform(limits): NaNs produced
-    #> Warning in transformation$transform(x): NaNs produced
-    #> Warning in scale_fill_gradient2(midpoint = 0, low = "#0000FF", mid = "grey80",
-    #> : sqrt transformation introduced infinite values.
-    #> Warning in transform$transform(limits): NaNs produced
-    #> Warning in transformation$transform(x): NaNs produced
-    #> Warning in scale_fill_gradient2(midpoint = 0, low = "#0000FF", mid = "grey80",
-    #> : sqrt transformation introduced infinite values.
-    #> Warning in transform$transform(limits): NaNs produced
-    #> Warning in transformation$transform(x): NaNs produced
-    #> Warning in scale_fill_gradient2(midpoint = 0, low = "#0000FF", mid = "grey80",
-    #> : sqrt transformation introduced infinite values.
-    #> # A tibble: 52 × 4
+    #> # A tibble: 54 × 4
     #>    scrape_date scrape_time         date       cash_rate
     #>    <date>      <dttm>              <date>         <dbl>
     #>  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -74,7 +46,7 @@ are shown below:
     #>  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
     #>  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
     #> 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-    #> # ℹ 42 more rows
+    #> # ℹ 44 more rows
     #> [1] 0.01
     #> # A tibble: 730 × 2
     #>    days_to_meeting finalrmse
@@ -90,7 +62,7 @@ are shown below:
     #>  9               9    0.0639
     #> 10              10    0.0639
     #> # ℹ 720 more rows
-    #> # A tibble: 26 × 7
+    #> # A tibble: 27 × 7
     #>    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
     #>    <dttm>                          <dbl>          <dbl> <dbl>         <dbl>
     #>  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -118,7 +90,8 @@ are shown below:
     #> 23 2025-04-21 05:43:11              4.08           3.98 0.613          3.82
     #> 24 2025-04-21 06:21:05              4.08           3.98 0.613          3.82
     #> 25 2025-04-21 06:51:01              4.08           3.98 0.613          3.82
-    #> 26 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
+    #> 26 2025-04-21 06:56:20              4.08           3.98 0.613          3.82
+    #> 27 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
     #>    days_to_meeting  RMSE
     #>              <int> <dbl>
     #>  1              47 0.175
@@ -147,7 +120,8 @@ are shown below:
     #> 24              30 0.109
     #> 25              30 0.109
     #> 26              30 0.109
-    #> # A tibble: 546 × 3
+    #> 27              30 0.109
+    #> # A tibble: 567 × 3
     #>    scrape_time         bucket probability
     #>    <dttm>              <chr>        <dbl>
     #>  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -180,7 +154,7 @@ are shown below:
     #> 28 2025-04-04 12:00:00 1.60%    1.65e- 35
     #> 29 2025-04-04 12:00:00 1.85%    6.42e- 28
     #> 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-    #> # ℹ 516 more rows
+    #> # ℹ 537 more rows
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
