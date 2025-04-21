@@ -180,44 +180,40 @@ df_long <- df_long %>%
 
 latest_scrape <- max(cash_rate$scrape_date)
                                           
-# Save each chart
 for (m in unique(df_long$month_label)) {
+  # 1. filter and pull current bucket
+  dfm <- df_long %>% filter(month_label == m)
+  current_bucket <- dfm %>%
+    filter(bucket == as.character(current_rate)) %>%
+    pull(bucket_num) %>% unique()
 
-  
-  df_plot <- df_long %>%
-  filter(month_label == m) %>%
-  mutate(
-    # turn "3.60%" → 3.60 numeric
-    bucket_centre = as.numeric(sub("%","", bucket))
+  # 2. build the plot with your two‑sided gradient
+  p <- ggplot(dfm, aes(x = bucket, y = probability, fill = bucket_num)) +
+       geom_col(show.legend = FALSE) +
+       scale_fill_gradient2(
+         low      = "lightblue",
+         mid      = "grey80",
+         high     = "darkred",
+         midpoint = current_bucket,
+         space    = "Lab"
+       ) +
+       labs(
+         title   = paste("Cash Rate Outcome Probabilities —", m),
+         caption = paste("Based on futures‑implied rates as of",
+                         format(latest_scrape, "%d %B %Y")),
+         x       = "Target Rate Bucket",
+         y       = "Probability (%)"
+       ) +
+       theme_bw() +
+       theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  # 3. save it out
+  ggsave(
+    filename = paste0("figures/forecast_", m, ".png"),
+    plot     = p,
+    width    = 8,
+    height   = 5
   )
-
-p <- ggplot(df_plot, aes(x = bucket, y = probability, fill = bucket_centre)) +
-  geom_col(show.legend = FALSE) +
-  scale_fill_gradient2(
-    midpoint = current_rate,
-    low      = "blue",   # buckets below current_rate
-    mid      = "grey",   # bucket == current_rate
-    high     = "red",    # buckets above current_rate
-    limits   = range(df_plot$bucket_centre),
-    na.value = "grey"
-  ) +
-  labs(
-    title   = paste("Cash Rate Outcome Probabilities –", m),
-    caption = paste("Based on futures‑implied rates as of", 
-                    format(latest_scrape, "%d %B %Y")),
-    x       = "Target Rate Bucket",
-    y       = "Probability (%)"
-  ) +
-  theme_bw() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-ggsave(
-  filename = paste0("docs/rate_probabilities_", gsub(" ", "_", m), ".png"),
-  plot     = p,
-  width    = 6, height = 4, dpi = 300
-)
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
