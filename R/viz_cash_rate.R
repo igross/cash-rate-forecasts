@@ -396,10 +396,15 @@ top3_moves <- move_probs %>%
 # quick check
 print(top3_moves)
 
+# build a named vector of colours keyed off your actual factor levels
+my_cols <- setNames(
+  c("#004B8E", "#5FA4D4", "#BFBFBF", "#E07C7C", "#B50000"),
+  levels(top3_moves$bucket)
+)
 
 line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
   geom_line(linewidth = 1) +
-  geom_point(size = .5) +
+                       
   scale_y_continuous(labels = label_percent(1)) +
    scale_color_manual(
     values = c(
@@ -445,4 +450,4 @@ htmlwidgets::saveWidget(
   interactive_line,
   "docs/line_interactive.html",
   selfcontained = TRUE
-)       
+)
