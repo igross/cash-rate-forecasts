@@ -392,18 +392,33 @@ my_cols <- setNames(
   levels(top3_moves$bucket)
 )
 
-line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
+# 1) Base line chart, legend driven by color=bucket
+line <- ggplot(top3_moves, 
+               aes(x = scrape_date, 
+                   y = probability, 
+                   color = bucket, 
+                   group = bucket)) +
   geom_line(linewidth = 1) +
-                       
-  scale_y_continuous(labels = label_percent(1)) +
-   scale_color_manual(
+
+  # 2) Add points with hover-text, but no legend entry
+  geom_point(aes(text = paste0(
+                    "Date: ",   format(scrape_date, "%d %b %Y"), "<br>",
+                    "Move: ",   bucket,                    "<br>",
+                    "Prob: ",   percent(probability, accuracy = 1)
+                 )),
+             size = 3,
+             show.legend = FALSE) +
+
+  scale_color_manual(
     values = c(
-      "-50 bp cut"  = "#004B8E",   # darkest blue
-      "-25 bp cut"  = "#5FA4D4",   # lighter blue
-      "No change"   = "#BFBFBF",   # grey
-      "+25 bp hike" = "#E07C7C",   # lighter red
-      "+50 bp hike" = "#B50000"    # darkest red
-    ) )+
+      "-50 bp cut"  = "#004B8E",
+      "-25 bp cut"  = "#5FA4D4",
+      "No change"   = "#BFBFBF",
+      "+25 bp hike" = "#E07C7C",
+      "+50 bp hike" = "#B50000"
+    )
+  ) +
+  scale_y_continuous(labels = percent_format(1)) +
   labs(
     title  = "Cash Rate probabilities for the next RBA meeting",
     x      = "Forecast date",
@@ -411,29 +426,19 @@ line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group =
     colour = "Meeting‑day move"
   ) +
   theme_bw() +
-    theme(
-    axis.text.x        = element_text(angle = 45, hjust = 1),
-    legend.position    = c(1.02, 0.5),               # right & centered
-    legend.justification = c("left", "center"),
-    legend.background  = element_blank()
+  theme(
+    axis.text.x         = element_text(angle = 45, hjust = 1),
+    legend.position     = c(1.02, 0.5),
+    legend.justification= c("left","center"),
+    legend.background   = element_blank()
   )
 
-ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
-
-
-
-# instead of `line + aes(...)` do:
- 
-line_int <- line +
-  aes(text = paste0(
-    format(scrape_date, "%m-%d"),
-    "<br>", scales::percent(probability, accuracy = 1)
-  ))
-
-interactive_line <- ggplotly(line_int, tooltip = "text") %>%
+# 3) Convert to plotly, only taking the 'text' aesthetic into the tooltip
+interactive_line <- ggplotly(line, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
-    legend    = list(x = 1.02, y = 1)
+    width     = 800,
+    height    = 400
   )
 
 htmlwidgets::saveWidget(
