@@ -398,7 +398,7 @@ latest_stats <- results %>%
     rmse = RMSE
   )
                        
-print(latest_stats)
+print(latest_stats, n=10)
 
 # 3) show the top‑3 move buckets (with their exact probabilities)
 latest_moves <- move_probs %>%
