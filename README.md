@@ -54,7 +54,7 @@ are shown below:
     #> ℹ Did you mean to specify a different guide `position`?
     #> Warning: Removed 21 rows containing missing values or values outside the scale range
     #> (`geom_col()`).
-    #> # A tibble: 102 × 4
+    #> # A tibble: 104 × 4
     #>    scrape_date scrape_time         date       cash_rate
     #>    <date>      <dttm>              <date>         <dbl>
     #>  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -67,7 +67,7 @@ are shown below:
     #>  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
     #>  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
     #> 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-    #> # ℹ 92 more rows
+    #> # ℹ 94 more rows
     #> [1] 0.01
     #> # A tibble: 730 × 2
     #>    days_to_meeting finalrmse
@@ -83,7 +83,7 @@ are shown below:
     #>  9               9    0.0639
     #> 10              10    0.0639
     #> # ℹ 720 more rows
-    #> # A tibble: 51 × 7
+    #> # A tibble: 52 × 7
     #>    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
     #>    <dttm>                          <dbl>          <dbl> <dbl>         <dbl>
     #>  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -188,8 +188,8 @@ are shown below:
     #> 48              29 0.106
     #> 49              29 0.106
     #> 50              29 0.106
-    #> # ℹ 1 more row
-    #> # A tibble: 1,071 × 3
+    #> # ℹ 2 more rows
+    #> # A tibble: 1,092 × 3
     #>    scrape_time         bucket probability
     #>    <dttm>              <chr>        <dbl>
     #>  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -222,18 +222,18 @@ are shown below:
     #> 28 2025-04-04 12:00:00 1.60%    1.65e- 35
     #> 29 2025-04-04 12:00:00 1.85%    6.42e- 28
     #> 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-    #> # ℹ 1,041 more rows
+    #> # ℹ 1,062 more rows
     #> # A tibble: 1 × 4
     #>   scrape_time         cash_rate_current implied_mean  rmse
     #>   <dttm>                          <dbl>        <dbl> <dbl>
-    #> 1 2025-04-21 13:29:40              4.08         3.82 0.106
+    #> 1 2025-04-21 23:09:06              4.08         3.82 0.106
     #> # A tibble: 3 × 3
     #>   scrape_date         move       probability_pct
     #>   <dttm>              <chr>                <dbl>
-    #> 1 2025-04-21 13:29:40 -25 bp cut            75.9
-    #> 2 2025-04-21 13:29:40 -50 bp cut            14.1
-    #> 3 2025-04-21 13:29:40 No change              9.9
-    #> # A tibble: 153 × 6
+    #> 1 2025-04-21 23:09:06 -25 bp cut            75.9
+    #> 2 2025-04-21 23:09:06 -50 bp cut            14.1
+    #> 3 2025-04-21 23:09:06 No change              9.9
+    #> # A tibble: 156 × 6
     #>    scrape_date            mu sigma r_curr probability bucket    
     #>    <dttm>              <dbl> <dbl>  <dbl>       <dbl> <chr>     
     #>  1 2025-04-03 12:00:00  3.88 0.175   4.08      0.519  -25 bp cut
@@ -246,7 +246,7 @@ are shown below:
     #>  8 2025-04-07 12:00:00  3.72 0.156   4.05      0.388  -50 bp cut
     #>  9 2025-04-07 12:00:00  3.72 0.156   4.05      0.0871 No change 
     #> 10 2025-04-08 12:00:00  3.76 0.154   4.07      0.556  -25 bp cut
-    #> # ℹ 143 more rows
+    #> # ℹ 146 more rows
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
