@@ -416,8 +416,7 @@ print(latest_moves)
 # now slice out top‑3
 top3_moves <- move_probs %>%
   group_by(scrape_date) %>%
-  slice_max(probability, n = 3, with_ties = FALSE) %>%
-  mutate(probability = probability / sum(probability)) %>%
+  slice_max(probability, n = 3, with_ties = FALSE)) %>%
   ungroup()
 
 
