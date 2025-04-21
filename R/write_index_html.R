@@ -148,14 +148,14 @@ html <- sprintf('
 
   %s
 
-  %s
+
 
 
 
 
 </body>
 </html>
-', line_chart_section,meeting_section, interactive_line_section, intro_paragraph)
+', interactive_line_section,meeting_section , intro_paragraph)
 
 
 # Write output
