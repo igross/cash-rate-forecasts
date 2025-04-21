@@ -1,6 +1,5 @@
 
 on:
-on:
   schedule:
     # every 15 minutes from 23:00–23:59
     - cron:  '*/15 23 * * *'
