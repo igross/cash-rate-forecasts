@@ -387,6 +387,8 @@ move_probs <- results %>%
   unnest(c(bucket, probs)) %>%
   rename(probability = probs)
 
+tail(move_probs,20)
+                       
 latest_time <- max(results$scrape_time)
 
 latest_stats <- results %>%
