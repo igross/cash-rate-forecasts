@@ -181,6 +181,14 @@ df_long <- df_long %>%
 latest_scrape <- max(cash_rate$scrape_date)
                                           
 for (m in unique(df_long$month_label)) {
+
+   dfm <- df_long %>% 
+    filter(month_label == m) %>%
+    # 2) now mutate bucket_num & diff
+    mutate(
+      bucket_num = as.numeric(sub("%","", bucket)),
+      diff       = bucket_num - current_rate
+    )
 dfm <- dfm %>%
   mutate(
     bucket_num = as.numeric(sub("%","", bucket)),
