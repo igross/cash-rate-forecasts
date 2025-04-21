@@ -181,35 +181,51 @@ df_long <- df_long %>%
 latest_scrape <- max(cash_rate$scrape_date)
                                           
 for (m in unique(df_long$month_label)) {
-  # 1) subset for this meeting…
+  # 1) Subset and compute signed ¼‑power
   dfm <- df_long %>%
     filter(month_label == m) %>%
     mutate(
       bucket_num = as.numeric(sub("%","", bucket)),
       diff       = bucket_num - current_rate,
-      # signed fourth‐root: tiny diffs blow up, negatives stay negative
       diff_s     = sign(diff) * abs(diff)^(1/4)
     )
   
-  # 2) find the bar position for today’s rate
+  # 2) Find the label of the current‑rate bucket
   current_bucket_num   <- dfm$bucket_num[which.min(abs(dfm$bucket_num - current_rate))]
   current_bucket_label <- sprintf("%.2f%%", current_bucket_num)
-  xpos                 <- which(levels(dfm$bucket) == current_bucket_label)
   
-  # 3) plot, mapping fill→diff_s and NO `trans` on the scale
-  p <- ggplot(dfm, aes(x = bucket, y = probability, fill = diff_s)) +
-    geom_col(show.legend = FALSE) +
-    geom_vline(xintercept = xpos,
-               colour    = "black",
-               linetype  = "dashed",
-               linewidth = 0.8) +
+  # 3) Plot!
+  p <- ggplot(dfm, aes(x = bucket, y = probability)) +
+    
+    # the main bars, coloured by our signed‐power
+    geom_col(aes(fill = diff_s), show.legend = FALSE) +
+    
+    # redraw the “current” bar on top, with a black border
+    geom_col(
+      data = filter(dfm, bucket == current_bucket_label),
+      aes(fill = diff_s),
+      colour = "black",
+      size   = 0.8,
+      show.legend = FALSE
+    ) +
+    
+    # dashed line down the middle of that same bar
+    geom_vline(
+      xintercept = which(levels(dfm$bucket) == current_bucket_label),
+      colour     = "black",
+      linetype   = "dashed",
+      linewidth  = 0.8
+    ) +
+    
+    # a simple diverging gradient on diff_s
     scale_fill_gradient2(
       midpoint = 0,
-      low      = "#0000FF",   # vivid blue for below
-      mid      = "grey90",    # almost white at zero
-      high     = "#FF0000",   # vivid red for above
+      low      = "#0022FF",   # very vivid blue below
+      mid      = "#FFFFFF",   # pure white at zero
+      high     = "#FF2200",   # very vivid red above
       limits   = range(dfm$diff_s)
     ) +
+    
     labs(
       title   = paste("Cash Rate Outcome Probabilities –", m),
       caption = paste("Based on futures‑implied rates as of",
@@ -218,7 +234,9 @@ for (m in unique(df_long$month_label)) {
       y       = "Probability (%)"
     ) +
     theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    )
   
   ggsave(
     sprintf("docs/rate_probabilities_%s.png", gsub(" ", "_", m)),
@@ -226,6 +244,7 @@ for (m in unique(df_long$month_label)) {
     width  = 6, height = 4, dpi = 300
   )
 }
+
 
                        
 
@@ -382,6 +401,7 @@ my_cols <- setNames(
 
 line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
   geom_line(linewidth = 1) +
+                       
   scale_y_continuous(labels = label_percent(1)) +
    scale_color_manual(
     values = c(
