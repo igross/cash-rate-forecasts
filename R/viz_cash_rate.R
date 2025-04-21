@@ -387,10 +387,8 @@ move_probs <- results %>%
   unnest(c(bucket, probs)) %>%
   rename(probability = probs)
 
-                       # 1) find the most recent scrape_time
 latest_time <- max(results$scrape_time)
 
-# 2) show the raw inputs for that date: today's cash rate, implied mean, and RMSE
 latest_stats <- results %>%
   filter(scrape_time == latest_time) %>%
   transmute(
@@ -399,6 +397,7 @@ latest_stats <- results %>%
     implied_mean = implied_r_tp1,
     rmse = RMSE
   )
+                       
 print(latest_stats)
 
 # 3) show the top‑3 move buckets (with their exact probabilities)
