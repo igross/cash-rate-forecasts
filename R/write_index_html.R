@@ -56,7 +56,7 @@ if (file.exists("docs/rate_fan_chart.png")) {
 
 interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
-    Interactive Probability Chart
+    Forecasts for the Next RBA Meeting
   </h1>
   <div style="
       display: flex;
