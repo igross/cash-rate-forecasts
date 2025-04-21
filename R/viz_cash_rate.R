@@ -386,55 +386,55 @@ top3_moves <- move_probs %>%
   mutate(probability = probability / sum(probability)) %>%
   ungroup()
 
-# build a named vector of colours keyed off your actual factor levels
-my_cols <- setNames(
-  c("#004B8E", "#5FA4D4", "#BFBFBF", "#E07C7C", "#B50000"),
-  levels(top3_moves$bucket)
-)
+# now slice out top‑3
+top3_moves <- move_probs %>%
+  group_by(scrape_date) %>%
+  slice_max(probability, n = 3, with_ties = FALSE) %>%
+  mutate(probability = probability / sum(probability)) %>%
+  ungroup()
 
-# assume top3_moves has: scrape_date, bucket (factor), probability (0–1)
+# quick check
+print(top3_moves)
 
-# 1) Build your ggplot with hover‐text on the lines, no geom_point:
-p <- ggplot(top3_moves, aes(x = scrape_date, y = probability, colour = bucket,
-                            text = paste0(bucket, ": ", percent(probability, 1)))) +
-  geom_line(linewidth = 1) +
-  # invisible points to give Plotly a single marker per series:
-  geom_point(size = 8, alpha = 0) +
-  scale_colour_manual(values = c(
-    "-50 bp cut"  = "#004B8E",
-    "-25 bp cut"  = "#5FA4D4",
-    "No change"   = "#BFBFBF",
-    "+25 bp hike" = "#E07C7C",
-    "+50 bp hike" = "#B50000"
-  )) +
-  scale_y_continuous(labels = percent_format(1)) +
-  labs(
-    title  = "Cash Rate probabilities for the next RBA meeting",
-    x      = "Forecast date",
-    y      = "Probability",
-    colour = "Meeting‑day move"
+# and plot
+line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
+  geom_line(linewidth = 1) + geom_point(size = 1.1) +
+  scale_y_continuous(labels = label_percent(1)) +
+labs(  title  = paste0("Cash Rate probabilities for the next RBA meeting"),
+       x      = "Forecast date",
+       y      = "Probability",
+       colour = "Meeting‑day move") + scale_colour_manual(
+    values = c(
+      "-50 bp cut" = "#004B8E",  # deepest blue  (largest cut)
+      "-25 bp cut" = "#5FA4D4",  # lighter blue  (half‑size cut)
+      "No change"  = "#BFBFBF",  # neutral grey
+      "+25 bp hike"= "#E07C7C",  # lighter red   (half‑size hike)
+      "+50 bp hike"= "#B50000"   # deepest red   (largest hike)
+    )
   ) +
-  theme_bw() +
-  theme(
-    axis.text.x         = element_text(angle = 45, hjust = 1),
-    legend.position     = c(1.02, 0.5),
-    legend.justification= c("left","center"),
-    legend.background   = element_blank()
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
+
+
+# instead of `line + aes(...)` do:
+ 
+line_int <- line +
+  aes(text = paste0(
+    format(scrape_date, "%Y-%m-%d"),
+    "<br>", scales::percent(probability, accuracy = 1)
+  ))
+
+interactive_line <- ggplotly(line_int, tooltip = "text") %>%
+  layout(
+    hovermode = "x unified",
+    legend    = list(x = 1.02, y = 1)
   )
 
-# 2) Convert to Plotly, only using the `text` aesthetic for hover,
-#    disable the bar (modebar) and explicitly size:
-fig <- ggplotly(p, tooltip = "text") %>%
-  style(hoverinfo = "none", traces = which(sapply(.$x$data, `[[`, "mode")=="markers")) %>% 
-  # above: hide hoverinfo on the invisible points so only the lines trigger hover
-  layout(
-    hovermode        = "x unified",
-    legend           = list(x = 1.02, y = 0.5),
-    width            = 900,
-    height           = 500
-  ) %>%
-  config(displayModeBar = FALSE)
-
-# 3) Save
-htmlwidgets::saveWidget(fig, "docs/line_interactive.html", selfcontained = TRUE)
+htmlwidgets::saveWidget(
+  interactive_line,
+  "docs/line_interactive.html",
+  selfcontained = TRUE
+)
                        
