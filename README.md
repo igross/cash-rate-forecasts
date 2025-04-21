@@ -40,7 +40,7 @@ are shown below:
     #> [1] "Sep 2025"
     #> [1] "Nov 2025"
     #> [1] "Dec 2025"
-    #> # A tibble: 26 × 4
+    #> # A tibble: 28 × 4
     #>    scrape_date scrape_time         date       cash_rate
     #>    <date>      <dttm>              <date>         <dbl>
     #>  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -53,7 +53,7 @@ are shown below:
     #>  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
     #>  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
     #> 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-    #> # ℹ 16 more rows
+    #> # ℹ 18 more rows
     #> [1] 0.01
     #> # A tibble: 730 × 2
     #>    days_to_meeting finalrmse
@@ -69,7 +69,7 @@ are shown below:
     #>  9               9    0.0639
     #> 10              10    0.0639
     #> # ℹ 720 more rows
-    #> # A tibble: 13 × 7
+    #> # A tibble: 14 × 7
     #>    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
     #>    <dttm>                          <dbl>          <dbl> <dbl>         <dbl>
     #>  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -84,7 +84,8 @@ are shown below:
     #> 10 2025-04-17 12:00:00              4.08           3.98 0.613          3.82
     #> 11 2025-04-19 14:00:34              4.08           3.98 0.613          3.82
     #> 12 2025-04-20 14:11:25              4.08           3.98 0.613          3.82
-    #> 13 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
+    #> 13 2025-04-21 03:26:37              4.08           3.98 0.613          3.82
+    #> 14 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
     #>    days_to_meeting  RMSE
     #>              <int> <dbl>
     #>  1              47 0.175
@@ -100,7 +101,8 @@ are shown below:
     #> 11              31 0.111
     #> 12              30 0.109
     #> 13              30 0.109
-    #> # A tibble: 273 × 3
+    #> 14              30 0.109
+    #> # A tibble: 294 × 3
     #>    scrape_time         bucket probability
     #>    <dttm>              <chr>        <dbl>
     #>  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -133,7 +135,7 @@ are shown below:
     #> 28 2025-04-04 12:00:00 1.60%    1.65e- 35
     #> 29 2025-04-04 12:00:00 1.85%    6.42e- 28
     #> 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-    #> # ℹ 243 more rows
+    #> # ℹ 264 more rows
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
