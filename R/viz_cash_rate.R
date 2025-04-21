@@ -201,10 +201,10 @@ for (m in unique(df_long$month_label)) {
     scale_fill_gradient2(
       midpoint = 0,            # zero deviation = current rate
       low      = "#0000FF",    # pure blue for negative diffs
-      mid      = "grey80",
+      mid      = "grey30",
       high     = "#FF0000",    # pure red for positive diffs
       limits   = c(min(dfm$diff), max(dfm$diff)),
-      trans    = scales::power_trans(10)       # sqrt transform: small diffs expand
+      trans    = "sqrt"       # sqrt transform: small diffs expand
     ) +
     labs(
       title   = paste("Cash Rate Outcome Probabilities –", m),
