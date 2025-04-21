@@ -200,14 +200,7 @@ for (m in unique(df_long$month_label)) {
     # the main bars, coloured by our signed‐power
     geom_col(aes(fill = diff_s), show.legend = FALSE) +
     
-    # redraw the “current” bar on top, with a black border
-    geom_col(
-      data = filter(dfm, bucket == current_bucket_label),
-      aes(fill = diff_s),
-      colour = "black",
-      size   = 0.8,
-      show.legend = FALSE
-    ) +
+    
     
     # dashed line down the middle of that same bar
     geom_vline(
@@ -221,7 +214,7 @@ for (m in unique(df_long$month_label)) {
     scale_fill_gradient2(
       midpoint = 0,
       low      = "#0022FF",   # very vivid blue below
-      mid      = "#E0E0E0",   # pure white at zero
+      mid      = "#B3B3B3",   # pure white at zero
       high     = "#FF2200",   # very vivid red above
       limits   = range(dfm$diff_s)
     ) +
