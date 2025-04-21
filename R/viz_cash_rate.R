@@ -396,8 +396,7 @@ my_cols <- setNames(
 p <- ggplot(top3_moves,
             aes(x = scrape_date, y = probability, colour = bucket, group = bucket)) +
   geom_line(linewidth = 1) +   # lines have no hover text
-  geom_point(aes(text = paste0(bucket, ": ", percent(probability, accuracy = 1))),
-             size = 4) +       # only these markers get hover‐text
+
   scale_colour_manual(values = c(
     "-50 bp cut"  = "#004B8E",
     "-25 bp cut"  = "#5FA4D4",
