@@ -181,40 +181,54 @@ df_long <- df_long %>%
 latest_scrape <- max(cash_rate$scrape_date)
                                           
 for (m in unique(df_long$month_label)) {
-  # 1. filter and pull current bucket
-  dfm <- df_long %>% filter(month_label == m)
-  current_bucket <- dfm %>%
-    filter(bucket == as.character(current_rate)) %>%
-    pull(bucket_num) %>% unique()
-
-  # 2. build the plot with your two‑sided gradient
+  dfm <- df_long %>% 
+    filter(month_label == m) %>%
+    # 1) parse the bucket label into a numeric center
+    mutate(bucket_num = as.numeric(sub("%", "", bucket)))
+  
+  # 2) figure out which bucket center is closest to current_rate
+  current_bucket_num <- dfm$bucket_num[which.min(abs(dfm$bucket_num - current_rate))]
+  current_bucket_label <- paste0(sprintf("%.2f", current_bucket_num), "%")
+  
   p <- ggplot(dfm, aes(x = bucket, y = probability, fill = bucket_num)) +
-       geom_col(show.legend = FALSE) +
-       scale_fill_gradient2(
-         low      = "lightblue",
-         mid      = "grey80",
-         high     = "darkred",
-         midpoint = current_bucket,
-         space    = "Lab"
-       ) +
-       labs(
-         title   = paste("Cash Rate Outcome Probabilities —", m),
-         caption = paste("Based on futures‑implied rates as of",
-                         format(latest_scrape, "%d %B %Y")),
-         x       = "Target Rate Bucket",
-         y       = "Probability (%)"
-       ) +
-       theme_bw() +
-       theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-  # 3. save it out
+    geom_col(show.legend = FALSE) +
+    # 3) mark the current bucket with a dashed vertical line
+    annotate("segment",
+             x     = current_bucket_label,
+             xend  = current_bucket_label,
+             y     = 0,
+             yend  = max(dfm$probability),
+             colour = "black",
+             linetype = "dashed",
+             linewidth = 0.8) +
+    # 4) colour gradient below/above current_rate
+    scale_fill_gradient2(
+      midpoint = current_rate,
+      low      = "blue",
+      mid      = "grey",
+      high     = "red",
+      limits   = range(dfm$bucket_num),
+      guide    = "none"
+    ) +
+    labs(
+      title   = paste("Cash Rate Outcome Probabilities -", m),
+      caption = paste("Based on futures‑implied rates as of", 
+                      format(latest_scrape, "%d %B %Y")),
+      x       = "Target Rate Bucket",
+      y       = "Probability (%)"
+    ) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
   ggsave(
-    filename = paste0("figures/forecast_", m, ".png"),
+    filename = paste0("docs/rate_probabilities_", gsub(" ", "_", m), ".png"),
     plot     = p,
-    width    = 8,
-    height   = 5
+    width    = 6,
+    height   = 4,
+    dpi      = 300
   )
 }
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # 2.  Identify the last and next meetings ---------------------------------------
