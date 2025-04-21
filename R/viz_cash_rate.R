@@ -181,54 +181,38 @@ df_long <- df_long %>%
 latest_scrape <- max(cash_rate$scrape_date)
                                           
 for (m in unique(df_long$month_label)) {
-
-   dfm <- df_long %>% 
+  # 1) subset for this meeting…
+  dfm <- df_long %>%
     filter(month_label == m) %>%
-    # 2) now mutate bucket_num & diff
     mutate(
       bucket_num = as.numeric(sub("%","", bucket)),
-      diff       = bucket_num - current_rate
+      diff       = bucket_num - current_rate,
+      # signed fourth‐root: tiny diffs blow up, negatives stay negative
+      diff_s     = sign(diff) * abs(diff)^(1/4)
     )
-dfm <- dfm %>%
-  mutate(
-    bucket_num = as.numeric(sub("%","", bucket)),
-    diff       = bucket_num - current_rate,
-    diff_s     = sign(diff) * abs(diff)^(1/4)    # signed ¼‑power
-  )
-
-power_trans <- function(p) {
-  trans_new(
-    name      = paste0("signed-", p),
-    transform = function(x) sign(x) * abs(x)^p,
-    inverse   = function(x) sign(x) * abs(x)^(1/p)
-  )
-}
   
-  # find the bucket *string* and its *position* in the factor levels
+  # 2) find the bar position for today’s rate
   current_bucket_num   <- dfm$bucket_num[which.min(abs(dfm$bucket_num - current_rate))]
   current_bucket_label <- sprintf("%.2f%%", current_bucket_num)
   xpos                 <- which(levels(dfm$bucket) == current_bucket_label)
   
-  p <- ggplot(dfm, aes(x = bucket, y = probability, fill = diff)) +
+  # 3) plot, mapping fill→diff_s and NO `trans` on the scale
+  p <- ggplot(dfm, aes(x = bucket, y = probability, fill = diff_s)) +
     geom_col(show.legend = FALSE) +
-    
-    # draw a vertical line on the discrete x–position:
-    geom_vline(xintercept = xpos, 
-               colour = "black", 
-               linetype = "dashed", 
+    geom_vline(xintercept = xpos,
+               colour    = "black",
+               linetype  = "dashed",
                linewidth = 0.8) +
-    
-  scale_fill_gradient2(
-    midpoint = 0,
-  low      = "#0022FF",   # very vivid blue
-  mid      = "#F0F0F0",   # almost white at zero
-  high     = "#FF2200",
-    limits   = range(dfm$diff_s),
-    trans    = power_trans(0.25)  # fourth‐root transform
-  ) +
+    scale_fill_gradient2(
+      midpoint = 0,
+      low      = "#0000FF",   # vivid blue for below
+      mid      = "grey90",    # almost white at zero
+      high     = "#FF0000",   # vivid red for above
+      limits   = range(dfm$diff_s)
+    ) +
     labs(
       title   = paste("Cash Rate Outcome Probabilities –", m),
-      caption = paste("Based on futures‑implied rates as of", 
+      caption = paste("Based on futures‑implied rates as of",
                       format(latest_scrape, "%d %B %Y")),
       x       = "Target Rate Bucket",
       y       = "Probability (%)"
@@ -237,13 +221,13 @@ power_trans <- function(p) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
   ggsave(
-    sprintf("docs/rate_probabilities_%s.png", gsub(" ","_",m)),
+    sprintf("docs/rate_probabilities_%s.png", gsub(" ", "_", m)),
     plot   = p,
-    width  = 6,
-    height = 4,
-    dpi    = 300
+    width  = 6, height = 4, dpi = 300
   )
 }
+
+                       
 
 
 # ────────────────────────────────────────────────────────────────────────────────
