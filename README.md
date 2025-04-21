@@ -29,11 +29,32 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
+    #> # A tibble: 18 × 3
+    #>    Meeting   mean     sd
+    #>    <chr>    <dbl>  <dbl>
+    #>  1 Apr 2025  4.09 NA    
+    #>  2 May 2025  3.81  0.116
+    #>  3 Jun 2025  3.78 NA    
+    #>  4 Jul 2025  3.54  0.384
+    #>  5 Aug 2025  3.28  0.441
+    #>  6 Sep 2025  2.95  0.667
+    #>  7 Oct 2025  3.11 NA    
+    #>  8 Nov 2025  2.95  0.751
+    #>  9 Dec 2025  2.93  0.868
+    #> 10 Jan 2026  2.92 NA    
+    #> 11 Feb 2026  2.91 NA    
+    #> 12 Mar 2026  2.89 NA    
+    #> 13 Apr 2026  2.88 NA    
+    #> 14 May 2026  2.86 NA    
+    #> 15 Jun 2026  2.87 NA    
+    #> 16 Jul 2026  2.88 NA    
+    #> 17 Aug 2026  2.88 NA    
+    #> 18 Sep 2026  2.89 NA
     #> Warning: Position guide is perpendicular to the intended axis.
     #> ℹ Did you mean to specify a different guide `position`?
     #> Warning: Removed 21 rows containing missing values or values outside the scale range
     #> (`geom_col()`).
-    #> # A tibble: 90 × 4
+    #> # A tibble: 92 × 4
     #>    scrape_date scrape_time         date       cash_rate
     #>    <date>      <dttm>              <date>         <dbl>
     #>  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -46,7 +67,7 @@ are shown below:
     #>  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
     #>  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
     #> 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-    #> # ℹ 80 more rows
+    #> # ℹ 82 more rows
     #> [1] 0.01
     #> # A tibble: 730 × 2
     #>    days_to_meeting finalrmse
@@ -62,7 +83,7 @@ are shown below:
     #>  9               9    0.0639
     #> 10              10    0.0639
     #> # ℹ 720 more rows
-    #> # A tibble: 45 × 7
+    #> # A tibble: 46 × 7
     #>    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
     #>    <dttm>                          <dbl>          <dbl> <dbl>         <dbl>
     #>  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -109,7 +130,8 @@ are shown below:
     #> 42 2025-04-21 09:48:05              4.08           3.98 0.613          3.82
     #> 43 2025-04-21 10:04:09              4.08           3.98 0.613          3.82
     #> 44 2025-04-21 10:07:38              4.08           3.98 0.613          3.82
-    #> 45 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
+    #> 45 2025-04-21 10:48:43              4.08           3.98 0.613          3.82
+    #> 46 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
     #>    days_to_meeting  RMSE
     #>              <int> <dbl>
     #>  1              47 0.175
@@ -156,8 +178,9 @@ are shown below:
     #> 42              30 0.109
     #> 43              29 0.106
     #> 44              29 0.106
-    #> 45              30 0.109
-    #> # A tibble: 945 × 3
+    #> 45              29 0.106
+    #> 46              30 0.109
+    #> # A tibble: 966 × 3
     #>    scrape_time         bucket probability
     #>    <dttm>              <chr>        <dbl>
     #>  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -190,8 +213,8 @@ are shown below:
     #> 28 2025-04-04 12:00:00 1.60%    1.65e- 35
     #> 29 2025-04-04 12:00:00 1.85%    6.42e- 28
     #> 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-    #> # ℹ 915 more rows
-    #> # A tibble: 135 × 6
+    #> # ℹ 936 more rows
+    #> # A tibble: 138 × 6
     #>    scrape_date            mu sigma r_curr probability bucket    
     #>    <dttm>              <dbl> <dbl>  <dbl>       <dbl> <chr>     
     #>  1 2025-04-03 12:00:00  3.88 0.175   4.08      0.534  -25 bp cut
@@ -204,7 +227,7 @@ are shown below:
     #>  8 2025-04-07 12:00:00  3.72 0.156   4.05      0.388  -50 bp cut
     #>  9 2025-04-07 12:00:00  3.72 0.156   4.05      0.0872 No change 
     #> 10 2025-04-08 12:00:00  3.76 0.154   4.07      0.558  -25 bp cut
-    #> # ℹ 125 more rows
+    #> # ℹ 128 more rows
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
