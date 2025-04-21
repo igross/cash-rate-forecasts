@@ -212,9 +212,9 @@ power_trans <- function(p) {
     
   scale_fill_gradient2(
     midpoint = 0,
-    low      = "#0000FF",
-    mid      = "grey80",
-    high     = "#FF0000",
+  low      = "#0022FF",   # very vivid blue
+  mid      = "#F0F0F0",   # almost white at zero
+  high     = "#FF2200",
     limits   = range(dfm$diff),
     trans    = power_trans(0.25)  # fourth‐root transform
   ) +
