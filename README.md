@@ -32,15 +32,8 @@ are shown below:
     #> Warning: Position guide is perpendicular to the intended axis.
     #> ℹ Did you mean to specify a different guide `position`?
     #> Warning: Removed 21 rows containing missing values or values outside the scale range
-    #> (`geom_bar()`).
-    #> [1] "Apr 2025"
-    #> [1] "May 2025"
-    #> [1] "Jul 2025"
-    #> [1] "Aug 2025"
-    #> [1] "Sep 2025"
-    #> [1] "Nov 2025"
-    #> [1] "Dec 2025"
-    #> # A tibble: 30 × 4
+    #> (`geom_col()`).
+    #> # A tibble: 32 × 4
     #>    scrape_date scrape_time         date       cash_rate
     #>    <date>      <dttm>              <date>         <dbl>
     #>  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -53,7 +46,7 @@ are shown below:
     #>  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
     #>  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
     #> 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-    #> # ℹ 20 more rows
+    #> # ℹ 22 more rows
     #> [1] 0.01
     #> # A tibble: 730 × 2
     #>    days_to_meeting finalrmse
@@ -69,7 +62,7 @@ are shown below:
     #>  9               9    0.0639
     #> 10              10    0.0639
     #> # ℹ 720 more rows
-    #> # A tibble: 15 × 7
+    #> # A tibble: 16 × 7
     #>    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
     #>    <dttm>                          <dbl>          <dbl> <dbl>         <dbl>
     #>  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -86,7 +79,8 @@ are shown below:
     #> 12 2025-04-20 14:11:25              4.08           3.98 0.613          3.82
     #> 13 2025-04-21 03:26:37              4.08           3.98 0.613          3.82
     #> 14 2025-04-21 03:53:59              4.08           3.98 0.613          3.82
-    #> 15 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
+    #> 15 2025-04-21 04:02:19              4.08           3.98 0.613          3.82
+    #> 16 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
     #>    days_to_meeting  RMSE
     #>              <int> <dbl>
     #>  1              47 0.175
@@ -104,7 +98,8 @@ are shown below:
     #> 13              30 0.109
     #> 14              30 0.109
     #> 15              30 0.109
-    #> # A tibble: 315 × 3
+    #> 16              30 0.109
+    #> # A tibble: 336 × 3
     #>    scrape_time         bucket probability
     #>    <dttm>              <chr>        <dbl>
     #>  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -137,7 +132,7 @@ are shown below:
     #> 28 2025-04-04 12:00:00 1.60%    1.65e- 35
     #> 29 2025-04-04 12:00:00 1.85%    6.42e- 28
     #> 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-    #> # ℹ 285 more rows
+    #> # ℹ 306 more rows
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
