@@ -181,12 +181,12 @@ df_long <- df_long %>%
 latest_scrape <- max(cash_rate$scrape_date)
                                           
 for (m in unique(df_long$month_label)) {
-  dfm <- df_long %>% 
-    filter(month_label == m) %>%
-    mutate(
-      bucket_num = as.numeric(sub("%","",bucket)),
-      diff       = bucket_num - current_rate   # deviation from today’s rate
-    )
+dfm <- dfm %>%
+  mutate(
+    bucket_num = as.numeric(sub("%","", bucket)),
+    diff       = bucket_num - current_rate,
+    diff_s     = sign(diff) * abs(diff)^(1/4)    # signed ¼‑power
+  )
 
 power_trans <- function(p) {
   trans_new(
@@ -215,7 +215,7 @@ power_trans <- function(p) {
   low      = "#0022FF",   # very vivid blue
   mid      = "#F0F0F0",   # almost white at zero
   high     = "#FF2200",
-    limits   = range(dfm$diff),
+    limits   = range(dfm$diff_s),
     trans    = power_trans(0.25)  # fourth‐root transform
   ) +
     labs(
