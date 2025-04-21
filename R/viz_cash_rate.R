@@ -187,21 +187,32 @@ for (m in unique(df_long$month_label)) {
       bucket_num = as.numeric(sub("%","",bucket)),
       diff       = bucket_num - current_rate   # deviation from today’s rate
     )
+
+  # find the bucket *string* and its *position* in the factor levels
+  current_bucket_num   <- dfm$bucket_num[which.min(abs(dfm$bucket_num - current_rate))]
+  current_bucket_label <- sprintf("%.2f%%", current_bucket_num)
+  xpos                 <- which(levels(dfm$bucket) == current_bucket_label)
   
   p <- ggplot(dfm, aes(x = bucket, y = probability, fill = diff)) +
     geom_col(show.legend = FALSE) +
-
+    
+    # draw a vertical line on the discrete x–position:
+    geom_vline(xintercept = xpos, 
+               colour = "black", 
+               linetype = "dashed", 
+               linewidth = 0.8) +
+    
     scale_fill_gradient2(
-      midpoint = 0,            # zero deviation = current rate
-      low      = "#0000FF",    # pure blue for negative diffs
+      midpoint = 0, 
+      low      = "#0000FF", 
       mid      = "grey80",
-      high     = "#FF0000",    # pure red for positive diffs
-      limits   = c(min(dfm$diff), max(dfm$diff)),
-      trans    = "sqrt"       # sqrt transform: small diffs expand
+      high     = "#FF0000",
+      limits   = range(dfm$diff),
+      trans    = sqrt_trans()
     ) +
     labs(
       title   = paste("Cash Rate Outcome Probabilities –", m),
-      caption = paste("Based on futures‑implied rates as of",
+      caption = paste("Based on futures‑implied rates as of", 
                       format(latest_scrape, "%d %B %Y")),
       x       = "Target Rate Bucket",
       y       = "Probability (%)"
