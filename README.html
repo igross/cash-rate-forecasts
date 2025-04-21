@@ -626,7 +626,7 @@ this data, which are shown below:</p>
 #&gt; ℹ Did you mean to specify a different guide `position`?
 #&gt; Warning: Removed 21 rows containing missing values or values outside the scale range
 #&gt; (`geom_col()`).
-#&gt; # A tibble: 80 × 4
+#&gt; # A tibble: 82 × 4
 #&gt;    scrape_date scrape_time         date       cash_rate
 #&gt;    &lt;date&gt;      &lt;dttm&gt;              &lt;date&gt;         &lt;dbl&gt;
 #&gt;  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -639,7 +639,7 @@ this data, which are shown below:</p>
 #&gt;  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
 #&gt;  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
 #&gt; 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-#&gt; # ℹ 70 more rows
+#&gt; # ℹ 72 more rows
 #&gt; [1] 0.01
 #&gt; # A tibble: 730 × 2
 #&gt;    days_to_meeting finalrmse
@@ -655,7 +655,7 @@ this data, which are shown below:</p>
 #&gt;  9               9    0.0639
 #&gt; 10              10    0.0639
 #&gt; # ℹ 720 more rows
-#&gt; # A tibble: 40 × 7
+#&gt; # A tibble: 41 × 7
 #&gt;    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
 #&gt;    &lt;dttm&gt;                          &lt;dbl&gt;          &lt;dbl&gt; &lt;dbl&gt;         &lt;dbl&gt;
 #&gt;  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -697,7 +697,8 @@ this data, which are shown below:</p>
 #&gt; 37 2025-04-21 08:34:19              4.08           3.98 0.613          3.82
 #&gt; 38 2025-04-21 08:40:44              4.08           3.98 0.613          3.82
 #&gt; 39 2025-04-21 09:32:16              4.08           3.98 0.613          3.82
-#&gt; 40 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
+#&gt; 40 2025-04-21 09:37:57              4.08           3.98 0.613          3.82
+#&gt; 41 2025-04-21 03:17:06              4.08           3.98 0.613          3.82
 #&gt;    days_to_meeting  RMSE
 #&gt;              &lt;int&gt; &lt;dbl&gt;
 #&gt;  1              47 0.175
@@ -740,7 +741,8 @@ this data, which are shown below:</p>
 #&gt; 38              30 0.109
 #&gt; 39              30 0.109
 #&gt; 40              30 0.109
-#&gt; # A tibble: 840 × 3
+#&gt; 41              30 0.109
+#&gt; # A tibble: 861 × 3
 #&gt;    scrape_time         bucket probability
 #&gt;    &lt;dttm&gt;              &lt;chr&gt;        &lt;dbl&gt;
 #&gt;  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -773,8 +775,8 @@ this data, which are shown below:</p>
 #&gt; 28 2025-04-04 12:00:00 1.60%    1.65e- 35
 #&gt; 29 2025-04-04 12:00:00 1.85%    6.42e- 28
 #&gt; 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-#&gt; # ℹ 810 more rows
-#&gt; # A tibble: 120 × 6
+#&gt; # ℹ 831 more rows
+#&gt; # A tibble: 123 × 6
 #&gt;    scrape_date            mu sigma r_curr probability bucket    
 #&gt;    &lt;dttm&gt;              &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;     
 #&gt;  1 2025-04-03 12:00:00  3.88 0.175   4.08      0.534  -25 bp cut
@@ -787,7 +789,7 @@ this data, which are shown below:</p>
 #&gt;  8 2025-04-07 12:00:00  3.72 0.156   4.05      0.388  -50 bp cut
 #&gt;  9 2025-04-07 12:00:00  3.72 0.156   4.05      0.0872 No change 
 #&gt; 10 2025-04-08 12:00:00  3.76 0.154   4.07      0.558  -25 bp cut
-#&gt; # ℹ 110 more rows</code></pre>
+#&gt; # ℹ 113 more rows</code></pre>
 
 </body>
 </html>
