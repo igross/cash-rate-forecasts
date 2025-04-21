@@ -102,6 +102,14 @@ df_result <- df_result %>%
   rename(stdev = finalrmse) %>%                               # rename for clarity
   select(date, meeting_date, forecast_rate, implied_r_tp1, stdev)
 
+summary_stats <- df_result %>%
+  # turn the “date” into a friendlier month label
+  mutate(Meeting = format(date, "%b %Y")) %>%
+  select(Meeting, mean = implied_r_tp1, sd = stdev)
+
+# print them to the console
+print(summary_stats, n = Inf)
+
 # Bucket edges
 bucket_centers <- seq(0.10, 5.1, by = 0.25)
 bucket_edges <- c(bucket_centers - 0.125, tail(bucket_centers, 1) + 0.125)
