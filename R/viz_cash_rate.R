@@ -159,26 +159,32 @@ ggsave("docs/rate_probabilities_next.png", width = 6, height = 4, dpi = 300)
 line_df <- all_estimates_buckets %>%
   filter(meeting_date == next_meeting)
 
-my_cols <- setNames(
-  c("#004B8E", "#5FA4D4", "#BFBFBF", "#E07C7C", "#B50000"),
-  as.character(bucket_centers)
-)
+# define your five anchor colours: deep blue → light blue → grey → light red → deep red
+anchors <- c("#0000FF","#5FA4D4","grey80","#E07C7C","#FF0000")
 
-line <- ggplot(line_df, aes(as.Date(scrape_time), probability, color = factor(bucket), group = factor(bucket))) +
+# build a continuous 21‑colour palette by interpolation
+pal_21 <- colorRampPalette(anchors)(length(bucket_centers))
+
+# name it by your bucket labels (e.g. "0.10","0.35",…)
+names(pal_21) <- sprintf("%.2f", bucket_centers)
+
+# then in your plot:
+line <- ggplot(line_df, aes(as.Date(scrape_time), probability, 
+                            color = factor(sprintf("%.2f", bucket)), 
+                            group = bucket)) +
   geom_line(size = 1) +
-  scale_color_manual(values = my_cols) +
+  scale_color_manual(values = pal_21, name = "Bucket (%)") +
   scale_y_continuous(labels = label_percent(scale = 1)) +
   labs(
-    title    = paste("Evolution of Move Probabilities — Next meeting", format(next_meeting, "%d %b %Y")),
-    x        = "Forecast timestamp",
-    y        = "Probability",
-    color    = "Bucket (%)"
+    title = paste("Evolution of Bucket Probabilities — Next meeting", format(next_meeting, "%d %b %Y")),
+    x     = "Forecast timestamp",
+    y     = "Probability"
   ) +
   theme_bw() +
   theme(
-    axis.text.x         = element_text(angle = 45, hjust = 1),
-    legend.position     = c(1.02, 0.5),
-    legend.justification= c("left", "center")
+    axis.text.x          = element_text(angle = 45, hjust = 1),
+    legend.position      = c(1.02, 0.5),
+    legend.justification = c("left","center")
   )
 
 ggsave("docs/line.png", plot = line, width = 8, height = 5, dpi = 300)
