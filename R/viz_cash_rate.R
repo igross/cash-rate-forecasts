@@ -183,42 +183,46 @@ for (mt in future_meetings) {
 }
 
 # =============================================
-# Line chart: top‑3 bucket probabilities over time (latest series)
+# Define next_meeting (the very next date after today)
 # =============================================
+next_meeting <- meeting_schedule %>%
+  filter(meeting_date > Sys.Date()) %>%
+  slice_min(meeting_date) %>%
+  pull(meeting_date)
 
-# 1) we already have `next_meeting` and `all_estimates_buckets` from above
-
-# 2) build a data frame of only that meeting + its top‑3 buckets per scrape
+# =============================================
+# Line chart: top‑3 bucket probabilities over time
+# =============================================
 top3_df <- all_estimates_buckets %>%
-  filter(meeting_date == next_meeting) %>%      # only the next meeting
-  group_by(scrape_time) %>%                     # for each scrape timestamp
-  slice_max(order_by = probability, 
-            n = 3, 
-            with_ties = FALSE) %>%              # keep the 3 largest probs
+  filter(meeting_date == next_meeting) %>%
+  group_by(scrape_time) %>%
+  slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   ungroup()
 
-# 3) define a palette for the 3 buckets (will vary scrape‑to‑scrape)
-#    or just let ggplot pick colours automatically
-my_cols_top3 <- RColorBrewer::brewer.pal(3, "Dark2")
+# Use your red/grey/blue palette keyed by bucket label:
+bucket_palette <- c(
+  `-50 bp cut`  = "#004B8E",
+  `-25 bp cut`  = "#5FA4D4",
+  `No change`   = "#BFBFBF",
+  `+25 bp hike` = "#E07C7C",
+  `+50 bp hike` = "#B50000"
+)
 
-# 4) plot only those top 3 lines
 line <- ggplot(top3_df, aes(
     x     = as.Date(scrape_time),
     y     = probability,
-    color = bucket,            # bucket is numeric centre (e.g. 0.25, 0.50)
+    color = bucket,
     group = bucket
   )) +
   geom_line(size = 1.2) +
-  scale_colour_manual(
-    values = my_cols_top3,
-    name   = "Top 3 Buckets"
+  scale_color_manual(
+    values = bucket_palette,
+    name   = "Move"
   ) +
-  scale_y_continuous(labels = scales::label_percent(scale = 1)) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title    = paste("Top 3 Cash‑Rate Move Probabilities — Next Meeting", 
-                     format(next_meeting, "%d %b %Y")),
-    subtitle = paste("Each line is one of the three most likely outcomes as of", 
-                     format(latest_scrape, "%d %b %Y")),
+    title    = paste("Top 3 Move Probabilities — Next Meeting", format(next_meeting, "%d %b %Y")),
+    subtitle = paste("as of", format(latest_scrape, "%d %b %Y")),
     x        = "Forecast timestamp",
     y        = "Probability"
   ) +
@@ -229,24 +233,26 @@ line <- ggplot(top3_df, aes(
     legend.justification = c("left","center")
   )
 
-# 5) write out (overwrite if exists)
-out_line <- file.path("docs", "line_top3.png")
+# Save static PNG (overwrites if exists)
+out_line <- "docs/line_top3.png"
 if (file.exists(out_line)) unlink(out_line)
 ggsave(
   filename = out_line,
-  plot     = line_top3,
+  plot     = line,
   width    = 8,
   height   = 5,
-  dpi      = 300,
-  device   = "png"
+  dpi      = 300
 )
 
-# 9) Make the interactive widget
-line_int <- line + aes(text = paste0(
-  format(
- bucket,
- scales::percent(probability, accuracy = 1)
-))
+# =============================================
+# Interactive widget
+# =============================================
+line_int <- line +
+  aes(text = paste0(
+    format(scrape_time, "%Y-%m-%d %H:%M"),
+    "<br>Move: ", bucket,
+    "<br>Prob: ", scales::percent(probability, accuracy = 1)
+  ))
 
 interactive_line <- ggplotly(line_int, tooltip = "text") %>%
   layout(
@@ -254,9 +260,8 @@ interactive_line <- ggplotly(line_int, tooltip = "text") %>%
     legend    = list(x = 1.02, y = 0.5, xanchor = "left")
   )
 
-# 10) Save it
 htmlwidgets::saveWidget(
   interactive_line,
-  file   = "docs/line_interactive.html",
+  file          = "docs/line_interactive_top3.html",
   selfcontained = TRUE
 )
