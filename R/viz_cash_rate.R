@@ -264,6 +264,6 @@ interactive_line <- ggplotly(line_int, tooltip = "text") %>%
 
 htmlwidgets::saveWidget(
   interactive_line,
-  file          = "docs/line_interactive_top3.html",
+  file          = "docs/line_interactive.html",
   selfcontained = TRUE
 )
