@@ -14,6 +14,8 @@ labels <- png_files |>
   str_remove("\\.png$") |>
   str_replace_all("_", " ")  # e.g. "May 2025"
 
+print(labels)
+
 intro_paragraph <- '
   <p style="max-width: 800px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
     This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia\'s cash rate,
