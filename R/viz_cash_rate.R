@@ -160,7 +160,8 @@ for (mt in future_meetings) {
   # d) create the bar chart
   p <- ggplot(bar_df, aes(factor(bucket), probability, fill = bucket)) +
     geom_col(show.legend = FALSE) +
-    scale_y_continuous(labels = scales::label_percent(scale = 1)) +
+    scale_y_continuous(
+  labels = scales::label_percent(accuracy = 1)) +
     labs(
       title    = paste("Cash Rate Outcome Probabilities —", format(mt, "%d %B %Y")),
       subtitle = paste("As of", format(latest_scrape, "%d %B %Y")),
