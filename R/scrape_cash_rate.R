@@ -17,6 +17,8 @@ cutoff_time <- Sys.time() - months(3)
 # file.info()$mtime gives file modification time
 to_remove <- old_csvs[file.info(old_csvs)$mtime < cutoff_time]
 
+print(to_remove)
+
 # remove them (if any)
 if (length(to_remove) > 0) {
   file.remove(to_remove)
