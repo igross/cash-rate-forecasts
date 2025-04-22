@@ -215,7 +215,7 @@ line <- ggplot(top3_df, aes(
     color = bucket,   # now a factor
     group = bucket
   )) +
-  geom_line(size = 1.2) +
+  geom_line(linewidth = 1.2) +
   scale_color_manual(
     values = setNames(
       c("#004B8E","#5FA4D4","#BFBFBF","#E07C7C","#B50000"),
