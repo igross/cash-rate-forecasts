@@ -164,8 +164,8 @@ for (mt in future_meetings) {
    theme_bw()  +
    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-  label   <- format(mt, "%b_%Y")
-  out_png <- file.path("docs", paste0("rate_probabilities_", label, ".png"))
+  label   <- format(mt, "%B_%Y")
+  out_png <- file.path("docs", sprintf("rate_probabilities_%s.png", label))
                      
   ggsave(
     filename = out_png,
