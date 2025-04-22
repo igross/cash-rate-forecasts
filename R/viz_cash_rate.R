@@ -191,12 +191,12 @@ top3_df <- all_estimates_buckets %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   ungroup()
 
-                     top3_df <- top3_df %>%
+top3_df <- top3_df %>%
   # bucket is currently numeric (e.g. 3.35, 3.60) — convert to factor
   mutate(
     bucket = factor(
-      sprintf("%.2f%%", bucket),                 # e.g. "3.35%"
-      levels = sprintf("%.2f%%", bucket_centers)  # ensure consistent ordering
+    sprintf("%.2f%%", bucket),                 # e.g. "3.35%"
+    levels = sprintf("%.2f%%", bucket_centers)  # ensure consistent ordering
     )
   )
 
@@ -212,18 +212,21 @@ bucket_palette <- c(
 line <- ggplot(top3_df, aes(
     x     = as.Date(scrape_time),
     y     = probability,
-    color = bucket,
+    color = bucket,   # now a factor
     group = bucket
   )) +
   geom_line(size = 1.2) +
   scale_color_manual(
-    values = bucket_palette,
-    name   = "Move"
+    values = setNames(
+      c("#004B8E","#5FA4D4","#BFBFBF","#E07C7C","#B50000"),
+      sprintf("%.2f%%", bucket_centers)
+    ),
+    name = "Target Rate"
   ) +
-    scale_y_continuous(labels = function(x) sprintf("%.0f%%", x*100))  +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title    = paste("Top 3 Move Probabilities — Next Meeting", format(next_meeting, "%d %b %Y")),
-    subtitle = paste("as of", format(latest_scrape, "%d %b %Y")),
+    title    = paste("Top 3 Cash‑Rate Buckets — Next Meeting", format(next_meeting, "%d %b %Y")),
+    subtitle = paste("as of", format(latest_scrape,   "%d %b %Y")),
     x        = "Forecast timestamp",
     y        = "Probability"
   ) +
@@ -234,8 +237,9 @@ line <- ggplot(top3_df, aes(
     legend.justification = c("left","center")
   )
 
+
 # Save static PNG (overwrites if exists)
-out_line <- "docs/line_top3.png"
+out_line <- "docs/line.png"
 if (file.exists(out_line)) unlink(out_line)
 ggsave(
   filename = out_line,
