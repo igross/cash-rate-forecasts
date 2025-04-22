@@ -96,6 +96,8 @@ for (i in 1:nrow(meetingforecasts_df)) {
 
 df_result <- bind_rows(results) %>% distinct()
 
+tail(df_result)
+
 df_result <- df_result %>%
   mutate(
     days_to_meeting = as.integer(meeting_date - scrape_latest)    # difference in calendar days
