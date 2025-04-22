@@ -202,7 +202,7 @@ top3_df <- all_estimates_buckets %>%
 my_cols_top3 <- RColorBrewer::brewer.pal(3, "Dark2")
 
 # 4) plot only those top 3 lines
-line_top3 <- ggplot(top3_df, aes(
+line <- ggplot(top3_df, aes(
     x     = as.Date(scrape_time),
     y     = probability,
     color = bucket,            # bucket is numeric centre (e.g. 0.25, 0.50)
@@ -242,12 +242,12 @@ ggsave(
 )
 
 # 6) Optional: interactive version
-line_int_top3 <- line_top3 +
+line_int <- line +
   aes(text = paste0(
     format(scales::percent(probability, accuracy = 1)
   ))
 
-interactive_top3 <- ggplotly(line_int_top3, tooltip = "text") %>%
+interactive <- ggplotly(line_int, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
     legend    = list(x = 1.02, y = 0.5, xanchor = "left")
@@ -255,6 +255,6 @@ interactive_top3 <- ggplotly(line_int_top3, tooltip = "text") %>%
 
 htmlwidgets::saveWidget(
   interactive_top3,
-  "docs/line_interactive_top3.html",
+  "docs/line_interactive.html",
   selfcontained = TRUE
 )
