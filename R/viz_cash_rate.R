@@ -96,7 +96,8 @@ for (i in 1:nrow(meetingforecasts_df)) {
 
 df_result <- bind_rows(results) %>% distinct()
 
-tail(df_result)
+print(meetingforecasts_df)
+print(df_result)
 
 df_result <- df_result %>%
   mutate(
