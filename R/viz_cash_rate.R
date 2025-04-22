@@ -85,6 +85,8 @@ for (i in 1:nrow(meetingforecasts_df)) {
     meeting_date = row$meeting_date,
     forecast_rate = row$forecast_rate,
     implied_r_tp1 = r_tp1
+    nb = nb
+    
   )
 
   if (!is.na(row$meeting_date)) {
@@ -107,8 +109,6 @@ summary_stats <- df_result %>%
   mutate(Meeting = format(date, "%b %Y")) %>%
   select(Meeting, mean = implied_r_tp1, sd = stdev)
 
-# print them to the console
-print(summary_stats, n = Inf)
 
 # Bucket edges
 bucket_centers <- seq(0.10, 5.1, by = 0.25)
