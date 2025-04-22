@@ -433,7 +433,10 @@ my_cols <- setNames(
 
 line <- ggplot(top3_moves, aes(scrape_date, probability, color = bucket, group = bucket)) +
   geom_line(linewidth = 1) +
-                       
+     scale_x_datetime(
+    date_breaks = "1 day",
+    date_labels = "%d %b"
+  ) +                    
   scale_y_continuous(labels = label_percent(1)) +
    scale_color_manual(
     values = c(
