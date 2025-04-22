@@ -243,9 +243,7 @@ ggsave(
 # 6) Optional: interactive version
 line_int_top3 <- line_top3 +
   aes(text = paste0(
-    format(scrape_time, "%Y-%m-%d %H:%M"),
-    "\nBucket: ", bucket, " %",
-    "\nProb: ", scales::percent(probability, accuracy = 1)
+    format(scales::percent(probability, accuracy = 1)
   ))
 
 interactive_top3 <- ggplotly(line_int_top3, tooltip = "text") %>%
