@@ -171,7 +171,6 @@ for (mt in future_meetings) {
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-  # e) save (overwriting if it exists)
   ggsave(
     filename = out_png,
     plot     = p,
