@@ -156,10 +156,10 @@ for (mt in future_meetings) {
   scale_y_continuous(labels = function(x) sprintf("%.0f%%", x*100)) +
    
     labs(
-      title    = paste("Cash Rate Outcome Probabilities —", format(mt, "%d %B %Y")),
+  #    title    = paste("Cash Rate Outcome Probabilities —", format(mt, "%d %B %Y")),
   #    subtitle = paste("As of", format(latest_scrape, "%d %B %Y")),
-  #    x        = "Target Rate (%)",
-  #    y        = "Probability (%)"
+      x        = "Target Rate (%)",
+      y        = "Probability (%)"
     ) +
    theme_bw()  +
    theme(axis.text.x = element_text(angle = 45, hjust = 1))
