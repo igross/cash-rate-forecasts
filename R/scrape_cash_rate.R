@@ -11,13 +11,17 @@ old_csvs <- list.files(
   full.names = TRUE
 )
 
-# define cutoff (8 weeks ago from now)
-cutoff_time <- Sys.time() - months(3)
+dates_in_name <- str_match(basename(old_csvs),
+                           "scraped_cash_rate_(\\d{4}-\\d{2}-\\d{2})")[,2]
 
-# file.info()$mtime gives file modification time
-to_remove <- old_csvs[file.info(old_csvs)$mtime < cutoff_time]
+# 3. parse to Date
+file_dates <- as.Date(dates_in_name, format = "%Y-%m-%d")
 
-print(to_remove)
+# 4. compute cutoff
+cutoff_date <- Sys.Date() - weeks(8)
+
+# 5. select files older than cutoff
+to_remove <- old_csvs[!is.na(file_dates) & file_dates < cutoff_date]
 
 # remove them (if any)
 if (length(to_remove) > 0) {
