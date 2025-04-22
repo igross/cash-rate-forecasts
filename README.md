@@ -29,11 +29,53 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
+    #> # A tibble: 18 × 3
+    #>    date       forecast_rate meeting_date
+    #>    <date>             <dbl> <date>      
+    #>  1 2025-04-01          4.08 2025-04-01  
+    #>  2 2025-05-01          3.98 2025-05-20  
+    #>  3 2025-06-01          3.78 NA          
+    #>  4 2025-07-01          3.59 2025-07-08  
+    #>  5 2025-08-01          3.36 2025-08-12  
+    #>  6 2025-09-01          3.27 2025-09-30  
+    #>  7 2025-10-01          3.11 NA          
+    #>  8 2025-11-01          2.96 2025-11-04  
+    #>  9 2025-12-01          2.92 2025-12-09  
+    #> 10 2026-01-01          2.92 NA          
+    #> 11 2026-02-01          2.91 NA          
+    #> 12 2026-03-01          2.89 NA          
+    #> 13 2026-04-01          2.88 NA          
+    #> 14 2026-05-01          2.86 NA          
+    #> 15 2026-06-01          2.87 NA          
+    #> 16 2026-07-01          2.88 NA          
+    #> 17 2026-08-01          2.88 NA          
+    #> 18 2026-09-01          2.89 NA          
+    #> # A tibble: 18 × 5
+    #>    date       meeting_date forecast_rate implied_r_tp1    nb
+    #>    <date>     <date>               <dbl>         <dbl> <dbl>
+    #>  1 2025-04-01 2025-04-01            4.08          4.09 0    
+    #>  2 2025-05-01 2025-05-20            3.98          3.81 0.613
+    #>  3 2025-06-01 NA                    3.78          3.78 1    
+    #>  4 2025-07-01 2025-07-08            3.59          3.54 0.226
+    #>  5 2025-08-01 2025-08-12            3.36          3.28 0.355
+    #>  6 2025-09-01 2025-09-30            3.27          2.95 0.967
+    #>  7 2025-10-01 NA                    3.11          3.11 1    
+    #>  8 2025-11-01 2025-11-04            2.96          2.95 0.1  
+    #>  9 2025-12-01 2025-12-09            2.92          2.93 0.258
+    #> 10 2026-01-01 NA                    2.92          2.92 1    
+    #> 11 2026-02-01 NA                    2.91          2.91 1    
+    #> 12 2026-03-01 NA                    2.89          2.89 1    
+    #> 13 2026-04-01 NA                    2.88          2.88 1    
+    #> 14 2026-05-01 NA                    2.86          2.86 1    
+    #> 15 2026-06-01 NA                    2.87          2.87 1    
+    #> 16 2026-07-01 NA                    2.88          2.88 1    
+    #> 17 2026-08-01 NA                    2.88          2.88 1    
+    #> 18 2026-09-01 NA                    2.89          2.89 1
     #> Warning: Position guide is perpendicular to the intended axis.
     #> ℹ Did you mean to specify a different guide `position`?
     #> Warning: Removed 21 rows containing missing values or values outside the scale range
     #> (`geom_col()`).
-    #> # A tibble: 116 × 4
+    #> # A tibble: 118 × 4
     #>    scrape_date scrape_time         date       cash_rate
     #>    <date>      <dttm>              <date>         <dbl>
     #>  1 2025-04-03  2025-04-03 12:00:00 2025-04-01      4.08
@@ -46,7 +88,7 @@ are shown below:
     #>  8 2025-04-08  2025-04-08 12:00:00 2025-05-01      3.94
     #>  9 2025-04-09  2025-04-09 12:00:00 2025-04-01      4.05
     #> 10 2025-04-09  2025-04-09 12:00:00 2025-05-01      3.88
-    #> # ℹ 106 more rows
+    #> # ℹ 108 more rows
     #> [1] 0.01
     #> # A tibble: 730 × 2
     #>    days_to_meeting finalrmse
@@ -62,7 +104,7 @@ are shown below:
     #>  9               9    0.0639
     #> 10              10    0.0639
     #> # ℹ 720 more rows
-    #> # A tibble: 58 × 7
+    #> # A tibble: 59 × 7
     #>    scrape_time         cash_rate_current cash_rate_next    nb implied_r_tp1
     #>    <dttm>                          <dbl>          <dbl> <dbl>         <dbl>
     #>  1 2025-04-03 12:00:00              4.08           4    0.613          3.88
@@ -167,8 +209,8 @@ are shown below:
     #> 48              29 0.106
     #> 49              29 0.106
     #> 50              29 0.106
-    #> # ℹ 8 more rows
-    #> # A tibble: 1,218 × 3
+    #> # ℹ 9 more rows
+    #> # A tibble: 1,239 × 3
     #>    scrape_time         bucket probability
     #>    <dttm>              <chr>        <dbl>
     #>  1 2025-04-03 12:00:00 0.10%    2.30e- 97
@@ -201,18 +243,18 @@ are shown below:
     #> 28 2025-04-04 12:00:00 1.60%    1.65e- 35
     #> 29 2025-04-04 12:00:00 1.85%    6.42e- 28
     #> 30 2025-04-04 12:00:00 2.10%    2.75e- 21
-    #> # ℹ 1,188 more rows
+    #> # ℹ 1,209 more rows
     #> # A tibble: 1 × 4
     #>   scrape_time         cash_rate_current implied_mean  rmse
     #>   <dttm>                          <dbl>        <dbl> <dbl>
-    #> 1 2025-04-22 01:06:13              4.08         3.82 0.106
+    #> 1 2025-04-22 01:17:16              4.08         3.82 0.106
     #> # A tibble: 3 × 3
     #>   scrape_date         move       probability_pct
     #>   <dttm>              <chr>                <dbl>
-    #> 1 2025-04-22 01:06:13 -25 bp cut            75.9
-    #> 2 2025-04-22 01:06:13 -50 bp cut            14.1
-    #> 3 2025-04-22 01:06:13 No change              9.9
-    #> # A tibble: 174 × 6
+    #> 1 2025-04-22 01:17:16 -25 bp cut            75.9
+    #> 2 2025-04-22 01:17:16 -50 bp cut            14.1
+    #> 3 2025-04-22 01:17:16 No change              9.9
+    #> # A tibble: 177 × 6
     #>    scrape_date            mu sigma r_curr probability bucket    
     #>    <dttm>              <dbl> <dbl>  <dbl>       <dbl> <chr>     
     #>  1 2025-04-03 12:00:00  3.88 0.175   4.08      0.519  -25 bp cut
@@ -225,7 +267,7 @@ are shown below:
     #>  8 2025-04-07 12:00:00  3.72 0.156   4.05      0.388  -50 bp cut
     #>  9 2025-04-07 12:00:00  3.72 0.156   4.05      0.0871 No change 
     #> 10 2025-04-08 12:00:00  3.76 0.154   4.07      0.556  -25 bp cut
-    #> # ℹ 164 more rows
+    #> # ℹ 167 more rows
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
