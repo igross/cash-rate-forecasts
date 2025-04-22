@@ -95,12 +95,15 @@ all_estimates <- bind_rows(all_list) %>%
 bucket_centers <- seq(0.10, 5.10, by = 0.25)
 half_width     <- 0.125
 
+current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
+  filter(date == max(date)) %>%
+  pull(value)
+
 bucket_list <- vector("list", nrow(all_estimates))
 for (i in seq_len(nrow(all_estimates))) {
   mu_i    <- all_estimates$implied_mean[i]
   sigma_i <- all_estimates$stdev[i]
-  rc      <- read_rba(series_id = "FIRMMCRTD") %>%
-               filter(date == max(date)) %>% pull(value)  # or use cached
+  rc      <- current_rate  
 
   # raw pnorm diffs
   v <- numeric(length(bucket_centers))
