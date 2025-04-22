@@ -191,6 +191,15 @@ top3_df <- all_estimates_buckets %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   ungroup()
 
+                     top3_df <- top3_df %>%
+  # bucket is currently numeric (e.g. 3.35, 3.60) — convert to factor
+  mutate(
+    bucket = factor(
+      sprintf("%.2f%%", bucket),                 # e.g. "3.35%"
+      levels = sprintf("%.2f%%", bucket_centers)  # ensure consistent ordering
+    )
+  )
+
 # Use your red/grey/blue palette keyed by bucket label:
 bucket_palette <- c(
   `-50 bp cut`  = "#004B8E",
