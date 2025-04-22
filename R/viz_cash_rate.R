@@ -151,8 +151,8 @@ for (mt in future_meetings) {
     )
 
   # d) create the bar chart
-  p <- ggplot(bar_df, aes(factor(bucket), probability, fill = bucket))
-  +  geom_col(show.legend = FALSE) 
+  p <- ggplot(bar_df, aes(factor(bucket), probability, fill = bucket)) +
+   geom_col(show.legend = FALSE) +
 #  + scale_y_continuous(labels = function(x) sprintf("%.0f%%", x*100))
    
   #  labs(
@@ -161,8 +161,8 @@ for (mt in future_meetings) {
   #    x        = "Target Rate (%)",
   #    y        = "Probability (%)"
   #  ) +
-   + theme_bw()  
-   + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+   theme_bw()  +
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
   ggsave(
     filename = paste0("docs/rate_probabilities_", gsub(" ", "_", mt), ".png"),
