@@ -2,6 +2,25 @@ library(conflicted)
 conflict_prefer_all("dplyr", quiet = TRUE)
 library(tidyverse)
 library(jsonlite)
+library(lubridate)
+
+# list all CSVs in daily_data
+old_csvs <- list.files(
+  path       = "daily_data",
+  pattern    = "\\.csv$",
+  full.names = TRUE
+)
+
+# define cutoff (8 weeks ago from now)
+cutoff_time <- Sys.time() - months(3)
+
+# file.info()$mtime gives file modification time
+to_remove <- old_csvs[file.info(old_csvs)$mtime < cutoff_time]
+
+# remove them (if any)
+if (length(to_remove) > 0) {
+  file.remove(to_remove)
+}
 
 json_url <- "https://asx.api.markitdigital.com/asx-research/1.0/derivatives/interest-rate/IB/futures?days=1&height=179&width=179"
 
