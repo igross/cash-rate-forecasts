@@ -186,47 +186,46 @@ next_meeting <- meeting_schedule %>%
 # —————————————————————————————————————————————————————————————————————
 # build top3_df and turn the numeric bucket centers into descriptive moves
 # —————————————————————————————————————————————————————————————————————
+# 1) compute the true “no‐change” bucket centre once:
+current_center <- bucket_centers[which.min(abs(bucket_centers - current_rate))]
+
+# 2) rebuild top3_df so it maps correctly:
 top3_df <- all_estimates_buckets %>%
-  filter(meeting_date == next_meeting) %>%   # only next meeting
+  filter(meeting_date == next_meeting) %>%     # only the next meeting
   group_by(scrape_time) %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   ungroup() %>%
   mutate(
     move = factor(
       case_when(
-        bucket == current_rate - 0.50 ~ "-50 bp cut",
-        bucket == current_rate - 0.25 ~ "-25 bp cut",
-        bucket == current_rate          ~ "No change",
-        bucket == current_rate + 0.25 ~ "+25 bp hike",
-        bucket == current_rate + 0.50 ~ "+50 bp hike",
-        TRUE                           ~ sprintf("%.2f%%", bucket)
+        bucket - current_center == -0.50 ~ "-50 bp cut",
+        bucket - current_center == -0.25 ~ "-25 bp cut",
+        bucket - current_center ==  0.00 ~ "No change",
+        bucket - current_center ==  0.25 ~ "+25 bp hike",
+        bucket - current_center ==  0.50 ~ "+50 bp hike",
+        TRUE                             ~ NA_character_
       ),
       levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
     )
   )
 
-# your 5‑colours palette keyed to those 5 moves
-bucket_palette <- c(
-  `-50 bp cut`  = "#004B8E",
-  `-25 bp cut`  = "#5FA4D4",
-  `No change`   = "#BFBFBF",
-  `+25 bp hike` = "#E07C7C",
-  `+50 bp hike` = "#B50000"
-)
-
-# —————————————————————————————————————————————————————————————————————
-# plot the top‑3 lines
-# —————————————————————————————————————————————————————————————————————
+# 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
     x     = as.Date(scrape_time),
     y     = probability,
-    color = move,    # now use your descriptive factor
+    color = move,
     group = move
   )) +
   geom_line(size = 1.2) +
   scale_color_manual(
-    values = bucket_palette,
-    name   = "Move"
+    values = c(
+      "-50 bp cut"  = "#004B8E",
+      "-25 bp cut"  = "#5FA4D4",
+      "No change"   = "#BFBFBF",
+      "+25 bp hike" = "#E07C7C",
+      "+50 bp hike" = "#B50000"
+    ),
+    na.value = "grey80"
   ) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
