@@ -99,6 +99,9 @@ current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
   filter(date == max(date)) %>%
   pull(value)
 
+current_center <- bucket_centers[ which.min( abs(bucket_centers - current_rate) ) ]
+# current_center == 4.10
+
 bucket_list <- vector("list", nrow(all_estimates))
 for (i in seq_len(nrow(all_estimates))) {
   mu_i    <- all_estimates$implied_mean[i]
@@ -131,6 +134,7 @@ for (i in seq_len(nrow(all_estimates))) {
 }
 
 all_estimates_buckets <- bind_rows(bucket_list)
+print(all_estimates_buckets)
 
 # =============================================
 # 7 Bar charts for every future meeting (latest scrape)
