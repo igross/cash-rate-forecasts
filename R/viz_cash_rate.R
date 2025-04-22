@@ -124,7 +124,9 @@ for (i in seq_len(nrow(all_estimates))) {
     implied_mean= mu_i,
     stdev       = sigma_i,
     bucket      = bucket_centers,
-    probability = v
+    probability = v, 
+    diff       = bucket - current_rate,
+    diff_s     = sign(diff) * abs(diff)^(1/4)
   )
 }
 
@@ -154,6 +156,14 @@ for (mt in future_meetings) {
   p <- ggplot(bar_df, aes(factor(bucket), probability, fill = bucket)) +
    geom_col(show.legend = FALSE) +
   scale_y_continuous(labels = function(x) sprintf("%.0f%%", x*100)) +
+                      # diverging gradient: vivid blue for cuts, white at zero, vivid red for hikes
+  scale_fill_gradient2(
+    midpoint = 0,
+    low      = "#0022FF",
+    mid      = "#B3B3B3",
+    high     = "#FF2200",
+    limits   = range(bar_df$diff_s)
+  ) +
    
     labs(
   #    title    = paste("Cash Rate Outcome Probabilities —", format(mt, "%d %B %Y")),
