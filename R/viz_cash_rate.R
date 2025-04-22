@@ -182,51 +182,54 @@ next_meeting <- meeting_schedule %>%
   slice_min(meeting_date) %>%
   pull(meeting_date)
 
-# =============================================
-# Line chart: top‑3 bucket probabilities over time
-# =============================================
+# —————————————————————————————————————————————————————————————————————
+# build top3_df and turn the numeric bucket centers into descriptive moves
+# —————————————————————————————————————————————————————————————————————
 top3_df <- all_estimates_buckets %>%
-  filter(meeting_date == next_meeting) %>%
+  filter(meeting_date == next_meeting) %>%   # only next meeting
   group_by(scrape_time) %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
-  ungroup()
-
-top3_df <- top3_df %>%
-  # bucket is currently numeric (e.g. 3.35, 3.60) — convert to factor
+  ungroup() %>%
   mutate(
-    bucket = factor(
-    sprintf("%.2f%%", bucket),                 # e.g. "3.35%"
-    levels = sprintf("%.2f%%", bucket_centers)  # ensure consistent ordering
+    move = factor(
+      case_when(
+        bucket == current_rate - 0.50 ~ "-50 bp cut",
+        bucket == current_rate - 0.25 ~ "-25 bp cut",
+        bucket == current_rate          ~ "No change",
+        bucket == current_rate + 0.25 ~ "+25 bp hike",
+        bucket == current_rate + 0.50 ~ "+50 bp hike",
+        TRUE                           ~ sprintf("%.2f%%", bucket)
+      ),
+      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
     )
   )
 
-# Use your red/grey/blue palette keyed by bucket label:
+# your 5‑colours palette keyed to those 5 moves
 bucket_palette <- c(
-  `-50 bp cut`  = "#004B8E",
-  `-25 bp cut`  = "#5FA4D4",
+  `-50 bp cut`  = "#004B8E",
+  `-25 bp cut`  = "#5FA4D4",
   `No change`   = "#BFBFBF",
-  `+25 bp hike` = "#E07C7C",
-  `+50 bp hike` = "#B50000"
+  `+25 bp hike` = "#E07C7C",
+  `+50 bp hike` = "#B50000"
 )
 
-my_cols_top3 <- RColorBrewer::brewer.pal(n = nlevels(top3_df$bucket), name = "Dark2")
-names(my_cols_top3) <- levels(top3_df$bucket)
-
-# 3) your plot
+# —————————————————————————————————————————————————————————————————————
+# plot the top‑3 lines
+# —————————————————————————————————————————————————————————————————————
 line <- ggplot(top3_df, aes(
     x     = as.Date(scrape_time),
     y     = probability,
-    color = bucket,
-    group = bucket
+    color = move,    # now use your descriptive factor
+    group = move
   )) +
   geom_line(size = 1.2) +
   scale_color_manual(
-    values = my_cols_top3,
-    name   = "Bucket"
+    values = bucket_palette,
+    name   = "Move"
   ) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title    = paste("Top 3 Cash‑Rate Buckets — Next Meeting", format(next_meeting, "%d %b %Y")),
+    title    = paste("Top 3 Cash‑Rate Moves – Next Meeting", format(next_meeting, "%d %b %Y")),
     subtitle = paste("as of", format(latest_scrape,   "%d %b %Y")),
     x        = "Forecast timestamp",
     y        = "Probability"
@@ -238,17 +241,9 @@ line <- ggplot(top3_df, aes(
     legend.justification = c("left","center")
   )
 
+# overwrite the previous PNG
+ggsave("docs/line_top3.png", line, width = 8, height = 5, dpi = 300)
 
-# Save static PNG (overwrites if exists)
-out_line <- "docs/line.png"
-if (file.exists(out_line)) unlink(out_line)
-ggsave(
-  filename = out_line,
-  plot     = line,
-  width    = 8,
-  height   = 5,
-  dpi      = 300
-)
 
 # =============================================
 # Interactive widget
