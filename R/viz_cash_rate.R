@@ -84,7 +84,7 @@ for (i in 1:nrow(meetingforecasts_df)) {
     date = row$date,
     meeting_date = row$meeting_date,
     forecast_rate = row$forecast_rate,
-    implied_r_tp1 = r_tp1
+    implied_r_tp1 = r_tp1,
     nb = nb
     
   )
