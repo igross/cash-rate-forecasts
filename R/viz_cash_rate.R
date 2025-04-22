@@ -160,8 +160,8 @@ for (mt in future_meetings) {
   #    subtitle = paste("As of", format(latest_scrape, "%d %B %Y")),
       x        = "Target Rate (%)",
       y        = "Probability (%)"
-    ) +
-    theme_bw() # +
+    )# +
+    # theme_bw() # +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
   ggsave(
