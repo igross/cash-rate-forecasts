@@ -241,20 +241,22 @@ ggsave(
   device   = "png"
 )
 
-# 6) Optional: interactive version
-line_int <- line +
-  aes(text = paste0(
-    format(scales::percent(probability, accuracy = 1)
-  ))
+# 9) Make the interactive widget
+line_int <- line + aes(text = paste0(
+  format(
+ bucket,
+ scales::percent(probability, accuracy = 1)
+))
 
-interactive <- ggplotly(line_int, tooltip = "text") %>%
+interactive_line <- ggplotly(line_int, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
     legend    = list(x = 1.02, y = 0.5, xanchor = "left")
   )
 
+# 10) Save it
 htmlwidgets::saveWidget(
-  interactive_top3,
-  "docs/line_interactive.html",
+  interactive_line,
+  file   = "docs/line_interactive.html",
   selfcontained = TRUE
 )
