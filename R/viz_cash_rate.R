@@ -151,8 +151,6 @@ for (mt in future_meetings) {
     )
 
   # b) build file name
-  label   <- format(mt, "%b_%Y")
-  out_png <- file.path("docs", paste0("rate_probabilities_", label, ".png"))
 
   # c) ensure old file is removed
   if (file.exists(out_png)) unlink(out_png)
@@ -172,7 +170,7 @@ for (mt in future_meetings) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
   ggsave(
-    filename = out_png,
+    filename = paste0("docs/rate_probabilities_", gsub(" ", "_", mt), ".png"),
     plot     = p,
     width    = 6,
     height   = 4,
