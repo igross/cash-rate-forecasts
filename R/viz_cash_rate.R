@@ -53,7 +53,7 @@ all_list <- map(scrapes, function(scr) {
     filter(date >= min(meeting_schedule$expiry),
            date <= max(meeting_schedule$expiry)) %>%
     left_join(meeting_schedule, by = c("date" = "expiry")) %>%
-    distinct() %>%
+    distinct() %>% 
     arrange(date)
 
   rt  <- df$forecast_rate[1]
