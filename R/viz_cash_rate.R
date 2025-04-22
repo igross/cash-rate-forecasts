@@ -152,8 +152,6 @@ for (mt in future_meetings) {
 
   # b) build file name
 
-  # c) ensure old file is removed
-  if (file.exists(out_png)) unlink(out_png)
 
   # d) create the bar chart
   p <- ggplot(bar_df, aes(factor(bucket), probability, fill = bucket)) +
