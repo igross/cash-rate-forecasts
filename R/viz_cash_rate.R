@@ -209,19 +209,20 @@ bucket_palette <- c(
   `+50 bp hike` = "#B50000"
 )
 
+my_cols_top3 <- RColorBrewer::brewer.pal(n = nlevels(top3_df$bucket), name = "Dark2")
+names(my_cols_top3) <- levels(top3_df$bucket)
+
+# 3) your plot
 line <- ggplot(top3_df, aes(
     x     = as.Date(scrape_time),
     y     = probability,
-    color = bucket,   # now a factor
+    color = bucket,
     group = bucket
   )) +
-  geom_line(linewidth = 1.2) +
+  geom_line(size = 1.2) +
   scale_color_manual(
-    values = setNames(
-      c("#004B8E","#5FA4D4","#BFBFBF","#E07C7C","#B50000"),
-      sprintf("%.2f%%", bucket_centers)
-    ),
-    name = "Target Rate"
+    values = my_cols_top3,
+    name   = "Bucket"
   ) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
