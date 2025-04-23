@@ -258,7 +258,7 @@ line <- ggplot(top3_df, aes(
       "+25 bp hike" = "#E07C7C",
       "+50 bp hike" = "#B50000"
     ),
-    na.value = "grey80"
+    na.value = "grey80" 
   ) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
