@@ -134,7 +134,8 @@ for (i in seq_len(nrow(all_estimates))) {
 }
 
 all_estimates_buckets <- bind_rows(bucket_list)
-print(all_estimates_buckets)
+
+print(all_estimates_buckets, n=20, width = Inf)
 
 # =============================================
 # 7 Bar charts for every future meeting (latest scrape)
@@ -223,7 +224,7 @@ top3_df <- all_estimates_buckets %>%
     )
   )
 
-print(top3_df)
+print(top3_df, n=20, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
