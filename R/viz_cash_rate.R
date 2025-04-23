@@ -99,10 +99,39 @@ current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
   filter(date == max(date)) %>%
   pull(value)
 
-bucket_centres <- seq(current_rate-0.50, current_rate+0.50, by = 0.25)
-
+bucket_centres <- seq(0.10, 5.10, by = 0.25)
 bucket_labels  <- c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike")
 
+# 2) find today’s rate and locate its “no change” bucket
+current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
+  filter(date == max(date)) %>%
+  pull(value)
+# this picks the bucket centre closest to current_rate
+current_idx  <- which.min(abs(bucket_centres - current_rate))
+
+# 3) offsets of those five labels (in bucket‐index space)
+#    -2 → two buckets below = –50 bp (2 * 0.25 = 0.50)
+#    -1 → one bucket  below = –25 bp
+#     0 → exact bucket    = no change
+#    +1 → one bucket  above = +25 bp
+#    +2 → two buckets above = +50 bp
+offsets <- c(-2, -1, 0, +1, +2)
+
+# 4) initialize a vector of NAs and sprinkle in your five labels
+full_labels <- rep(NA_character_, length(bucket_centres))
+for (i in seq_along(offsets)) {
+  pos_raw <- current_idx + offsets[i]
+  # only write if it falls within your bucket_centres
+  if (pos_raw >= 1 && pos_raw <= length(bucket_centres)) {
+    full_labels[pos_raw] <- bucket_labels[i]
+  }
+}
+
+# 5) build a lookup and join it into your buckets data‐frame
+bucket_lookup <- tibble(
+  bucket = bucket_centres,
+  move   = factor(full_labels, levels = bucket_labels)
+)
 bucket_list <- vector("list", nrow(all_estimates))
 for (i in seq_len(nrow(all_estimates))) {
   mu_i    <- all_estimates$implied_mean[i]
@@ -215,11 +244,11 @@ top3_df <- all_estimates_buckets %>%
   mutate(
   move = factor(
     case_when(
-      abs(diff + 0.50) < 1e-2 ~ "-50 bp cut",
-      abs(diff + 0.25) < 1e-2 ~ "-25 bp cut",
-      abs(diff       ) < 1e-2 ~ "No change",
-      abs(diff - 0.25) < 1e-2 ~ "+25 bp hike",
-      abs(diff - 0.50) < 1e-2 ~ "+50 bp hike",
+      abs(diff + 0.50) < 1e-1 ~ "-50 bp cut",
+      abs(diff + 0.25) < 1e-1 ~ "-25 bp cut",
+      abs(diff       ) < 1e-1 ~ "No change",
+      abs(diff - 0.25) < 1e-1 ~ "+25 bp hike",
+      abs(diff - 0.50) < 1e-1 ~ "+50 bp hike",
       TRUE                    ~ sprintf("%.2f%%", bucket)
     ),
     levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
