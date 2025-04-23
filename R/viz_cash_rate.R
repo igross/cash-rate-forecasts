@@ -244,7 +244,7 @@ print(top3_df, n = Inf, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
-    x     = as.Date(scrape_time),
+    x     = as.Time(scrape_time),
     y     = probability,
     color = move,
     group = move
