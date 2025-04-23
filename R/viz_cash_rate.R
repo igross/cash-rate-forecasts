@@ -231,7 +231,7 @@ top3_df <- all_estimates_buckets %>%
     )
   ) %>%
   select(-diff_center)
-  )
+  
 
 print(top3_df, n=20, width = Inf)
                      
