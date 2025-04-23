@@ -259,7 +259,7 @@ line <- ggplot(top3_df, aes(
       "+50 bp hike" = "#B50000"
     ),
     na.value = "grey80" 
-  ) + 
+  ) +  
  scale_x_datetime(
   date_breaks = "1 day",
   date_labels = "%d %b"
