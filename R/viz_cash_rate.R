@@ -213,18 +213,18 @@ top3_df <- all_estimates_buckets %>%
   mutate(
   move = factor(
     case_when(
-      abs(diff + 0.50) < 1e-3 ~ "-50 bp cut",
-      abs(diff + 0.25) < 1e-3 ~ "-25 bp cut",
-      abs(diff       ) < 1e-3 ~ "No change",
-      abs(diff - 0.25) < 1e-3 ~ "+25 bp hike",
-      abs(diff - 0.50) < 1e-3 ~ "+50 bp hike",
+      abs(diff + 0.50) < 1e-2 ~ "-50 bp cut",
+      abs(diff + 0.25) < 1e-2 ~ "-25 bp cut",
+      abs(diff       ) < 1e-2 ~ "No change",
+      abs(diff - 0.25) < 1e-2 ~ "+25 bp hike",
+      abs(diff - 0.50) < 1e-2 ~ "+50 bp hike",
       TRUE                    ~ sprintf("%.2f%%", bucket)
     ),
     levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
   )
   )
 
-print(top3_df, n=20, width = Inf)
+tail(top3_df, n=20, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
