@@ -158,18 +158,16 @@ for (mt in future_meetings) {
     )
 
   # d) create the bar chart
-  p <- ggplot(bar_df, aes(factor(bucket), probability, fill = bucket)) +
-   geom_col(show.legend = FALSE) +
-  scale_y_continuous(labels = function(x) sprintf("%.0f%%", x*100)) +
-                      # diverging gradient: vivid blue for cuts, white at zero, vivid red for hikes
+p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
+  geom_col(show.legend = FALSE) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   scale_fill_gradient2(
     midpoint = 0,
-    low      = "#0022FF",
-    mid      = "#B3B3B3",
-    high     = "#FF2200",
-    limits   = range(bar_df$diff_s)
+    low      = "#0022FF",    # vivid blue for cuts
+    mid      = "#B3B3B3",    # white at no change
+    high     = "#FF2200",    # vivid red for hikes
+    limits   = range(bar_df$diff_s, na.rm = TRUE)
   ) +
-   
     labs(
   #    title    = paste("Cash Rate Outcome Probabilities —", format(mt, "%d %B %Y")),
   #    subtitle = paste("As of", format(latest_scrape, "%d %B %Y")),
