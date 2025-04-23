@@ -260,7 +260,7 @@ print(top3_df, n = Inf, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
-    x     = scrape_time,
+    x     = scrape_time  + hours(10),
     y     = probability,
     color = move,
     group = move
@@ -279,10 +279,17 @@ line <- ggplot(top3_df, aes(
     name = "",
     na.value = "grey80" 
   ) +  
- scale_x_datetime(
-  date_breaks = "1 day",
-  date_labels = "%d %b"
-)  +
+ scale_x_datetime(  
+  breaks = function(x) {  
+      seq(  
+        from = lubridate::floor_date(min(x), "day"),  
+        to   = lubridate::ceiling_date(max(x), "day"),  
+        by   = "1 day"  
+      ) %>%  
+        .[!lubridate::wday(.) %in% c(1, 7)]  # drop Sundays (1) & Saturdays (7)  
+    },  
+    date_labels = "%d %b"  
+  ) + 
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
     title    = paste("Cash Rate Moves for the Next Meeting on", format(as.Date(next_meeting), "%d %b %Y")),
