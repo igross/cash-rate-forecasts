@@ -5,16 +5,6 @@ suppressPackageStartupMessages({
   library(stringr)
 })
 
-# Find PNGs for meeting charts
-png_files <- list.files("docs", pattern = "^rate_probabilities_.*\\.png$", full.names = FALSE)
-
-# Extract and parse meeting month names
-labels <- png_files |>
-  str_remove("^rate_probabilities_") |>
-  str_remove("\\.png$") |>
-  str_replace_all("_", " ")  # e.g. "May 2025"
-
-print(labels)
 
 intro_paragraph <- '
   <p style="max-width: 800px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
@@ -22,18 +12,36 @@ intro_paragraph <- '
     based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
   </p>'
 
-# Parse to dates (assume 1st of each month)
-dates <- suppressWarnings(as.Date(paste0("01 ", labels), format = "%d %B %Y"))
+# Find PNGs for meeting charts
+png_files <- list.files("docs", pattern = "^rate_probabilities_.*\\.png$", full.names = FALSE)
+
+# Instead of stripping everything, use a regex to pull out the
+# month‐abbrev and year from the filename:
+#   rate_probabilities_Apr_2025.png  →  "Apr" and "2025"
+labels <- str_match(png_files, "^rate_probabilities_([A-Za-z]{3})_(\\d{4})\\.png$")
+# str_match returns a matrix: [,2] is month, [,3] is year
+month_abbrev <- labels[,2]
+year_str     <- labels[,3]
+
+# Now build a proper Date by pasting "01 " in front of them, and
+# using %b for abbreviated month
+dates <- suppressWarnings(
+  as.Date(paste0("01 ", month_abbrev, " ", year_str),
+          format = "%d %b %Y")
+)
+
+# Filter out any that failed to parse or are in the past
 valid_idx <- which(!is.na(dates) & dates > Sys.Date())
 
-# Filter and sort by future dates
+# Subset
 png_files <- png_files[valid_idx]
-labels <- labels[valid_idx]
-dates <- dates[valid_idx]
+dates     <- dates[valid_idx]
+labels    <- paste(month_abbrev[valid_idx], year_str[valid_idx])
 
+# And then continue exactly as before, ordering by dates etc.
 order_idx <- order(dates)
 png_files <- png_files[order_idx]
-labels <- labels[order_idx]
+labels    <- labels[order_idx]
 
 # Build image cards (no visible labels)
 cards <- character(0)
