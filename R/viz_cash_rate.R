@@ -210,18 +210,27 @@ top3_df <- all_estimates_buckets %>%
   group_by(scrape_time) %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   ungroup() %>%
-  mutate(
+   mutate(
+    # 1) compute the raw diff (use this for both labelling & future drops)
+    diff_center = bucket - current_center,
+
+    # 2) classify with a tolerance (near) + catch-all for anything else
+    move = case_when(
+      near(diff_center, -0.50) ~ "-50 bp cut",
+      near(diff_center, -0.25) ~ "-25 bp cut",
+      near(diff_center,  0.00) ~ "No change",
+      near(diff_center,  0.25) ~ "+25 bp hike",
+      near(diff_center,  0.50) ~ "+50 bp hike",
+      TRUE                      ~ sprintf("%+.0f bp", diff_center * 100)
+    ),
+
+    # 3) if you still want a factor with the five standard levels at front:
     move = factor(
-      case_when(
-        bucket - current_center == -0.50 ~ "-50 bp cut",
-        bucket - current_center == -0.25 ~ "-25 bp cut",
-        bucket - current_center ==  0.00 ~ "No change",
-        bucket - current_center ==  0.25 ~ "+25 bp hike",
-        bucket - current_center ==  0.50 ~ "+50 bp hike",
-        TRUE                             ~ NA_character_
-      ),
-      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
+      move,
+      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
     )
+  ) %>%
+  select(-diff_center)
   )
 
 print(top3_df, n=20, width = Inf)
@@ -259,7 +268,7 @@ line <- ggplot(top3_df, aes(
   )
 
 # overwrite the previous PNG
-ggsave("docs/line_top3.png", line, width = 8, height = 5, dpi = 300)
+ggsave("docs/line.png", line, width = 8, height = 5, dpi = 300)
 
 
 # =============================================
@@ -267,9 +276,7 @@ ggsave("docs/line_top3.png", line, width = 8, height = 5, dpi = 300)
 # =============================================
 line_int <- line +
   aes(text = paste0(
-    format(scrape_time, "%Y-%m-%d %H:%M"),
-    "<br>Move: ", bucket,
-    "<br>Prob: ", scales::percent(probability, accuracy = 1)
+    format(scales::percent(probability, accuracy = 1)
   ))
 
 interactive_line <- ggplotly(line_int, tooltip = "text") %>%
