@@ -15,33 +15,18 @@ intro_paragraph <- '
 # Find PNGs for meeting charts
 png_files <- list.files("docs", pattern = "^rate_probabilities_.*\\.png$", full.names = FALSE)
 
-# Instead of stripping everything, use a regex to pull out the
-# month‐abbrev and year from the filename:
-#   rate_probabilities_Apr_2025.png  →  "Apr" and "2025"
-labels <- str_match(png_files, "^rate_probabilities_([A-Za-z]{3})_(\\d{4})\\.png$")
-# str_match returns a matrix: [,2] is month, [,3] is year
-month_abbrev <- labels[,2]
-year_str     <- labels[,3]
+labels <- png_files |>
+  str_remove("^rate_probabilities_") |>
+  str_remove("\\.png$") 
 
-# Now build a proper Date by pasting "01 " in front of them, and
-# using %b for abbreviated month
+# If label is “May_2025” or “05_2025”, try both formats
 dates <- suppressWarnings(
-  as.Date(paste0("01 ", month_abbrev, " ", year_str),
-          format = "%d %b %Y")
+  as.Date(paste0("01 ", labels), "%d %B %Y")
 )
-
-# Filter out any that failed to parse or are in the past
-valid_idx <- which(!is.na(dates) & dates > Sys.Date())
-
-# Subset
-png_files <- png_files[valid_idx]
-dates     <- dates[valid_idx]
-labels    <- paste(month_abbrev[valid_idx], year_str[valid_idx])
-
-# And then continue exactly as before, ordering by dates etc.
-order_idx <- order(dates)
-png_files <- png_files[order_idx]
-labels    <- labels[order_idx]
+dates_na <- which(is.na(dates))
+if (length(dates_na) > 0) {
+  dates[dates_na] <- as.Date(paste0("01 ", labels[dates_na]), "%d_%Y")
+}
 
 # Build image cards (no visible labels)
 cards <- character(0)
