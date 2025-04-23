@@ -252,12 +252,15 @@ line <- ggplot(top3_df, aes(
   geom_line(size = 1.2) +
   scale_color_manual(
     values = c(
-      "-50 bp cut"  = "#004B8E",
-      "-25 bp cut"  = "#5FA4D4",
-      "No change"   = "#BFBFBF",
-      "+25 bp hike" = "#E07C7C",
-      "+50 bp hike" = "#B50000"
+  "-75 bp or more cut" = "#000080",  # navy blue
+  "-50 bp cut"         = "#004B8E",
+  "-25 bp cut"         = "#5FA4D4",
+  "No change"          = "#BFBFBF",
+  "+25 bp hike"        = "#E07C7C",
+  "+50 bp hike"        = "#B50000",
+  "+75 bp or more hike"= "#800000"   # dark red
     ),
+    name = "",
     na.value = "grey80" 
   ) +  
  scale_x_datetime(
@@ -266,7 +269,7 @@ line <- ggplot(top3_df, aes(
 )  +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title    = paste("Cash Rate Moves for the Next Meeting on ", format(as.Date(next_meeting), "%d %b %Y")),
+    title    = paste("Cash Rate Moves for the Next Meeting on", format(as.Date(next_meeting), "%d %b %Y")),
     subtitle = paste("as of", format(as.Date(latest_scrape),   "%d %b %Y")),
     x        = "Forecast date",
     y        = "Probability"
