@@ -223,6 +223,8 @@ top3_df <- all_estimates_buckets %>%
     )
   )
 
+print(top3_df)
+                     
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
     x     = as.Date(scrape_time),
