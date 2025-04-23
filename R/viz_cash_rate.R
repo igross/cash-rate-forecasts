@@ -169,7 +169,7 @@ p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
     limits   = range(bar_df$diff_s, na.rm = TRUE)
   ) +
     labs(
-  #    title    = paste("Cash Rate Outcome Probabilities —", format(mt, "%d %B %Y")),
+      title    = paste("Cash Rate Outcome Probabilities —", format(mt, "%d %B %Y")),
   #    subtitle = paste("As of", format(latest_scrape, "%d %B %Y")),
       x        = "Target Rate (%)",
       y        = "Probability (%)"
@@ -262,9 +262,9 @@ line <- ggplot(top3_df, aes(
   ) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title    = paste("Cash‑Rate Moves – Next Meeting", format(next_meeting, "%d %b %Y")),
+    title    = paste("Cash Rate Moves for the Next Meeting on ", format(next_meeting, "%d %b %Y")),
     subtitle = paste("as of", format(latest_scrape,   "%d %b %Y")),
-    x        = "Forecast timestamp",
+    x        = "Forecast date",
     y        = "Probability"
   ) +
   theme_bw() +
