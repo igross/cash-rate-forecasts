@@ -204,36 +204,39 @@ next_meeting <- meeting_schedule %>%
 # 1) compute the true “no‐change” bucket centre once:
 current_center <- bucket_centers[which.min(abs(bucket_centers - current_rate))]
 
-# 2) rebuild top3_df so it maps correctly:
-top3_df <- all_estimates_buckets %>%
-  filter(meeting_date == next_meeting) %>%     # only the next meeting
-  group_by(scrape_time) %>%
+top3_buckets <- all_estimates_buckets %>%
+  filter(
+    scrape_time  == latest_scrape,
+    meeting_date == next_meeting
+  ) %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
-  ungroup() %>%
-   mutate(
-    # 1) compute the raw diff (use this for both labelling & future drops)
-    diff_center = bucket - current_center,
+  pull(bucket)
 
-    # 2) classify with a tolerance (near) + catch-all for anything else
+# B) now build top3_df by filtering all dates to those same 3 buckets
+top3_df <- all_estimates_buckets %>%
+  filter(
+    meeting_date == next_meeting,
+    bucket %in% top3_buckets
+  ) %>%
+  # compute diff & move exactly as before
+  mutate(
+    diff_center = bucket - current_center,
     move = case_when(
       near(diff_center, -0.50) ~ "-50 bp cut",
       near(diff_center, -0.25) ~ "-25 bp cut",
       near(diff_center,  0.00) ~ "No change",
       near(diff_center,  0.25) ~ "+25 bp hike",
       near(diff_center,  0.50) ~ "+50 bp hike",
-      TRUE                      ~ sprintf("%+.0f bp", diff_center * 100)
+      TRUE                      ~ sprintf("%+.0f bp", diff_center*100)
     ),
-
-    # 3) if you still want a factor with the five standard levels at front:
     move = factor(
       move,
       levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
     )
   ) %>%
   select(-diff_center)
-  
 
-print(top3_df, n=20, width = Inf)
+print(top3_df, n = 20, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
