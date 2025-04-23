@@ -196,7 +196,7 @@ p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
 next_meeting <- meeting_schedule %>%
   filter(meeting_date > Sys.Date()) %>%
   slice_min(meeting_date) %>%
-  pull(meeting_date)
+  pull(meeting_date) 
 
 # —————————————————————————————————————————————————————————————————————
 # build top3_df and turn the numeric bucket centers into descriptive moves
