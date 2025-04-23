@@ -170,7 +170,7 @@ p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
   ) +
     labs(
       title    = paste("Cash Rate Outcome Probabilities —", format(as.Date(mt), "%d %B %Y")),
-  #    subtitle = paste("As of", format(latest_scrape, "%d %B %Y")),
+      subtitle = paste("As of", format(as.Date(latest_scrape), "%d %B %Y")),
       x        = "Target Rate (%)",
       y        = "Probability (%)"
     ) +
@@ -244,7 +244,7 @@ print(top3_df, n = Inf, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
-    x     = as.Time(scrape_time),
+    x     = as.time(scrape_time),
     y     = probability,
     color = move,
     group = move
@@ -259,11 +259,15 @@ line <- ggplot(top3_df, aes(
       "+50 bp hike" = "#B50000"
     ),
     na.value = "grey80" 
+  ) + 
+  scale_x_date(
+    date_breaks = "1 day",
+    date_labels = "%d %b"       # e.g. "21 Apr"
   ) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title    = paste("Cash Rate Moves for the Next Meeting on ", format(next_meeting, "%d %b %Y")),
-    subtitle = paste("as of", format(latest_scrape,   "%d %b %Y")),
+    title    = paste("Cash Rate Moves for the Next Meeting on ", format(as.Date(next_meeting), "%d %b %Y")),
+    subtitle = paste("as of", format(as.Date(latest_scrape),   "%d %b %Y")),
     x        = "Forecast date",
     y        = "Probability"
   ) +
