@@ -299,13 +299,11 @@ line <- ggplot(top3_df, aes(
   ) +
   theme_bw() +
   theme(
-    axis.text.x          = element_text(angle = 45, hjust = 1),
-    legend.position      = c(1.02, 0.5),
-    legend.justification = c("left","center"),
-      axis.text.x  = element_text(size = 12),  # tick labels
-  axis.text.y  = element_text(size = 12),
-  axis.title.x = element_text(size = 14),  # axis titles
-  axis.title.y = element_text(size = 14)
+    axis.text.x  = element_text(angle = 45, hjust = 1, size = 12),
+    axis.text.y  = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = c(1.02, 0.5)
   ) 
 
 # overwrite the previous PNG
