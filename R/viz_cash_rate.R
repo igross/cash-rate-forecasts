@@ -92,46 +92,16 @@ all_estimates <- bind_rows(all_list) %>%
 # =============================================
 # 6) Build bucketed probabilities for each row
 # =============================================
-
+bucket_centers <- seq(0.10, 5.10, by = 0.25)
 half_width     <- 0.125
 
 current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
   filter(date == max(date)) %>%
   pull(value)
 
-bucket_centres <- seq(0.10, 5.10, by = 0.25)
-bucket_labels  <- c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike")
+current_center <- bucket_centers[ which.min( abs(bucket_centers - current_rate) ) ]
+# current_center == 4.10
 
-# 2) find today’s rate and locate its “no change” bucket
-current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
-  filter(date == max(date)) %>%
-  pull(value)
-# this picks the bucket centre closest to current_rate
-current_idx  <- which.min(abs(bucket_centres - current_rate))
-
-# 3) offsets of those five labels (in bucket‐index space)
-#    -2 → two buckets below = –50 bp (2 * 0.25 = 0.50)
-#    -1 → one bucket  below = –25 bp
-#     0 → exact bucket    = no change
-#    +1 → one bucket  above = +25 bp
-#    +2 → two buckets above = +50 bp
-offsets <- c(-2, -1, 0, +1, +2)
-
-# 4) initialize a vector of NAs and sprinkle in your five labels
-full_labels <- rep(NA_character_, length(bucket_centres))
-for (i in seq_along(offsets)) {
-  pos_raw <- current_idx + offsets[i]
-  # only write if it falls within your bucket_centres
-  if (pos_raw >= 1 && pos_raw <= length(bucket_centres)) {
-    full_labels[pos_raw] <- bucket_labels[i]
-  }
-}
-
-# 5) build a lookup and join it into your buckets data‐frame
-bucket_lookup <- tibble(
-  bucket = bucket_centres,
-  move   = factor(full_labels, levels = bucket_labels)
-)
 bucket_list <- vector("list", nrow(all_estimates))
 for (i in seq_len(nrow(all_estimates))) {
   mu_i    <- all_estimates$implied_mean[i]
@@ -158,7 +128,6 @@ for (i in seq_len(nrow(all_estimates))) {
     stdev       = sigma_i,
     bucket      = bucket_centers,
     probability = v, 
-    bucket_labels = bucket_labels,
     diff       = bucket - current_rate,
     diff_s     = sign(diff) * abs(diff)^(1/4)
   )
@@ -166,7 +135,7 @@ for (i in seq_len(nrow(all_estimates))) {
 
 all_estimates_buckets <- bind_rows(bucket_list)
 
-tail(all_estimates_buckets, n=20, width = Inf)
+print(all_estimates_buckets, n=20, width = Inf)
 
 # =============================================
 # 7 Bar charts for every future meeting (latest scrape)
@@ -242,20 +211,20 @@ top3_df <- all_estimates_buckets %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   ungroup() %>%
   mutate(
-  move = factor(
-    case_when(
-      abs(diff + 0.50) < 1e-1 ~ "-50 bp cut",
-      abs(diff + 0.25) < 1e-1 ~ "-25 bp cut",
-      abs(diff       ) < 1e-1 ~ "No change",
-      abs(diff - 0.25) < 1e-1 ~ "+25 bp hike",
-      abs(diff - 0.50) < 1e-1 ~ "+50 bp hike",
-      TRUE                    ~ sprintf("%.2f%%", bucket)
-    ),
-    levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
-  )
+    move = factor(
+      case_when(
+        bucket - current_center == -0.50 ~ "-50 bp cut",
+        bucket - current_center == -0.25 ~ "-25 bp cut",
+        bucket - current_center ==  0.00 ~ "No change",
+        bucket - current_center ==  0.25 ~ "+25 bp hike",
+        bucket - current_center ==  0.50 ~ "+50 bp hike",
+        TRUE                             ~ NA_character_
+      ),
+      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
+    )
   )
 
-tail(top3_df, n=20, width = Inf)
+print(top3_df, n=20, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
@@ -277,7 +246,7 @@ line <- ggplot(top3_df, aes(
   ) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title    = paste("Cash‑Rate Moves – Next Meeting", format(next_meeting, "%d %b %Y")),
+    title    = paste("Top 3 Cash‑Rate Moves – Next Meeting", format(next_meeting, "%d %b %Y")),
     subtitle = paste("as of", format(latest_scrape,   "%d %b %Y")),
     x        = "Forecast timestamp",
     y        = "Probability"
@@ -290,7 +259,7 @@ line <- ggplot(top3_df, aes(
   )
 
 # overwrite the previous PNG
-ggsave("docs/line.png", line, width = 8, height = 5, dpi = 300)
+ggsave("docs/line_top3.png", line, width = 8, height = 5, dpi = 300)
 
 
 # =============================================
