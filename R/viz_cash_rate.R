@@ -92,15 +92,16 @@ all_estimates <- bind_rows(all_list) %>%
 # =============================================
 # 6) Build bucketed probabilities for each row
 # =============================================
-bucket_centers <- seq(0.10, 5.10, by = 0.25)
+
 half_width     <- 0.125
 
 current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
   filter(date == max(date)) %>%
   pull(value)
 
-current_center <- bucket_centers[ which.min( abs(bucket_centers - current_rate) ) ]
-# current_center == 4.10
+bucket_centres <- seq(current_rate-0.50, current_rate+0.50, by = 0.25)
+
+bucket_labels  <- c("-50 bp cut", "-25 bp cut", "No change", "+25 bp hike", "+50 bp hike")
 
 bucket_list <- vector("list", nrow(all_estimates))
 for (i in seq_len(nrow(all_estimates))) {
@@ -128,6 +129,7 @@ for (i in seq_len(nrow(all_estimates))) {
     stdev       = sigma_i,
     bucket      = bucket_centers,
     probability = v, 
+    bucket_labels = bucket_labels,
     diff       = bucket - current_rate,
     diff_s     = sign(diff) * abs(diff)^(1/4)
   )
