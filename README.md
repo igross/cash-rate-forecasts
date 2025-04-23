@@ -29,7 +29,7 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 17,640 × 8
+    #> # A tibble: 17,787 × 8
     #>    scrape_time         meeting_date implied_mean stdev bucket probability   diff
     #>    <dttm>              <date>              <dbl> <dbl>  <dbl>       <dbl>  <dbl>
     #>  1 2025-04-01 12:00:00 2025-04-01           4.08    NA   0.1           NA -4    
@@ -74,9 +74,9 @@ are shown below:
     #> 18  0.707
     #> 19  0.841
     #> 20  0.931
-    #> # ℹ 17,620 more rows
+    #> # ℹ 17,767 more rows
     #> [1] 3.85 3.60 4.10
-    #> # A tibble: 360 × 9
+    #> # A tibble: 363 × 9
     #>     scrape_time         meeting_date implied_mean stdev bucket probability
     #>     <dttm>              <date>              <dbl> <dbl>  <dbl>       <dbl>
     #>   1 2025-04-01 12:00:00 2025-05-20           3.90 0.206   3.6       0.174 
@@ -439,6 +439,9 @@ are shown below:
     #> 358 2025-04-23 05:02:08 2025-05-20           3.81 0.104   3.6       0.196 
     #> 359 2025-04-23 05:02:08 2025-05-20           3.81 0.104   3.85      0.743 
     #> 360 2025-04-23 05:02:08 2025-05-20           3.81 0.104   4.1       0.0604
+    #> 361 2025-04-23 05:08:09 2025-05-20           3.81 0.104   3.6       0.196 
+    #> 362 2025-04-23 05:08:09 2025-05-20           3.81 0.104   3.85      0.743 
+    #> 363 2025-04-23 05:08:09 2025-05-20           3.81 0.104   4.1       0.0604
     #>       diff diff_s move      
     #>      <dbl>  <dbl> <fct>     
     #>   1 -0.500 -0.841 -50 bp cut
@@ -800,7 +803,10 @@ are shown below:
     #> 357  0      0     No change 
     #> 358 -0.500 -0.841 -50 bp cut
     #> 359 -0.250 -0.707 -25 bp cut
-    #> 360  0      0     No change
+    #> 360  0      0     No change 
+    #> 361 -0.500 -0.841 -50 bp cut
+    #> 362 -0.250 -0.707 -25 bp cut
+    #> 363  0      0     No change
     #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     #> ℹ Please use `linewidth` instead.
     #> This warning is displayed once every 8 hours.
