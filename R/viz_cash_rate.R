@@ -277,7 +277,7 @@ ggsave("docs/line.png", line, width = 8, height = 5, dpi = 300)
 line_int <- line +
   aes(text = paste0(
     format(scales::percent(probability, accuracy = 1)
-  ))
+  )))
 
 interactive_line <- ggplotly(line_int, tooltip = "text") %>%
   layout(
