@@ -260,10 +260,10 @@ line <- ggplot(top3_df, aes(
     ),
     na.value = "grey80" 
   ) + 
-  scale_x_date(
-    date_breaks = "1 day",
-    date_labels = "%d %b"       # e.g. "21 Apr"
-  ) +
+ scale_x_datetime(
+  date_breaks = "1 day",
+  date_labels = "%d %b"
+)  +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
     title    = paste("Cash Rate Moves for the Next Meeting on ", format(as.Date(next_meeting), "%d %b %Y")),
