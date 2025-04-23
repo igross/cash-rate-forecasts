@@ -867,11 +867,6 @@ are shown below:
     #> 391             0.145            0.182       0.182  -0.500 -0.841 -50 bp cut
     #> 392             0.855            0.769       0.769  -0.250 -0.707 -25 bp cut
     #> 393             0                0.0496      0.0496  0      0     No change
-    #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-    #> ℹ Please use `linewidth` instead.
-    #> This warning is displayed once every 8 hours.
-    #> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    #> generated.
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
