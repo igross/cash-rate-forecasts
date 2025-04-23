@@ -29,7 +29,7 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 13,818 × 8
+    #> # A tibble: 13,965 × 8
     #>    scrape_time         meeting_date implied_mean stdev bucket probability  diff
     #>    <dttm>              <date>              <dbl> <dbl>  <dbl>       <dbl> <dbl>
     #>  1 2025-04-01 12:00:00 2025-04-01           4.08    NA   0.1           NA -4   
@@ -42,8 +42,23 @@ are shown below:
     #>  8 2025-04-01 12:00:00 2025-04-01           4.08    NA   1.85          NA -2.25
     #>  9 2025-04-01 12:00:00 2025-04-01           4.08    NA   2.1           NA -2   
     #> 10 2025-04-01 12:00:00 2025-04-01           4.08    NA   2.35          NA -1.75
-    #> # ℹ 13,808 more rows
+    #> # ℹ 13,955 more rows
     #> # ℹ 1 more variable: diff_s <dbl>
+    #> # A tibble: 285 × 9
+    #>    scrape_time         meeting_date implied_mean stdev bucket probability   diff
+    #>    <dttm>              <date>              <dbl> <dbl>  <dbl>       <dbl>  <dbl>
+    #>  1 2025-04-01 12:00:00 2025-05-20           3.90 0.206   3.85       0.443 -0.250
+    #>  2 2025-04-01 12:00:00 2025-05-20           3.90 0.206   4.1        0.307  0    
+    #>  3 2025-04-01 12:00:00 2025-05-20           3.90 0.206   3.6        0.174 -0.500
+    #>  4 2025-04-02 12:00:00 2025-05-20           3.91 0.188   3.85       0.474 -0.250
+    #>  5 2025-04-02 12:00:00 2025-05-20           3.91 0.188   4.1        0.317  0    
+    #>  6 2025-04-02 12:00:00 2025-05-20           3.91 0.188   3.6        0.154 -0.500
+    #>  7 2025-04-03 12:00:00 2025-05-20           3.87 0.175   3.85       0.524 -0.250
+    #>  8 2025-04-03 12:00:00 2025-05-20           3.87 0.175   4.1        0.245  0    
+    #>  9 2025-04-03 12:00:00 2025-05-20           3.87 0.175   3.6        0.198 -0.500
+    #> 10 2025-04-04 12:00:00 2025-05-20           3.79 0.168   3.85       0.519 -0.250
+    #> # ℹ 275 more rows
+    #> # ℹ 2 more variables: diff_s <dbl>, move <fct>
     #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     #> ℹ Please use `linewidth` instead.
     #> This warning is displayed once every 8 hours.
