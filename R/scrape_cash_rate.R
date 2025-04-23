@@ -20,13 +20,14 @@ file_dates <- as.Date(dates_in_name, format = "%Y-%m-%d")
 # 4. compute cutoff
 cutoff_date <- Sys.Date() - weeks(8)
 
-# 5. select files older than cutoff
-to_remove <- old_csvs[!is.na(file_dates) & file_dates < cutoff_date]
+is_old       <- !is.na(file_dates) & file_dates < cutoff_date
+is_weekend   <- !is.na(file_dates) & lubridate::wday(file_dates) %in% c(1, 7)
+to_remove    <- old_csvs[is_old | is_weekend]
 
-# remove them (if any)
-if (length(to_remove) > 0) {
-  file.remove(to_remove)
-}
+ # 6. remove them (if any)
+ if (length(to_remove) > 0) {
+   file.remove(to_remove)
+ }
 
 json_url <- "https://asx.api.markitdigital.com/asx-research/1.0/derivatives/interest-rate/IB/futures?days=1&height=179&width=179"
 
