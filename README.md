@@ -29,7 +29,7 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 15,141 × 8
+    #> # A tibble: 15,288 × 8
     #>    scrape_time         meeting_date implied_mean stdev bucket probability   diff
     #>    <dttm>              <date>              <dbl> <dbl>  <dbl>       <dbl>  <dbl>
     #>  1 2025-04-01 12:00:00 2025-04-01           4.08    NA   0.1           NA -4    
@@ -74,8 +74,8 @@ are shown below:
     #> 18  0.707
     #> 19  0.841
     #> 20  0.931
-    #> # ℹ 15,121 more rows
-    #> # A tibble: 309 × 9
+    #> # ℹ 15,268 more rows
+    #> # A tibble: 312 × 9
     #>    scrape_time         meeting_date implied_mean stdev bucket probability   diff
     #>    <dttm>              <date>              <dbl> <dbl>  <dbl>       <dbl>  <dbl>
     #>  1 2025-04-01 12:00:00 2025-05-20           3.90 0.206   3.6       0.174  -0.500
@@ -120,7 +120,7 @@ are shown below:
     #> 18  0     No change 
     #> 19 -0.841 -50 bp cut
     #> 20 -0.707 -25 bp cut
-    #> # ℹ 289 more rows
+    #> # ℹ 292 more rows
     #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     #> ℹ Please use `linewidth` instead.
     #> This warning is displayed once every 8 hours.
