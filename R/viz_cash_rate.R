@@ -190,6 +190,8 @@ for (mt in future_meetings) {
   )
 }
 
+                     tail(bar_df,n=20,width=Inf)
+
 # =============================================
 # Define next_meeting (the very next date after today)
 # =============================================
