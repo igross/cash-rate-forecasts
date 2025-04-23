@@ -622,7 +622,7 @@ repo.</p>
 <h1 id="graphs">Graphs!</h1>
 <p>The file <code>R/viz_cash_rate.R</code> produces visualisations of
 this data, which are shown below:</p>
-<pre><code>#&gt; # A tibble: 18,375 × 8
+<pre><code>#&gt; # A tibble: 18,522 × 8
 #&gt;    scrape_time         meeting_date implied_mean stdev bucket probability   diff
 #&gt;    &lt;dttm&gt;              &lt;date&gt;              &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt;
 #&gt;  1 2025-04-01 12:00:00 2025-04-01           4.08    NA   0.1           NA -4    
@@ -667,9 +667,9 @@ this data, which are shown below:</p>
 #&gt; 18  0.707
 #&gt; 19  0.841
 #&gt; 20  0.931
-#&gt; # ℹ 18,355 more rows
+#&gt; # ℹ 18,502 more rows
 #&gt; [1] 3.85 3.60 4.10
-#&gt; # A tibble: 375 × 9
+#&gt; # A tibble: 378 × 9
 #&gt;     scrape_time         meeting_date implied_mean stdev bucket probability
 #&gt;     &lt;dttm&gt;              &lt;date&gt;              &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt;
 #&gt;   1 2025-04-01 12:00:00 2025-05-20           3.90 0.206   3.6       0.174 
@@ -1047,6 +1047,9 @@ this data, which are shown below:</p>
 #&gt; 373 2025-04-23 05:47:04 2025-05-20           3.81 0.104   3.6       0.196 
 #&gt; 374 2025-04-23 05:47:04 2025-05-20           3.81 0.104   3.85      0.743 
 #&gt; 375 2025-04-23 05:47:04 2025-05-20           3.81 0.104   4.1       0.0604
+#&gt; 376 2025-04-23 05:53:07 2025-05-20           3.81 0.104   3.6       0.196 
+#&gt; 377 2025-04-23 05:53:07 2025-05-20           3.81 0.104   3.85      0.743 
+#&gt; 378 2025-04-23 05:53:07 2025-05-20           3.81 0.104   4.1       0.0604
 #&gt;       diff diff_s move      
 #&gt;      &lt;dbl&gt;  &lt;dbl&gt; &lt;fct&gt;     
 #&gt;   1 -0.500 -0.841 -50 bp cut
@@ -1423,7 +1426,10 @@ this data, which are shown below:</p>
 #&gt; 372  0      0     No change 
 #&gt; 373 -0.500 -0.841 -50 bp cut
 #&gt; 374 -0.250 -0.707 -25 bp cut
-#&gt; 375  0      0     No change
+#&gt; 375  0      0     No change 
+#&gt; 376 -0.500 -0.841 -50 bp cut
+#&gt; 377 -0.250 -0.707 -25 bp cut
+#&gt; 378  0      0     No change
 #&gt; Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
 #&gt; ℹ Please use `linewidth` instead.
 #&gt; This warning is displayed once every 8 hours.
