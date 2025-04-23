@@ -169,7 +169,7 @@ p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
     limits   = range(bar_df$diff_s, na.rm = TRUE)
   ) +
     labs(
-      title    = paste("Cash Rate Outcome Probabilities —", format(mt, "%d %B %Y")),
+      title    = paste("Cash Rate Outcome Probabilities —", format(as.Date(mt), "%d %B %Y")),
   #    subtitle = paste("As of", format(latest_scrape, "%d %B %Y")),
       x        = "Target Rate (%)",
       y        = "Probability (%)"
