@@ -248,11 +248,11 @@ line <- ggplot(top3_df, aes(
   geom_line(size = 1.2) +
   scale_color_manual(
     values = c(
-      "-50 bp cut"  = "#004B8E",
-      "-25 bp cut"  = "#5FA4D4",
+      "-50 bp cut"  = "#004B8E",
+      "-25 bp cut"  = "#5FA4D4",
       "No change"   = "#BFBFBF",
-      "+25 bp hike" = "#E07C7C",
-      "+50 bp hike" = "#B50000"
+      "+25 bp hike" = "#E07C7C",
+      "+50 bp hike" = "#B50000"
     ),
     na.value = "grey80"
   ) +
