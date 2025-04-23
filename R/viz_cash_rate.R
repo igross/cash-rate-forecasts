@@ -135,7 +135,7 @@ for (i in seq_len(nrow(all_estimates))) {
 
 all_estimates_buckets <- bind_rows(bucket_list)
 
-print(all_estimates_buckets, n=20, width = Inf)
+tail(all_estimates_buckets, n=20, width = Inf)
 
 # =============================================
 # 7 Bar charts for every future meeting (latest scrape)
@@ -211,17 +211,17 @@ top3_df <- all_estimates_buckets %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   ungroup() %>%
   mutate(
-    move = factor(
-      case_when(
-        bucket - current_center == -0.50 ~ "-50 bp cut",
-        bucket - current_center == -0.25 ~ "-25 bp cut",
-        bucket - current_center ==  0.00 ~ "No change",
-        bucket - current_center ==  0.25 ~ "+25 bp hike",
-        bucket - current_center ==  0.50 ~ "+50 bp hike",
-        TRUE                             ~ NA_character_
-      ),
-      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
-    )
+  move = factor(
+    case_when(
+      abs(diff + 0.50) < 1e-3 ~ "-50 bp cut",
+      abs(diff + 0.25) < 1e-3 ~ "-25 bp cut",
+      abs(diff       ) < 1e-3 ~ "No change",
+      abs(diff - 0.25) < 1e-3 ~ "+25 bp hike",
+      abs(diff - 0.50) < 1e-3 ~ "+50 bp hike",
+      TRUE                    ~ sprintf("%.2f%%", bucket)
+    ),
+    levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
+  )
   )
 
 print(top3_df, n=20, width = Inf)
