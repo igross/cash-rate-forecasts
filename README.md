@@ -29,7 +29,7 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 14,700 × 8
+    #> # A tibble: 14,847 × 8
     #>    scrape_time         meeting_date implied_mean stdev bucket probability   diff
     #>    <dttm>              <date>              <dbl> <dbl>  <dbl>       <dbl>  <dbl>
     #>  1 2025-04-01 12:00:00 2025-04-01           4.08    NA   0.1           NA -4    
@@ -74,8 +74,8 @@ are shown below:
     #> 18  0.707
     #> 19  0.841
     #> 20  0.931
-    #> # ℹ 14,680 more rows
-    #> # A tibble: 300 × 9
+    #> # ℹ 14,827 more rows
+    #> # A tibble: 303 × 9
     #>    scrape_time         meeting_date implied_mean stdev bucket probability   diff
     #>    <dttm>              <date>              <dbl> <dbl>  <dbl>       <dbl>  <dbl>
     #>  1 2025-04-01 12:00:00 2025-05-20           3.90 0.206   3.85      0.443  -0.250
@@ -98,29 +98,29 @@ are shown below:
     #> 18 2025-04-08 12:00:00 2025-05-20           3.75 0.154   4.1       0.0691  0    
     #> 19 2025-04-09 12:00:00 2025-05-20           3.63 0.146   3.6       0.604  -0.500
     #> 20 2025-04-09 12:00:00 2025-05-20           3.63 0.146   3.85      0.255  -0.250
-    #>    diff_s move     
-    #>     <dbl> <fct>    
-    #>  1 -0.707 <NA>     
-    #>  2  0     No change
-    #>  3 -0.841 <NA>     
-    #>  4 -0.707 <NA>     
-    #>  5  0     No change
-    #>  6 -0.841 <NA>     
-    #>  7 -0.707 <NA>     
-    #>  8  0     No change
-    #>  9 -0.841 <NA>     
-    #> 10 -0.707 <NA>     
-    #> 11 -0.841 <NA>     
-    #> 12  0     No change
-    #> 13 -0.841 <NA>     
-    #> 14 -0.707 <NA>     
-    #> 15 -0.931 <NA>     
-    #> 16 -0.707 <NA>     
-    #> 17 -0.841 <NA>     
-    #> 18  0     No change
-    #> 19 -0.841 <NA>     
-    #> 20 -0.707 <NA>     
-    #> # ℹ 280 more rows
+    #>    diff_s move      
+    #>     <dbl> <fct>     
+    #>  1 -0.707 -25 bp cut
+    #>  2  0     No change 
+    #>  3 -0.841 -50 bp cut
+    #>  4 -0.707 -25 bp cut
+    #>  5  0     No change 
+    #>  6 -0.841 -50 bp cut
+    #>  7 -0.707 -25 bp cut
+    #>  8  0     No change 
+    #>  9 -0.841 -50 bp cut
+    #> 10 -0.707 -25 bp cut
+    #> 11 -0.841 -50 bp cut
+    #> 12  0     No change 
+    #> 13 -0.841 -50 bp cut
+    #> 14 -0.707 -25 bp cut
+    #> 15 -0.931 <NA>      
+    #> 16 -0.707 -25 bp cut
+    #> 17 -0.841 -50 bp cut
+    #> 18  0     No change 
+    #> 19 -0.841 -50 bp cut
+    #> 20 -0.707 -25 bp cut
+    #> # ℹ 283 more rows
     #> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
     #> ℹ Please use `linewidth` instead.
     #> This warning is displayed once every 8 hours.
