@@ -212,6 +212,8 @@ top3_buckets <- all_estimates_buckets %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
   pull(bucket)
 
+print(top3_buckets)
+
 # B) now build top3_df by filtering all dates to those same 3 buckets
 top3_df <- all_estimates_buckets %>%
   filter(
@@ -222,11 +224,13 @@ top3_df <- all_estimates_buckets %>%
   mutate(
     diff_center = bucket - current_center,
     move = case_when(
+      near(diff_center, -0.75) ~ "-75 bp cut",
       near(diff_center, -0.50) ~ "-50 bp cut",
       near(diff_center, -0.25) ~ "-25 bp cut",
       near(diff_center,  0.00) ~ "No change",
       near(diff_center,  0.25) ~ "+25 bp hike",
       near(diff_center,  0.50) ~ "+50 bp hike",
+      near(diff_center,  0.75) ~ "+75 bp hike",
       TRUE                      ~ sprintf("%+.0f bp", diff_center*100)
     ),
     move = factor(
@@ -236,7 +240,7 @@ top3_df <- all_estimates_buckets %>%
   ) %>%
   select(-diff_center)
 
-print(top3_df, n = 20, width = Inf)
+print(top3_df, n = Inf, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
