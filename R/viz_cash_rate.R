@@ -265,7 +265,7 @@ line <- ggplot(top3_df, aes(
     color = move,
     group = move
   )) +
-  geom_line(size = 1.2) +
+  geom_line(linewidth = 1.2) +
   scale_color_manual(
     values = c(
   "-75 bp or more cut" = "#000080",  # navy blue
