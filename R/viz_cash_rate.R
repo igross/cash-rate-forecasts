@@ -262,7 +262,7 @@ line <- ggplot(top3_df, aes(
   ) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title    = paste("Top 3 Cash‑Rate Moves – Next Meeting", format(next_meeting, "%d %b %Y")),
+    title    = paste("Cash‑Rate Moves – Next Meeting", format(next_meeting, "%d %b %Y")),
     subtitle = paste("as of", format(latest_scrape,   "%d %b %Y")),
     x        = "Forecast timestamp",
     y        = "Probability"
