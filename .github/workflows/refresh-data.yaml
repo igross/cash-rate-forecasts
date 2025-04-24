@@ -2,9 +2,7 @@
 on:
   schedule:
   # 23:00–05:00 UTC → 10:00–16:00 AEST (non-DST)
-  - cron: '*/15 23,0-5 * * 1-5'
-  # 00:00–06:00 UTC → 11:00–17:00 AEDT (DST shift, still captures 10:00–16:00 AEDT)
-  - cron: '*/15 0-6 * * 1-5'
+  - cron: '*/15 23,0-6 * * 1-5'
   push:
     branches: [main, master]
   pull_request:
