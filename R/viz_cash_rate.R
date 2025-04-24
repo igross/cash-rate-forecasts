@@ -260,7 +260,7 @@ print(top3_df, n = Inf, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
-    x     = scrape_time  + hours(10),
+    x     = scrape_time  + hours(34),
     y     = probability,
     color = move,
     group = move
