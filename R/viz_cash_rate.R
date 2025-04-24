@@ -20,8 +20,8 @@ cash_rate <- readRDS("combined_data/all_data.Rds")    # columns: date, cash_rate
 load("combined_data/rmse_days.RData")                 # object rmse_days: days_to_meeting ↦ finalrmse
 
 blend_weight <- function(days_to_meeting) {
-  # Linear blend from 0 to 1 over last 14 days
-  pmax(0, pmin(1, 1 - days_to_meeting / 14))
+  # Linear blend from 0 to 1 over last 30 days
+  pmax(0, pmin(1, 1 - days_to_meeting / 30))
 }
 
 # =============================================
