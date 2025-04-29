@@ -90,7 +90,7 @@ all_list <- map(scrapes, function(scr) {
 all_estimates <- bind_rows(all_list) %>%
   filter(!is.na(meeting_date)) %>%
   left_join(rmse_days, by = "days_to_meeting") %>%
-  rename(stdev = finalrmse)
+  rename(stdev = 'RMSEPre-CPI')
 
 # =============================================
 # 6) Build bucketed probabilities for each row
