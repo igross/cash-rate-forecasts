@@ -87,6 +87,8 @@ all_list <- map(scrapes, function(scr) {
   bind_rows(out)
 })
 
+print(rmse_days)
+
 all_estimates <- bind_rows(all_list) %>%
   filter(!is.na(meeting_date)) %>%
   left_join(rmse_days, by = "days_to_meeting") %>%
