@@ -91,7 +91,10 @@ print(rmse_days)
 
 all_estimates <- bind_rows(all_list) %>%
   filter(!is.na(meeting_date)) %>%
-  left_join(rmse_days, by = "days_to_meeting") %>%
+   left_join(
+    rmse_days,
+    by = c("days_to_meeting" = "Days_to_Meeting")
+  ) %>%
   rename(stdev = `RMSEPre-CPI`) %>%
   rename(stdev_cpi = `RMSEPost-CPI`)
 
