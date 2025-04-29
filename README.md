@@ -29,7 +29,7 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 27,048 × 11
+    #> # A tibble: 27,195 × 11
     #>    scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
     #>    <dttm>              <date>              <dbl> <dbl>           <int>  <dbl>
     #>  1 2025-04-01 12:00:00 2025-04-01           4.08    NA               0   0.1 
@@ -74,9 +74,9 @@ are shown below:
     #> 18             0                    NA          NA  0.25   0.707
     #> 19             0                    NA          NA  0.5    0.841
     #> 20             0                    NA          NA  0.75   0.931
-    #> # ℹ 27,028 more rows
+    #> # ℹ 27,175 more rows
     #> [1] 3.85 3.60 4.10
-    #> # A tibble: 552 × 12
+    #> # A tibble: 555 × 12
     #>     scrape_time         meeting_date implied_mean  stdev days_to_meeting bucket
     #>     <dttm>              <date>              <dbl>  <dbl>           <int>  <dbl>
     #>   1 2025-04-01 12:00:00 2025-05-20           3.90 0.206               49   3.6 
@@ -631,6 +631,9 @@ are shown below:
     #> 550 2025-04-29 03:49:10 2025-05-20           3.83 0.0799              22   3.6 
     #> 551 2025-04-29 03:49:10 2025-05-20           3.83 0.0799              22   3.85
     #> 552 2025-04-29 03:49:10 2025-05-20           3.83 0.0799              22   4.1 
+    #> 553 2025-04-29 04:13:36 2025-05-20           3.83 0.0799              22   3.6 
+    #> 554 2025-04-29 04:13:36 2025-05-20           3.83 0.0799              22   3.85
+    #> 555 2025-04-29 04:13:36 2025-05-20           3.83 0.0799              22   4.1 
     #>     probability_linear probability_prob probability   diff diff_s move      
     #>                  <dbl>            <dbl>       <dbl>  <dbl>  <dbl> <fct>     
     #>   1             0                0.174       0.174  -0.500 -0.841 -50 bp cut
@@ -1184,7 +1187,10 @@ are shown below:
     #> 549             0                0.0318      0.0233  0      0     No change 
     #> 550             0.0933           0.102       0.0995 -0.500 -0.841 -50 bp cut
     #> 551             0.907            0.867       0.877  -0.250 -0.707 -25 bp cut
-    #> 552             0                0.0318      0.0233  0      0     No change
+    #> 552             0                0.0318      0.0233  0      0     No change 
+    #> 553             0.0933           0.102       0.0995 -0.500 -0.841 -50 bp cut
+    #> 554             0.907            0.867       0.877  -0.250 -0.707 -25 bp cut
+    #> 555             0                0.0318      0.0233  0      0     No change
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
