@@ -43,7 +43,7 @@ are shown below:
     #>  9        0.0340        0.00920               9
     #> 10        0.0400        0.0230               10
     #> # ℹ 514 more rows
-    #> # A tibble: 27,783 × 11
+    #> # A tibble: 27,930 × 11
     #>    scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
     #>    <dttm>              <date>              <dbl> <dbl>           <int>  <dbl>
     #>  1 2025-04-01 12:00:00 2025-04-01           4.08    NA               0   0.1 
@@ -88,9 +88,9 @@ are shown below:
     #> 18             0                    NA          NA  0.25   0.707
     #> 19             0                    NA          NA  0.5    0.841
     #> 20             0                    NA          NA  0.75   0.931
-    #> # ℹ 27,763 more rows
+    #> # ℹ 27,910 more rows
     #> [1] 3.85 3.60 0.10
-    #> # A tibble: 567 × 12
+    #> # A tibble: 570 × 12
     #>     scrape_time         meeting_date implied_mean  stdev days_to_meeting bucket
     #>     <dttm>              <date>              <dbl>  <dbl>           <int>  <dbl>
     #>   1 2025-04-01 12:00:00 2025-05-20           3.90 0.0987              49   0.1 
@@ -660,6 +660,9 @@ are shown below:
     #> 565 2025-04-29 05:32:51 2025-05-20           3.83 0.0472              22   0.1 
     #> 566 2025-04-29 05:32:51 2025-05-20           3.83 0.0472              22   3.6 
     #> 567 2025-04-29 05:32:51 2025-05-20           3.83 0.0472              22   3.85
+    #> 568 2025-04-29 06:16:23 2025-05-20           3.83 0.0472              22   0.1 
+    #> 569 2025-04-29 06:16:23 2025-05-20           3.83 0.0472              22   3.6 
+    #> 570 2025-04-29 06:16:23 2025-05-20           3.83 0.0472              22   3.85
     #>     probability_linear probability_prob probability   diff diff_s move      
     #>                  <dbl>            <dbl>       <dbl>  <dbl>  <dbl> <fct>     
     #>   1             0                0           0      -4     -1.41  <NA>      
@@ -1229,6 +1232,9 @@ are shown below:
     #> 565             0                0           0      -4     -1.41  <NA>      
     #> 566             0.0933           0.0156      0.0156 -0.500 -0.841 -50 bp cut
     #> 567             0.907            0.984       0.984  -0.250 -0.707 -25 bp cut
+    #> 568             0                0           0      -4     -1.41  <NA>      
+    #> 569             0.0933           0.0156      0.0156 -0.500 -0.841 -50 bp cut
+    #> 570             0.907            0.984       0.984  -0.250 -0.707 -25 bp cut
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
