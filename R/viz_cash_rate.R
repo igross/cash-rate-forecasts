@@ -21,7 +21,7 @@ load("combined_data/rmse_days.RData")                 # object rmse_days: days_t
 
 blend_weight <- function(days_to_meeting) {
   # Linear blend from 0 to 1 over last 30 days
-  pmax(0, pmin(1, 0.5 - days_to_meeting / 30))
+  pmax(0, pmin(1, 1 - days_to_meeting / 30))
 }
 
 # =============================================
@@ -87,16 +87,10 @@ all_list <- map(scrapes, function(scr) {
   bind_rows(out)
 })
 
-print(rmse_days)
-
 all_estimates <- bind_rows(all_list) %>%
   filter(!is.na(meeting_date)) %>%
-   left_join(
-    rmse_days,
-    by = c("days_to_meeting" = "Days_to_Meeting")
-  ) %>%
-  rename(stdev = `RMSEPre-CPI`) %>%
-  rename(stdev_cpi = `RMSEPost-CPI`)
+  left_join(rmse_days, by = "days_to_meeting") %>%
+  rename(stdev = finalrmse)
 
 # =============================================
 # 6) Build bucketed probabilities for each row
