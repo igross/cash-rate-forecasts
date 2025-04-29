@@ -21,7 +21,7 @@ load("combined_data/rmse_days.RData")                 # object rmse_days: days_t
 
 blend_weight <- function(days_to_meeting) {
   # Linear blend from 0 to 1 over last 30 days
-  pmax(0, pmin(1, 1 - days_to_meeting / 30))
+  pmax(0, pmin(1, 0.5 - days_to_meeting / 30))
 }
 
 # =============================================
