@@ -48,6 +48,7 @@ new_data <- fromJSON(json_file) %>%
   filter(pricePreviousSettlement != 0) %>%
   select(date, cash_rate, scrape_date, scrape_time)
 
+print(new_data)
 
 # after you have new_data
 
