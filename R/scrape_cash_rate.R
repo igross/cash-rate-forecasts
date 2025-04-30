@@ -43,7 +43,7 @@ new_data <- fromJSON(json_file) %>%
     date         = ymd(dateExpiry) %>% floor_date("month"),
     scrape_date  = ymd(datePreviousSettlement),
     scrape_time  = now(tzone = "Australia/Melbourne"),
-    cash_rate    = 100 - pricePreviousSettlement
+    cash_rate    = 100 - priceLastTrade
   ) %>%
   filter(pricePreviousSettlement != 0) %>%
   select(date, cash_rate, scrape_date, scrape_time)
