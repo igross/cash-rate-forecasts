@@ -94,12 +94,17 @@ all_list <- map(scrapes, function(scr) {
     if (!is.na(row$meeting_date)) rt <- r_tp1
   }
 
-  bind_rows(out)
+   result <- bind_rows(out) %>%
+    filter(days_to_meeting >= 0)
+  
+  # if there’s nothing left, skip
+  if (nrow(result)==0) return(NULL)
+
+  result
+  
 })
 
 all_estimates <- bind_rows(all_list) %>%
-  # —— NEW: drop any meeting that’s already occurred
-  filter(days_to_meeting >= 0) %>%
   left_join(rmse_days, by = "days_to_meeting") %>%
   rename(stdev = finalrmse)
 
