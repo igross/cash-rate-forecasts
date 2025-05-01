@@ -290,7 +290,9 @@ line <- ggplot(top3_df, aes(
     },  
     date_labels = "%d %b"  
   ) + 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_y_continuous( limits = c(0, 1),
+    expand = c(0, 0),
+                     labels = scales::percent_format(accuracy = 1)) +
   labs(
     title    = paste("Cash Rate Moves for the Next Meeting on", format(as.Date(next_meeting), "%d %b %Y")),
     subtitle = paste("as of", format(as.Date(latest_scrape),   "%d %b %Y")),
