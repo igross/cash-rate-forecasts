@@ -29,7 +29,7 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 34,062 × 11
+    #> # A tibble: 33,936 × 11
     #>    scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
     #>    <dttm>              <date>              <dbl> <dbl>           <int>  <dbl>
     #>  1 2025-04-01 12:00:00 2025-04-01           4.08    NA               0   0.1 
@@ -74,7 +74,7 @@ are shown below:
     #> 18             0                    NA          NA  0.25   0.707
     #> 19             0                    NA          NA  0.5    0.841
     #> 20             0                    NA          NA  0.75   0.931
-    #> # ℹ 34,042 more rows
+    #> # ℹ 33,916 more rows
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
