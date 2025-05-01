@@ -100,6 +100,8 @@ all_estimates <- bind_rows(all_list) %>%
   left_join(rmse_days, by = "days_to_meeting") %>%
   rename(stdev = finalrmse)
 
+print(all_estimates, n=Inf, width=Inf)
+
 # =============================================
 # 6) Build bucketed probabilities for each row
 # =============================================
