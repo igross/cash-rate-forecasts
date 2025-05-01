@@ -104,7 +104,13 @@ all_list <- map(scrapes, function(scr) {
   
 })
 
-all_estimates <- bind_rows(all_list) %>%
+print(all_list)
+
+clean_list <- compact(all_list)
+
+all_estimates <- bind_rows(clean_list) %>%
+  # now days_to_meeting definitely exists
+  filter(days_to_meeting >= 0) %>%  
   left_join(rmse_days, by = "days_to_meeting") %>%
   rename(stdev = finalrmse)
 
