@@ -48,17 +48,25 @@ scrapes   <- all_times[all_times > last_meeting]   # every scrape after the last
 # 5) Build implied‐mean panel for each scrape × meeting
 # =============================================
 all_list <- map(scrapes, function(scr) {
-  scr_date <- as.Date(scr)  # convert POSIXct to Date
+  scr_date <- as.Date(scr)
 
-  df <- cash_rate %>%
-    filter(scrape_time == scr) %>%
-    select(date, forecast_rate = cash_rate) %>%
-    filter(date >= min(meeting_schedule$expiry),
-           date <= max(meeting_schedule$expiry)) %>%
-    left_join(meeting_schedule, by = c("date" = "expiry")) %>%
-    distinct() %>% 
+  # 1) for this scrape, get the most recent price for each expiry
+  df_rates <- cash_rate %>%
+    filter(scrape_time <= scr) %>%
+    group_by(date) %>%
+    slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
+    select(date, forecast_rate = cash_rate)
+
+  # 2) build one row per expiry, pull in that last‐known price, and attach meeting dates
+  df <- meeting_schedule %>%
+    rename(date = expiry) %>%               # bring your 'expiry' column into alignment
+    distinct(date, meeting_date) %>%
+    mutate(scrape_time = scr) %>%
+    left_join(df_rates, by = "date") %>%    # now every expiry is present, even if the price is from an earlier scrape
     arrange(date)
 
+  # 3) run your existing implied‐mean loop
   rt  <- df$forecast_rate[1]
   out <- vector("list", nrow(df))
 
