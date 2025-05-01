@@ -60,16 +60,18 @@ all_list <- map(scrapes, function(scr) {
 
   # 2) build one row per expiry, pull in that last‐known price, and attach meeting dates
   df <- meeting_schedule %>%
-    rename(date = expiry) %>%               # bring your 'expiry' column into alignment
+    rename(date = expiry) %>% 
     distinct(date, meeting_date) %>%
     mutate(scrape_time = scr) %>%
-    left_join(df_rates, by = "date") %>%    # now every expiry is present, even if the price is from an earlier scrape
+    left_join(df_rates, by = "date") %>% 
     arrange(date)
 
-  # 3) run your existing implied‐mean loop
+  # —— NEW: if we don’t even have the first expiry’s price yet, skip this scrape entirely
+  if (is.na(df$forecast_rate[1])) return(NULL)
+
+  # 3) run your implied‐mean loop
   rt  <- df$forecast_rate[1]
   out <- vector("list", nrow(df))
-
   for (i in seq_len(nrow(df))) {
     row <- df[i, ]
     dim <- days_in_month(row$date)
@@ -96,9 +98,11 @@ all_list <- map(scrapes, function(scr) {
 })
 
 all_estimates <- bind_rows(all_list) %>%
-  filter(!is.na(meeting_date)) %>%
+  # —— NEW: drop any meeting that’s already occurred
+  filter(days_to_meeting >= 0) %>%
   left_join(rmse_days, by = "days_to_meeting") %>%
   rename(stdev = finalrmse)
+
 
 print(all_estimates, n=Inf, width=Inf)
 
