@@ -220,15 +220,14 @@ next_meeting <- meeting_schedule %>%
 # 1) compute the true “no‐change” bucket centre once:
 current_center <- bucket_centers[which.min(abs(bucket_centers - current_rate))]
 
-top3_buckets <- all_estimates_buckets %>%
-  filter(
-    scrape_time  == latest_scrape,
-    meeting_date == next_meeting
-  ) %>%
-  slice_max(order_by = probability, n = 3, with_ties = FALSE) %>%
+top3_buckets <- all_estimates_buckets %>% 
+  filter(meeting_date == next_meeting) %>%          # keep the target meeting
+  group_by(bucket) %>%                              # pool all scrapes
+  summarise(probability = mean(probability, na.rm = TRUE),
+            .groups = "drop") %>%                   # average across scrapes
+  slice_max(order_by = probability, n = 3, with_ties = FALSE) %>% 
   pull(bucket)
 
-print(top3_buckets)
 
 # B) now build top3_df by filtering all dates to those same 3 buckets
 top3_df <- all_estimates_buckets %>%
@@ -256,7 +255,7 @@ top3_df <- all_estimates_buckets %>%
   ) %>%
   select(-diff_center)
 
-print(top3_df, n = Inf, width = Inf)
+tail(top3_df, n = 10, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
