@@ -50,34 +50,35 @@ scrapes   <- all_times[all_times > last_meeting]   # every scrape after the last
 all_list <- map(scrapes, function(scr) {
   scr_date <- as.Date(scr)
 
-  # 1) for this scrape, get the most recent price for each expiry
+  # 1) grab the last‐known price for each expiry up to this scrape
   df_rates <- cash_rate %>%
     filter(scrape_time <= scr) %>%
     group_by(date) %>%
     slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
     ungroup() %>%
-    select(date, forecast_rate = cash_rate)
+    select(expiry = date, forecast_rate = cash_rate)
 
-  # 2) build one row per expiry, pull in that last‐known price, and attach meeting dates
+  # 2) join onto your schedule
   df <- meeting_schedule %>%
-    rename(date = expiry) %>% 
-    distinct(date, meeting_date) %>%
+    distinct(expiry, meeting_date) %>%
     mutate(scrape_time = scr) %>%
-    left_join(df_rates, by = "date") %>% 
-    arrange(date)
+    left_join(df_rates, by = "expiry") %>%
+    arrange(expiry)
 
-  # —— NEW: if we don’t even have the first expiry’s price yet, skip this scrape entirely
-  if (is.na(df$forecast_rate[1])) return(NULL)
+  # 3) lose exactly those expiries with no price yet
+  df <- df %>% filter(!is.na(forecast_rate))
+  if (nrow(df) == 0) return(NULL)
 
-  # 3) run your implied‐mean loop
+  # 4) now build your implied‐mean panel
   rt  <- df$forecast_rate[1]
   out <- vector("list", nrow(df))
+
   for (i in seq_len(nrow(df))) {
     row <- df[i, ]
-    dim <- days_in_month(row$date)
+    dim <- lubridate::days_in_month(row$expiry)
 
     if (!is.na(row$meeting_date)) {
-      nb    <- (day(row$meeting_date) - 1) / dim
+      nb    <- (lubridate::day(row$meeting_date) - 1) / dim
       na    <- 1 - nb
       r_tp1 <- (row$forecast_rate - rt * nb) / na
     } else {
@@ -94,26 +95,17 @@ all_list <- map(scrapes, function(scr) {
     if (!is.na(row$meeting_date)) rt <- r_tp1
   }
 
-   result <- bind_rows(out) %>%
-    filter(days_to_meeting >= 0)
-  
-  # if there’s nothing left, skip
-  if (nrow(result)==0) return(NULL)
-
-  result
-  
+  bind_rows(out)
 })
 
-print(all_list)
-
-clean_list <- compact(all_list)
-
-all_estimates <- bind_rows(clean_list) %>%
-  # now days_to_meeting definitely exists
-  filter(days_to_meeting >= 0) %>%  
+all_estimates <- all_list %>%
+  compact() %>%                    # drop the NULLs
+  bind_rows() %>%
+  filter(days_to_meeting >= 0) %>% # only future meetings
   left_join(rmse_days, by = "days_to_meeting") %>%
   rename(stdev = finalrmse)
 
+print(all_list)
 
 print(all_estimates, n=Inf, width=Inf)
 
