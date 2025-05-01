@@ -334,7 +334,7 @@ ggsave("docs/line.png", line, width = 8, height = 5, dpi = 300)
 # =============================================
 line_int <- line +
   aes(text = paste0(
-    "Date: ", format(scrape_time + hours(10), "%Y-%m-%d %H:%M"), "<br>",
+    "", format(scrape_time + hours(10), "%m-%d %H:%M"), "<br>",
     "Probability: ", scales::percent(probability, accuracy = 1)
   ))
 
