@@ -297,7 +297,7 @@ line <- ggplot(top3_df, aes(
     na.value = "grey80" 
   ) +  
 scale_x_datetime(
-  limits = function(x) c(min(x), max(x) + days(3))   # axis extends 3 days
+  limits = function(x) c(min(x), max(x) + days(3)),   # axis extends 3 days
   breaks = function(x) {
     start <- lubridate::floor_date(min(x), "day") + lubridate::hours(10)
     end   <- floor_date(max(x), "day") + hours(10) + days(3)  # ticks cover buffer
