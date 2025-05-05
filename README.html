@@ -3622,7 +3622,19 @@ this data, which are shown below:</p>
 #&gt; 6 2025-05-05 00:20:47 2025-11-04           2.91             184
 #&gt; 7 2025-05-05 00:20:47 2025-12-09           3.04             219
 #&gt; 
-#&gt; # A tibble: 1,501 × 5
+#&gt; [[251]]
+#&gt; # A tibble: 7 × 4
+#&gt;   scrape_time         meeting_date implied_mean days_to_meeting
+#&gt;   &lt;dttm&gt;              &lt;date&gt;              &lt;dbl&gt;           &lt;int&gt;
+#&gt; 1 2025-05-05 01:28:02 2025-04-01           4.09             -33
+#&gt; 2 2025-05-05 01:28:02 2025-05-20           3.83              16
+#&gt; 3 2025-05-05 01:28:02 2025-07-08           3.67              65
+#&gt; 4 2025-05-05 01:28:02 2025-08-12           3.40             100
+#&gt; 5 2025-05-05 01:28:02 2025-09-30           4.33             149
+#&gt; 6 2025-05-05 01:28:02 2025-11-04           2.91             184
+#&gt; 7 2025-05-05 01:28:02 2025-12-09           3.04             219
+#&gt; 
+#&gt; # A tibble: 1,507 × 5
 #&gt;      scrape_time         meeting_date implied_mean days_to_meeting   stdev
 #&gt;      &lt;dttm&gt;              &lt;date&gt;              &lt;dbl&gt;           &lt;int&gt;   &lt;dbl&gt;
 #&gt;    1 2025-04-01 12:00:00 2025-04-01           4.08               0 NA     
@@ -5126,7 +5138,13 @@ this data, which are shown below:</p>
 #&gt; 1499 2025-05-05 00:20:47 2025-09-30           4.33             149  0.609 
 #&gt; 1500 2025-05-05 00:20:47 2025-11-04           2.91             184  0.727 
 #&gt; 1501 2025-05-05 00:20:47 2025-12-09           3.04             219  0.846 
-#&gt; # A tibble: 31,521 × 11
+#&gt; 1502 2025-05-05 01:28:02 2025-05-20           3.83              16  0.0639
+#&gt; 1503 2025-05-05 01:28:02 2025-07-08           3.67              65  0.321 
+#&gt; 1504 2025-05-05 01:28:02 2025-08-12           3.40             100  0.396 
+#&gt; 1505 2025-05-05 01:28:02 2025-09-30           4.33             149  0.609 
+#&gt; 1506 2025-05-05 01:28:02 2025-11-04           2.91             184  0.727 
+#&gt; 1507 2025-05-05 01:28:02 2025-12-09           3.04             219  0.846 
+#&gt; # A tibble: 31,647 × 11
 #&gt;    scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
 #&gt;    &lt;dttm&gt;              &lt;date&gt;              &lt;dbl&gt; &lt;dbl&gt;           &lt;int&gt;  &lt;dbl&gt;
 #&gt;  1 2025-04-01 12:00:00 2025-04-01           4.08    NA               0   0.1 
@@ -5171,7 +5189,7 @@ this data, which are shown below:</p>
 #&gt; 18             0                    NA          NA  0.25   0.707
 #&gt; 19             0                    NA          NA  0.5    0.841
 #&gt; 20             0                    NA          NA  0.75   0.931
-#&gt; # ℹ 31,501 more rows
+#&gt; # ℹ 31,627 more rows
 #&gt; Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
 #&gt; 3.5.0.
 #&gt; ℹ Please use the `legend.position.inside` argument of `theme()` instead.
