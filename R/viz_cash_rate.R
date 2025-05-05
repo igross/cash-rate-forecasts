@@ -297,9 +297,10 @@ line <- ggplot(top3_df, aes(
     na.value = "grey80" 
   ) +  
 scale_x_datetime(
+  limits = function(x) c(min(x), max(x) + days(3))   # axis extends 3 days
   breaks = function(x) {
     start <- lubridate::floor_date(min(x), "day") + lubridate::hours(10)
-    end   <- lubridate::ceiling_date(max(x), "day") + lubridate::hours(10)
+    end   <- floor_date(max(x), "day") + hours(10) + days(3)  # ticks cover buffer
 
     alldays <- seq(from = start, to = end, by = "1 day")
     alldays[!lubridate::wday(alldays) %in% c(1, 7)]   # Mon‑Fri 10 a.m.
