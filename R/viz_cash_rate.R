@@ -296,17 +296,21 @@ line <- ggplot(top3_df, aes(
     name = "",
     na.value = "grey80" 
   ) +  
- scale_x_datetime(  
-  breaks = function(x) {  
-      seq(  
-        from = lubridate::floor_date(min(x), "day"),  
-        to   = lubridate::ceiling_date(max(x), "day"),  
-        by   = "1 day"  
-      ) %>%  
-        .[!lubridate::wday(.) %in% c(1, 7)]  # drop Sundays (1) & Saturdays (7)  
-    },  
-    date_labels = "%d %b"  
-  ) + 
+ scale_x_datetime(
+  breaks = function(x) {
+    # first tick = 10:00 on the day of the first observation
+    start <- lubridate::floor_date(min(x), "day") + lubridate::hours(10)
+
+    # last tick = 10:00 on (at least) the day of the last observation
+    end   <- lubridate::ceiling_date(max(x), "day") + lubridate::hours(10)
+
+    # daily sequence, minus Saturdays (7) & Sundays (1)
+    seq(from = start, to = end, by = "1 day") |>
+      .[!lubridate::wday(.) %in% c(1, 7)]
+  },
+  date_labels = "%d %b",      # keeps the nice “05 May” style
+  expand = c(0, 0)
+) + 
   scale_y_continuous( limits = c(0, 1),
     expand = c(0, 0),
                      labels = scales::percent_format(accuracy = 1)) +
