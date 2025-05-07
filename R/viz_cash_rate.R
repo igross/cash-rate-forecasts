@@ -27,13 +27,17 @@ blend_weight <- function(days_to_meeting) {
 # =============================================
 # 3) Define RBA meeting schedule
 # =============================================
-meeting_schedule <- tibble(
-  meeting_date = as.Date(c(
-    "2025-02-18","2025-04-01","2025-05-20","2025-07-08",
-    "2025-08-12","2025-09-30","2025-11-04","2025-12-09"
-  ))
-) %>%
-  mutate(expiry = floor_date(meeting_date, "month")) %>%
+meeting_schedule <- tibble(meeting_date = as.Date(c(
+  "2025-02-18","2025-04-01","2025-05-20","2025-07-08",
+  "2025-08-12","2025-09-30","2025-11-04","2025-12-09"
+))) %>% 
+  mutate(
+    expiry = if_else(
+      day(meeting_date) >= days_in_month(meeting_date) - 1,   # last 1‑2 days
+      ceiling_date(meeting_date, "month"),                    # → next month
+      floor_date(meeting_date,  "month")                      # otherwise same
+    )
+  ) %>% 
   select(expiry, meeting_date)
 
 # =============================================
