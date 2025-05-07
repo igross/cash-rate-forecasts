@@ -77,27 +77,28 @@ all_list <- map(scrapes, function(scr) {
   rt  <- df$forecast_rate[1]
   out <- vector("list", nrow(df))
 
-  for (i in seq_len(nrow(df))) {
-    row <- df[i, ]
-    dim <- lubridate::days_in_month(row$expiry)
+for (i in seq_len(nrow(df))) {
+  row <- df[i, ]
 
-    if (!is.na(row$meeting_date)) {
-      nb    <- (lubridate::day(row$meeting_date) - 1) / dim
-      na    <- 1 - nb
-      r_tp1 <- (row$forecast_rate - rt * nb) / na
-    } else {
-      r_tp1 <- row$forecast_rate
-    }
-
-    out[[i]] <- tibble(
-      scrape_time     = scr,
-      meeting_date    = row$meeting_date,
-      implied_mean    = r_tp1,
-      days_to_meeting = as.integer(row$meeting_date - scr_date)
-    )
-
-    if (!is.na(row$meeting_date)) rt <- r_tp1
+  if (row$meeting_date < row$expiry) {
+    ## meeting is BEFORE the contract month  →  100 % after‑meeting
+    r_tp1 <- row$forecast_rate            # take it as‑is
+  } else {
+    dim <- days_in_month(row$expiry)      # normal within‑month case
+    nb  <- (day(row$meeting_date) - 1) / dim
+    na  <- 1 - nb
+    r_tp1 <- (row$forecast_rate - rt*nb) / na
   }
+
+  out[[i]] <- tibble(
+    scrape_time      = scr,
+    meeting_date     = row$meeting_date,
+    implied_mean     = r_tp1,
+    days_to_meeting  = as.integer(row$meeting_date - scr_date)
+  )
+
+  if (!is.na(row$meeting_date)) rt <- r_tp1
+}
 
   bind_rows(out)
 })
