@@ -112,7 +112,7 @@ all_estimates <- all_list %>%
 
 print(all_list)
 
-print(all_estimates, n=Inf, width=Inf)
+print(all_estimates, n=10, width=Inf)
 
 # =============================================
 # 6) Build bucketed probabilities for each row
@@ -173,7 +173,7 @@ for (i in seq_len(nrow(all_estimates))) {
 
 all_estimates_buckets <- bind_rows(bucket_list)
 
-print(all_estimates_buckets, n=20, width = Inf)
+tail(all_estimates_buckets, n=20, width = Inf)
 
 # =============================================
 # 7 Bar charts for every future meeting (latest scrape)
