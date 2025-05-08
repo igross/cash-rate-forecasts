@@ -278,7 +278,7 @@ top3_df <- all_estimates_buckets %>%
   ) %>%
   select(-diff_center)
 
-tail(top3_df, n = 10, width = Inf)
+print(top3_df, n = Inf, width = Inf)
                      
 # 3) then use `move` in your ggplot:
 line <- ggplot(top3_df, aes(
