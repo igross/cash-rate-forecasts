@@ -110,7 +110,7 @@ all_estimates <- all_list %>%
   left_join(rmse_days, by = "days_to_meeting") %>%
   rename(stdev = finalrmse)
 
-print(all_list)
+
 
 print(all_estimates, n=10, width=Inf)
 
@@ -173,7 +173,9 @@ for (i in seq_len(nrow(all_estimates))) {
 
 all_estimates_buckets <- bind_rows(bucket_list)
 
-tail(all_estimates_buckets, n=20, width = Inf)
+all_estimates_buckets %>% 
+  tail(20) %>% 
+  print(n = Inf, width = Inf)
 
 # =============================================
 # 7 Bar charts for every future meeting (latest scrape)
