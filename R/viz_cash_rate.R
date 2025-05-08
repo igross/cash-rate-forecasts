@@ -251,7 +251,6 @@ top3_buckets <- all_estimates_buckets %>%
   slice_max(order_by = probability, n = 3, with_ties = FALSE) %>% 
   pull(bucket)
 
-print(top3_buckets, n = Inf, width = Inf)
 
 # B) now build top3_df by filtering all dates to those same 3 buckets
 top3_df <- all_estimates_buckets %>%
