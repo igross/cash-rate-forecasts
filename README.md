@@ -88,12 +88,6 @@ are shown below:
     #> 18             0                0           0       1.5    1.11 
     #> 19             0                0           0       1.75   1.15 
     #> 20             0                0           0       2      1.19
-    #> Warning in min(x): no non-missing arguments to min; returning Inf
-    #> Warning in max(x): no non-missing arguments to max; returning -Inf
-    #> Warning in min(x): no non-missing arguments to min; returning Inf
-    #> Warning in max(x): no non-missing arguments to max; returning -Inf
-    #> Warning in min(x): no non-missing arguments to min; returning Inf
-    #> Warning in max(x): no non-missing arguments to max; returning -Inf
     #> # A tibble: 1,158 × 12
     #>      scrape_time         meeting_date implied_mean  stdev days_to_meeting bucket
     #>      <dttm>              <date>              <dbl>  <dbl>           <int>  <dbl>
