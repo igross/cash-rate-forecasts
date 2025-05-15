@@ -117,7 +117,7 @@ print(all_estimates, n=10, width=Inf)
 # =============================================
 # 6) Build bucketed probabilities for each row
 # =============================================
-bucket_centers <- seq(0.10, 5.10, by = 0.25)
+bucket_centers <- seq(0.10, 6.10, by = 0.25)
 half_width     <- 0.125
 
 current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
