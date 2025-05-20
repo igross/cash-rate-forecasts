@@ -46,6 +46,8 @@ meeting_schedule <- tibble(
   ) %>% 
   select(expiry, meeting_date)
 
+
+
 # =============================================
 # 4) Identify last meeting, collect scrapes
 # =============================================
@@ -236,13 +238,27 @@ p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
 
 
 # =============================================
-# Define next_meeting (the very next date after today)
+# Define next_meeting
+#  • If today is a meeting day, keep it until 15:30 AEST/AEDT
+#    then switch to the following meeting
 # =============================================
-next_meeting <- meeting_schedule %>%
-  filter(meeting_date > Sys.Date()) %>%
-  slice_min(meeting_date) %>%
-  pull(meeting_date) 
+now_melb  <- lubridate::now(tzone = "Australia/Melbourne")
+today_melb <- as.Date(now_melb)
 
+cutoff <- lubridate::ymd_hm(
+  paste0(today_melb, " 15:30"),
+  tz = "Australia/Melbourne"
+)
+
+next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
+                    now_melb < cutoff) {
+  today_melb                       # keep showing today’s meeting
+} else {
+  meeting_schedule %>%             # otherwise roll forward
+    filter(meeting_date > today_melb) %>%
+    slice_min(meeting_date) %>%
+    pull(meeting_date)
+}
 # —————————————————————————————————————————————————————————————————————
 # build top3_df and turn the numeric bucket centers into descriptive moves
 # —————————————————————————————————————————————————————————————————————
