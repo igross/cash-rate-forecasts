@@ -89,16 +89,16 @@ are shown below:
     #> 19             0                0           0       1.75   1.15 
     #> 20             0                0           0       2      1.19
     #> # A tibble: 3 × 12
-    #>   scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
-    #>   <dttm>              <date>              <dbl> <dbl>           <int>  <dbl>
-    #> 1 2025-05-20 01:27:59 2025-07-08           3.76 0.210              50   3.6 
-    #> 2 2025-05-20 01:27:59 2025-07-08           3.76 0.210              50   3.85
-    #> 3 2025-05-20 01:27:59 2025-07-08           3.76 0.210              50   4.1 
+    #>   scrape_time         meeting_date implied_mean  stdev days_to_meeting bucket
+    #>   <dttm>              <date>              <dbl>  <dbl>           <int>  <dbl>
+    #> 1 2025-05-20 01:27:59 2025-05-20           3.87 0.0639               1   3.6 
+    #> 2 2025-05-20 01:27:59 2025-05-20           3.87 0.0639               1   3.85
+    #> 3 2025-05-20 01:27:59 2025-05-20           3.87 0.0639               1   4.1 
     #>   probability_linear probability_prob probability   diff diff_s move      
     #>                <dbl>            <dbl>       <dbl>  <dbl>  <dbl> <fct>     
-    #> 1              0.360            0.348       0.348 -0.500 -0.841 -50 bp cut
-    #> 2              0.640            0.416       0.416 -0.250 -0.707 -25 bp cut
-    #> 3              0                0.140       0.140  0      0     No change
+    #> 1             0                0.0115    0.000382 -0.500 -0.841 -50 bp cut
+    #> 2             0.918            0.938     0.919    -0.250 -0.707 -25 bp cut
+    #> 3             0.0817           0.0509    0.0806    0      0     No change
     #> Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
     #> 3.5.0.
     #> ℹ Please use the `legend.position.inside` argument of `theme()` instead.
