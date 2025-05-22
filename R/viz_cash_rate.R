@@ -324,7 +324,10 @@ line <- ggplot(top3_df, aes(
     na.value = "grey80" 
   ) +  
 scale_x_datetime(
-  limits = function(x) c(min(x), max(x) + days(3)),   # axis extends 3 days
+  limits = function(x) c(
+      min(x),
+      as.POSIXct(next_meeting) + hours(17)          # end exactly at meeting
+    ),   # axis extends 3 days
   breaks = function(x) {
     start <- lubridate::floor_date(min(x), "day") + lubridate::hours(10)
     end   <- floor_date(max(x), "day") + hours(10) + days(3)  # ticks cover buffer
@@ -375,5 +378,90 @@ interactive_line <- ggplotly(line_int, tooltip = "text") %>%
 htmlwidgets::saveWidget(
   interactive_line,
   file          = "docs/line_interactive.html",
+  selfcontained = TRUE
+)
+
+# -------------------------------------------------
+# 1) Stacked area (static)
+# -------------------------------------------------
+area <- ggplot(top3_df, aes(
+    x   = scrape_time + hours(10),
+    y   = probability,
+    fill = move,          # <-- fill, not colour
+    group = move
+  )) +
+  geom_area(position = "stack", colour = NA, alpha = 0.9) +
+  scale_fill_manual(
+    values = c(
+      "-75 bp or more cut" = "#000080",
+      "-50 bp cut"         = "#004B8E",
+      "-25 bp cut"         = "#5FA4D4",
+      "No change"          = "#BFBFBF",
+      "+25 bp hike"        = "#E07C7C",
+      "+50 bp hike"        = "#B50000",
+      "+75 bp or more hike"= "#800000"
+    ),
+    name = "",
+    na.value = "grey80"
+  ) +
+  scale_x_datetime(
+    limits = function(x) c(
+      min(x),
+      as.POSIXct(next_meeting) + hours(17)          # end exactly at meeting
+    ),
+    breaks = function(x) {
+      start <- lubridate::floor_date(min(x), "day") + hours(10)
+      end   <- as.POSIXct(next_meeting) + hours(10)
+      alldays <- seq(from = start, to = end, by = "1 day")
+      alldays[!lubridate::wday(alldays) %in% c(1, 7)]   # Mon-Fri 10 a.m.
+    },
+    date_labels = "%d %b",
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1),
+    expand = c(0, 0),
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  labs(
+    title    = paste(
+      "Cash-Rate Scenarios up to the Meeting on",
+      format(as.Date(next_meeting), "%d %b %Y")
+    ),
+    subtitle = paste(
+      "as of", format(as.Date(latest_scrape), "%d %b %Y")
+    ),
+    x = "Forecast date",
+    y = "Probability (stacked)"
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x  = element_text(angle = 45, hjust = 1, size = 12),
+    axis.text.y  = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = c(1.02, 0.5)
+  )
+
+ggsave("docs/area.png", area, width = 8, height = 5, dpi = 300)  # overwrites if rerun
+
+# -------------------------------------------------
+# 2) Interactive version
+# -------------------------------------------------
+area_int <- area +
+  aes(text = paste0(
+    "", format(scrape_time + hours(10), "%H:%M"), "<br>",
+    "Probability: ", scales::percent(probability, accuracy = 1)
+  ))
+
+interactive_area <- ggplotly(area_int, tooltip = "text") %>%
+  layout(
+    hovermode = "x unified",
+    legend    = list(x = 1.02, y = 0.5, xanchor = "left")
+  )
+
+htmlwidgets::saveWidget(
+  interactive_area,
+  file          = "docs/area_interactive.html",
   selfcontained = TRUE
 )
