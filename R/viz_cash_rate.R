@@ -128,7 +128,7 @@ print(all_estimates, n=10, width=Inf)
 bucket_centers <- seq(0.10, 6.10, by = 0.25)
 half_width     <- 0.125
 
-current_rate <- 3.85 #read_rba(series_id = "FIRMMCRTD") %>%
+current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
   #filter(date == max(date)) %>%
   #pull(value)
 
@@ -270,7 +270,7 @@ top3_buckets <- all_estimates_buckets %>%
   group_by(bucket) %>%                              # pool all scrapes
   summarise(probability = mean(probability, na.rm = TRUE),
             .groups = "drop") %>%                   # average across scrapes
-  slice_max(order_by = probability, n = 3, with_ties = FALSE) %>% 
+  slice_max(order_by = probability, n = 4, with_ties = FALSE) %>% 
   pull(bucket)
 
 
