@@ -73,9 +73,7 @@ interactive_line_section <- '
 
 
 interactive_area_section <- '
-  <h1 style="margin-top:60px; text-align:center;">
-    Forecasts for the Next RBA Meeting
-  </h1>
+ 
   <div style="
       display: flex;
       justify-content: center;
@@ -168,6 +166,8 @@ html <- sprintf('
 
 
   %s
+
+%s
   
 <h1>Cash Rate Target Probabilities By RBA Meeting </h1>
 
