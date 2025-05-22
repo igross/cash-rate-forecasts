@@ -129,8 +129,8 @@ bucket_centers <- seq(0.10, 6.10, by = 0.25)
 half_width     <- 0.125
 
 current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
-  #filter(date == max(date)) %>%
-  #pull(value)
+  filter(date == max(date)) %>%
+  pull(value)
 
 current_center <- bucket_centers[ which.min( abs(bucket_centers - current_rate) ) ]
 
