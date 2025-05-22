@@ -72,7 +72,39 @@ interactive_line_section <- '
 '
 
 
-# Optional fan chart
+interactive_area_section <- '
+  <h1 style="margin-top:60px; text-align:center;">
+    Forecasts for the Next RBA Meeting
+  </h1>
+  <div style="
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    ">
+    <iframe
+      src="area_interactive.html"
+      style="
+        width: 90%;
+        height: 800px;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      "
+    ></iframe>
+  </div>
+'
+
+
+area_chart_section <- ""
+if (file.exists("docs/area.png")) {
+  area_chart_section <- '
+  <h1 style="margin-top:60px;">Forecasts for the Next RBA Meeting</h1>
+  <div class="chart-card" style="max-width: 800px; margin: 0 auto;">
+    <img src="area.png" alt="Next RBA Meeting">
+  </div>'
+}
+
+
 line_chart_section <- ""
 if (file.exists("docs/line.png")) {
   line_chart_section <- '
@@ -150,7 +182,7 @@ html <- sprintf('
 
 </body>
 </html>
-', interactive_line_section,meeting_section , intro_paragraph)
+', interactive_line_section,interactive_area_section,meeting_section , intro_paragraph)
 
 
 # Write output
