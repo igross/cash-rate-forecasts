@@ -381,6 +381,27 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 
+top3_df <- top3_df %>%
+  # make sure every scrape_time × move pair exists:
+  complete(
+    scrape_time,
+    move,
+    fill = list(probability = 0)
+  ) %>%
+  # re-lock the factor order so ggplot never re-orders it:
+  mutate(
+    move = factor(
+      move,
+      levels = c(
+        "-50 bp cut",
+        "-25 bp cut",
+        "No change",
+        "+25 bp hike",
+        "+50 bp hike"
+      )
+    )
+  )
+
 # -------------------------------------------------
 # 1) Stacked area (static)
 # -------------------------------------------------
