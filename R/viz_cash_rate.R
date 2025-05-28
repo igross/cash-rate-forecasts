@@ -274,23 +274,13 @@ top3_buckets <- all_estimates_buckets %>%
   pull(bucket)
 
 
-move_levels <- c(
-  "-50 bp cut",
-  "-25 bp cut",
-  "No change",
-  "+25 bp hike",
-  "+50 bp hike"
-)[ sort(match(top3_buckets,
-              c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike"))) ]
-# (this little dance just makes sure your three “top3” moves end up
-#  in the natural order you want them stacked)
-
-# 2) build the df, then complete() over every scrape_time × move
+# B) now build top3_df by filtering all dates to those same 3 buckets
 top3_df <- all_estimates_buckets %>%
   filter(
     meeting_date == next_meeting,
     bucket %in% top3_buckets
   ) %>%
+  # compute diff & move exactly as before
   mutate(
     diff_center = bucket - current_center,
     move = case_when(
@@ -303,15 +293,12 @@ top3_df <- all_estimates_buckets %>%
       near(diff_center,  0.75) ~ "+75 bp hike",
       TRUE                      ~ sprintf("%+.0f bp", diff_center*100)
     ),
-    move = factor(move, levels = move_levels)
+    move = factor(
+      move,
+      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
+    )
   ) %>%
-  select(scrape_time, move, probability) %>%
-  # here is the magic — make sure every scrape_time has *all* three moves
-  complete(
-    scrape_time,
-    move,
-    fill = list(probability = 0)
-  ) 
+  select(-diff_center)
 
 print(top3_df, n = Inf, width = Inf)
                      
