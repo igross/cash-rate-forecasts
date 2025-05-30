@@ -402,27 +402,28 @@ top3_df <- top3_df %>%
     )
   )
 
-# -------------------------------------------------
-# 1) Stacked area (static)
-# -------------------------------------------------
+# pick out only the colours you actually need, in exactly the order of your factor‐levels
+my_fill_cols <- c(
+  "-50 bp cut"   = "#004B8E",
+  "-25 bp cut"   = "#5FA4D4",
+  "No change"    = "#BFBFBF",
+  "+25 bp hike"  = "#E07C7C",
+  "+50 bp hike"  = "#B50000"
+)[ levels(top3_df$move) ]
+
+# now your area plot will see exactly those 5 fills, in that locked‐in order:
 area <- ggplot(top3_df, aes(
-    x   = scrape_time + hours(10),
-    y   = probability,
-    fill = move,          # <-- fill, not colour
-    group = move
+    x    = scrape_time + hours(10),
+    y    = probability,
+    fill = move,
+    group= move
   )) +
   geom_area(position = "stack", colour = NA, alpha = 0.9) +
   scale_fill_manual(
-    values = c(
-      "-75 bp or more cut" = "#000080",
-      "-50 bp cut"         = "#004B8E",
-      "-25 bp cut"         = "#5FA4D4",
-      "No change"          = "#BFBFBF",
-      "+25 bp hike"        = "#E07C7C",
-      "+50 bp hike"        = "#B50000",
-      "+75 bp or more hike"= "#800000"
-    ),
-    name = "",
+    values = my_fill_cols,        # only the 5 that actually exist
+    breaks = levels(top3_df$move),# in the same order as your factor
+    drop   = FALSE,               # keep zero-prob days if you like
+    name   = "",
     na.value = "grey80"
   ) +
   scale_x_datetime(
