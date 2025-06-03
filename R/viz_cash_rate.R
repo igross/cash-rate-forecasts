@@ -487,3 +487,9 @@ htmlwidgets::saveWidget(
   file          = "docs/area_interactive.html",
   selfcontained = TRUE
 )
+
+# Save the `cars` data frame in R’s native “.rds” format:
+saveRDS(cars, file = "cars_dataset.rds")
+
+# Later, to reload it exactly as a data.frame:
+loaded_cars <- readRDS("cars_dataset.rds")
