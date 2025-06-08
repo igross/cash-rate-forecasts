@@ -489,7 +489,5 @@ htmlwidgets::saveWidget(
 )
 
 # Save the `cars` data frame in R’s native “.rds” format:
-saveRDS(cars, file = "cars_dataset.rds")
+saveRDS(Filter(is.data.frame, mget(ls(), .GlobalEnv)), "all_dataframes.rds")
 
-# Later, to reload it exactly as a data.frame:
-loaded_cars <- readRDS("cars_dataset.rds")
