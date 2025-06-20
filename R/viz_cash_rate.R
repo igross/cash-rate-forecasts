@@ -24,6 +24,10 @@ blend_weight <- function(days_to_meeting) {
   pmax(0, pmin(1, 1 - days_to_meeting / 30))
 }
 
+
+spread <- 0.01
+cash_rate$cash_rate <- cash_rate$cash_rate+spread
+
 # =============================================
 # 3) Define RBA meeting schedule
 # =============================================
