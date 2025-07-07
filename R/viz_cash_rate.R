@@ -124,7 +124,7 @@ all_estimates <- all_list %>%
 
 
 
-print(all_estimates, n=10, width=Inf)
+tail(all_estimates, n=100, width=Inf)
 
 # =============================================
 # 6) Build bucketed probabilities for each row
