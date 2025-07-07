@@ -494,7 +494,7 @@ area <- ggplot(top3_df, aes(
       format(as.Date(next_meeting), "%d %b %Y")
     ),
     subtitle = paste(
-      "as of", format(as.Date(latest_scrape), "%d %b %Y")
+      "as of", format(as.Date(latest_scrape + hours(10)), "%d %b %Y")
     ),
     x = "Forecast date",
     y = "Probability (stacked)"
