@@ -96,43 +96,45 @@ all_list <- map(scrapes, function(scr) {
 
   
 
-  # 4) now build your implied‐mean panel
-    # 2. decide which value to return
-  use_override <- !is.null(override) &&
-                  abs(as.numeric(Sys.Date() - as_date(last_meeting))) <= 1
-  
-  base_rt <- if (use_override) override else latest_rt
-    
-  out <- vector("list", nrow(df))
+ initial_rt <- if (use_override &&
+                  Sys.Date() - last_meeting <= 1)  ## ≤ 1-day override window
+                 override
+               else
+                 latest_rt                   ## published FIRMMCRTD
 
-
-
+prev_implied <- NA_real_                     ## will hold r_tp1 from prior loop
+out <- vector("list", nrow(df))
 
 for (i in seq_len(nrow(df))) {
   row <- df[i, ]
 
-  if (row$meeting_date < row$expiry) {
-    ## meeting is BEFORE the contract month  →  100 % after‑meeting
-    r_tp1 <- row$forecast_rate            # take it as‑is
-  } else {
-    dim <- days_in_month(row$expiry)      # normal within‑month case
-    nb  <- (day(row$meeting_date) ) / dim
-    na  <- 1 - nb
-    r_tp1 <- (row$forecast_rate - base_rt*nb) / na
-  }
+  ## 1. pick the rate that goes into this row’s algebra
+  rt_in <- if (is.na(prev_implied)) initial_rt else prev_implied
 
+  ## 2. derive r_tp1 (implied mean after THIS meeting)
+  r_tp1 <- if (row$meeting_date < row$expiry) {
+              row$forecast_rate                 # meeting before delivery month
+           } else {
+              nb <- day(row$meeting_date) / days_in_month(row$expiry)
+              na <- 1 - nb
+              (row$forecast_rate - rt_in * nb) / na
+           }
+
+  ## 3. store the row
   out[[i]] <- tibble(
     scrape_time      = scr,
     meeting_date     = row$meeting_date,
     implied_mean     = r_tp1,
     days_to_meeting  = as.integer(row$meeting_date - scr_date),
-    previous_rate = base_rt
+    previous_rate    = rt_in                     # <- now equals rt_in
   )
 
-  if (!is.na(row$meeting_date)) rt <- r_tp1
+  ## 4. roll the implied mean forward for the next loop
+  prev_implied <- r_tp1
 }
 
-  bind_rows(out)
+bind_rows(out)
+  
 })
 
 all_estimates <- all_list %>%
