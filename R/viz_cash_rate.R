@@ -340,7 +340,7 @@ top3_df <- top3_df %>%
   )
 
 
-print(top3_df, rows = Inf)
+print(top3_df, width = Inf)
 
 line <- ggplot(top3_df, aes(
     x     = scrape_time + hours(10),
