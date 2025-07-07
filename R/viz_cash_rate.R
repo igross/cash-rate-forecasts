@@ -89,6 +89,22 @@ all_list <- map(scrapes, function(scr) {
   rt  <- df$forecast_rate[1]
   out <- vector("list", nrow(df))
 
+
+  # 1. grab the most-recent published value only
+  latest_rt <- read_rba(series_id) %>% 
+    slice_max(date, n = 1, with_ties = FALSE) %>% 
+    pull(value)
+
+  override <- 3.85
+  
+  # 2. decide which value to return
+  use_override <- !is.null(override) &&
+                  abs(as.numeric(Sys.Date() - as_date(last_meeting))) <= 1
+  
+  rt <- if (use_override) override else latest_rt
+
+  
+
 for (i in seq_len(nrow(df))) {
   row <- df[i, ]
 
