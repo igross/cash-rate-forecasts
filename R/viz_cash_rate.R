@@ -416,22 +416,26 @@ top3_df <- top3_df %>%
     move = factor(
       move,
       levels = c(
+        "-75 bp cut",
         "-50 bp cut",
         "-25 bp cut",
         "No change",
         "+25 bp hike",
-        "+50 bp hike"
+        "+50 bp hike",
+        "+75 bp hike"
       )
     )
   )
 
 # pick out only the colours you actually need, in exactly the order of your factor‐levels
 my_fill_cols <- c(
-  "-50 bp cut"   = "#004B8E",
-  "-25 bp cut"   = "#5FA4D4",
-  "No change"    = "#BFBFBF",
-  "+25 bp hike"  = "#E07C7C",
-  "+50 bp hike"  = "#B50000"
+  "-75 bp cut" = "#000080",  # navy blue
+  "-50 bp cut"         = "#004B8E",
+  "-25 bp cut"         = "#5FA4D4",
+  "No change"          = "#BFBFBF",
+  "+25 bp hike"        = "#E07C7C",
+  "+50 bp hike"        = "#B50000",
+  "+75 bp hike"= "#800000"   # dark red
 )[ levels(top3_df$move) ]
 
 # now your area plot will see exactly those 5 fills, in that locked‐in order:
