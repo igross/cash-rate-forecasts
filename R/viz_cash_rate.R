@@ -101,14 +101,12 @@ all_list <- map(scrapes, function(scr) {
   use_override <- !is.null(override) &&
                   abs(as.numeric(Sys.Date() - as_date(last_meeting))) <= 1
   
-  rt <- if (use_override) override else latest_rt
+  base_rt <- if (use_override) override else latest_rt
     
   out <- vector("list", nrow(df))
 
 
-print(rt)
 
-  
 
 for (i in seq_len(nrow(df))) {
   row <- df[i, ]
@@ -120,7 +118,7 @@ for (i in seq_len(nrow(df))) {
     dim <- days_in_month(row$expiry)      # normal within‑month case
     nb  <- (day(row$meeting_date) ) / dim
     na  <- 1 - nb
-    r_tp1 <- (row$forecast_rate - rt*nb) / na
+    r_tp1 <- (row$forecast_rate - base_rt*nb) / na
   }
 
   out[[i]] <- tibble(
@@ -128,7 +126,7 @@ for (i in seq_len(nrow(df))) {
     meeting_date     = row$meeting_date,
     implied_mean     = r_tp1,
     days_to_meeting  = as.integer(row$meeting_date - scr_date),
-    previous_rate = rt
+    previous_rate = base_rt
   )
 
   if (!is.na(row$meeting_date)) rt <- r_tp1
