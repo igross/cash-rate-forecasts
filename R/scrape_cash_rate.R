@@ -35,18 +35,20 @@ json_file <- tempfile()
 
 # download and parse
 download.file(json_url, json_file)
-new_data <- fromJSON(json_file) %>%
-  pluck("data", "items") %>%
-  as_tibble() %>%
+new_data <- fromJSON(json_file) %>% 
+  pluck("data", "items") %>% 
+  as_tibble() %>% 
   mutate(
-    # define `date` straight away, floor to start of month
+    # floor expiry to the month start
     date         = ymd(dateExpiry) %>% floor_date("month"),
     scrape_date  = ymd(datePreviousSettlement),
     scrape_time  = now(tzone = "Australia/Melbourne"),
-    cash_rate    = 100 - priceLastTrade
-  ) %>%
-  filter(pricePreviousSettlement != 0) %>%
+    # ← fallback: if priceLastTrade is NA, use pricePreviousSettlement
+    cash_rate    = 100 - coalesce(priceLastTrade, pricePreviousSettlement)
+  ) %>% 
+  filter(pricePreviousSettlement != 0) %>%   # keep this guard if you still
   select(date, cash_rate, scrape_date, scrape_time)
+
 
 print(new_data)
 
