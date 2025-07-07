@@ -106,7 +106,7 @@ all_list <- map(scrapes, function(scr) {
   out <- vector("list", nrow(df))
 
 
-
+print(rt)
 
   
 
