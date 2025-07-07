@@ -106,7 +106,8 @@ for (i in seq_len(nrow(df))) {
     scrape_time      = scr,
     meeting_date     = row$meeting_date,
     implied_mean     = r_tp1,
-    days_to_meeting  = as.integer(row$meeting_date - scr_date)
+    days_to_meeting  = as.integer(row$meeting_date - scr_date),
+    previous_rate = rt
   )
 
   if (!is.na(row$meeting_date)) rt <- r_tp1
