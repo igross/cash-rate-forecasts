@@ -25,9 +25,9 @@ blend_weight <- function(days_to_meeting) {
 }
 
   # 1. grab the most-recent published value only
-  latest_rt <- read_rba("FIRMMCRTD") %>% 
-    slice_max(date, n = 1, with_ties = FALSE) %>% 
-    pull(value)
+latest_rt <- read_rba(series_id = "FIRMMCRTD") |>
+             slice_max(date, n = 1, with_ties = FALSE) |>
+             pull(value)
 
   override <- 3.85
   
