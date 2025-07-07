@@ -31,11 +31,7 @@ latest_rt <- read_rba(series_id = "FIRMMCRTD") |>
 
   override <- 3.85
   
-  # 2. decide which value to return
-  use_override <- !is.null(override) &&
-                  abs(as.numeric(Sys.Date() - as_date(last_meeting))) <= 1
-  
-  rt <- if (use_override) override else latest_rt
+
 
 spread <- 0.00
 cash_rate$cash_rate <- cash_rate$cash_rate+spread
@@ -97,8 +93,16 @@ all_list <- map(scrapes, function(scr) {
   df <- df %>% filter(!is.na(forecast_rate))
   if (nrow(df) == 0) return(NULL)
 
+
+  
+
   # 4) now build your implied‐mean panel
-  rt  <- df$forecast_rate[1]
+    # 2. decide which value to return
+  use_override <- !is.null(override) &&
+                  abs(as.numeric(Sys.Date() - as_date(last_meeting))) <= 1
+  
+  rt <- if (use_override) override else latest_rt
+    
   out <- vector("list", nrow(df))
 
 
