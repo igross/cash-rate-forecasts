@@ -113,7 +113,7 @@ all_list <- map(scrapes, function(scr) {
     r_tp1 <- if (row$meeting_date < row$expiry) {
                 row$forecast_rate
              } else {
-                nb <- day(row$meeting_date) / days_in_month(row$expiry)
+                nb <- (day(row$meeting_date)-1) / days_in_month(row$expiry)
                 na <- 1 - nb
                 (row$forecast_rate - rt_in * nb) / na
              }
