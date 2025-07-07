@@ -25,7 +25,7 @@ blend_weight <- function(days_to_meeting) {
 }
 
 
-spread <- 0.01
+spread <- 0.00
 cash_rate$cash_rate <- cash_rate$cash_rate+spread
 
 # =============================================
