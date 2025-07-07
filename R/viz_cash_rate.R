@@ -97,7 +97,7 @@ for (i in seq_len(nrow(df))) {
     r_tp1 <- row$forecast_rate            # take it as‑is
   } else {
     dim <- days_in_month(row$expiry)      # normal within‑month case
-    nb  <- (day(row$meeting_date) - 1) / dim
+    nb  <- (day(row$meeting_date) ) / dim
     na  <- 1 - nb
     r_tp1 <- (row$forecast_rate - rt*nb) / na
   }
