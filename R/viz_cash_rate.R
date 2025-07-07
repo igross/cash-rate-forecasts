@@ -339,6 +339,9 @@ top3_df <- top3_df %>%
     )
   )
 
+
+print(top3_df)
+
 line <- ggplot(top3_df, aes(
     x     = scrape_time + hours(10),
     y     = probability,
