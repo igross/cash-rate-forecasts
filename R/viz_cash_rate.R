@@ -24,6 +24,18 @@ blend_weight <- function(days_to_meeting) {
   pmax(0, pmin(1, 1 - days_to_meeting / 30))
 }
 
+  # 1. grab the most-recent published value only
+  latest_rt <- read_rba("FIRMMCRTD") %>% 
+    slice_max(date, n = 1, with_ties = FALSE) %>% 
+    pull(value)
+
+  override <- 3.85
+  
+  # 2. decide which value to return
+  use_override <- !is.null(override) &&
+                  abs(as.numeric(Sys.Date() - as_date(last_meeting))) <= 1
+  
+  rt <- if (use_override) override else latest_rt
 
 spread <- 0.00
 cash_rate$cash_rate <- cash_rate$cash_rate+spread
@@ -90,18 +102,7 @@ all_list <- map(scrapes, function(scr) {
   out <- vector("list", nrow(df))
 
 
-  # 1. grab the most-recent published value only
-  latest_rt <- read_rba(series_id) %>% 
-    slice_max(date, n = 1, with_ties = FALSE) %>% 
-    pull(value)
 
-  override <- 3.85
-  
-  # 2. decide which value to return
-  use_override <- !is.null(override) &&
-                  abs(as.numeric(Sys.Date() - as_date(last_meeting))) <= 1
-  
-  rt <- if (use_override) override else latest_rt
 
   
 
