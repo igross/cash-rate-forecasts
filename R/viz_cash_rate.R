@@ -323,29 +323,42 @@ top3_df <- all_estimates_buckets %>%
   ) %>%
   select(-diff_center)
 
-print(top3_df, n = Inf, width = Inf)
-                     
-# 3) then use `move` in your ggplot:
+top3_df <- top3_df %>% 
+  mutate(
+    move = factor(
+      move,
+      levels = c(
+        "-75 bp cut",      # add
+        "-50 bp cut",
+        "-25 bp cut",
+        "No change",
+        "+25 bp hike",
+        "+50 bp hike",
+        "+75 bp hike"      # add
+      )
+    )
+  )
+
 line <- ggplot(top3_df, aes(
-    x     = scrape_time  + hours(10),
+    x     = scrape_time + hours(10),
     y     = probability,
-    color = move,
-    group = move
+    colour = move,
+    group  = move
   )) +
   geom_line(linewidth = 1.2) +
-  scale_color_manual(
+  scale_colour_manual(
     values = c(
-  "-75 bp or more cut" = "#000080",  # navy blue
-  "-50 bp cut"         = "#004B8E",
-  "-25 bp cut"         = "#5FA4D4",
-  "No change"          = "#BFBFBF",
-  "+25 bp hike"        = "#E07C7C",
-  "+50 bp hike"        = "#B50000",
-  "+75 bp or more hike"= "#800000"   # dark red
+      "-75 bp cut"   = "#000080",
+      "-50 bp cut"   = "#004B8E",
+      "-25 bp cut"   = "#5FA4D4",
+      "No change"    = "#BFBFBF",
+      "+25 bp hike"  = "#E07C7C",
+      "+50 bp hike"  = "#B50000",
+      "+75 bp hike"  = "#800000"
     ),
-    name = "",
-    na.value = "grey80" 
-  ) +  
+    drop = FALSE,   # keep colours even if a series is all-zero today
+    name = ""
+  ) + 
 scale_x_datetime(
   limits = function(x) c(
       min(x),
