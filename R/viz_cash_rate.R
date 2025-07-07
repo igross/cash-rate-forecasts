@@ -82,12 +82,14 @@ all_list <- map(scrapes, function(scr) {
   scr_date <- as.Date(scr)
 
   # 1) grab the last‐known price for each expiry up to this scrape
-  df_rates <- cash_rate %>%
-    filter(scrape_time <= scr) %>%
-    group_by(date) %>%
-    slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
-    ungroup() %>%
-    select(expiry = date, forecast_rate = cash_rate)
+df_rates <- cash_rate %>% 
+  filter(scrape_time == scr) %>%          # keep rows from *this* scrape only
+  select(
+    expiry        = date,                 # contract month
+    forecast_rate = cash_rate,            # implied rate
+    scrape_time                         # (all identical → scr)
+  )
+
 
   # 2) join onto your schedule
   df <- meeting_schedule %>%
