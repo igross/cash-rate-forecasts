@@ -29,20 +29,6 @@ Please fork/copy/modify as you see fit.
 The file `R/viz_cash_rate.R` produces visualisations of this data, which
 are shown below:
 
-    #> # A tibble: 2,999 × 5
-    #>    scrape_time         meeting_date implied_mean days_to_meeting  stdev
-    #>    <dttm>              <date>              <dbl>           <int>  <dbl>
-    #>  1 2025-05-20 01:27:59 2025-05-20           4.01               1 0.0639
-    #>  2 2025-05-20 01:27:59 2025-07-08           3.73              50 0.210 
-    #>  3 2025-05-20 01:27:59 2025-08-12           3.64              85 0.389 
-    #>  4 2025-05-20 01:27:59 2025-09-30           3.52             134 0.468 
-    #>  5 2025-05-20 01:27:59 2025-11-04           3.41             169 0.678 
-    #>  6 2025-05-20 01:27:59 2025-12-09           3.32             204 0.768 
-    #>  7 2025-05-20 01:27:59 2026-02-03           3.04             260 0.941 
-    #>  8 2025-05-20 03:01:31 2025-05-20           4.01               1 0.0639
-    #>  9 2025-05-20 03:01:31 2025-07-08           3.71              50 0.210 
-    #> 10 2025-05-20 03:01:31 2025-08-12           3.60              85 0.389 
-    #> # ℹ 2,989 more rows
     #> # A tibble: 20 × 11
     #>    scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
     #>    <dttm>              <date>              <dbl> <dbl>           <int>  <dbl>
