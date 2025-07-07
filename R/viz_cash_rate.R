@@ -318,7 +318,7 @@ top3_df <- all_estimates_buckets %>%
     ),
     move = factor(
       move,
-      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
+      levels = c("-75 bp cut","-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike","+75 bp hike")
     )
   ) %>%
   select(-diff_center)
