@@ -444,17 +444,17 @@ my_fill_cols <- c(
 
 # now your area plot will see exactly those 5 fills, in that locked‐in order:
 area <- ggplot(top3_df, aes(
-    x    = scrape_time + hours(10),
-    y    = probability,
-    fill = move,
-    group= move
-  )) +
+  x = scrape_time_adj,
+  y = probability,
+  fill = move,
+  group = move
+)) +
   geom_area(position = "stack", colour = NA, alpha = 0.9) +
   scale_fill_manual(
-    values = my_fill_cols,        # only the 5 that actually exist
-    breaks = levels(top3_df$move),# in the same order as your factor
-    drop   = FALSE,               # keep zero-prob days if you like
-    name   = "",
+    values = my_fill_cols,
+    breaks = levels(top3_df$move),
+    drop = FALSE,
+    name = "",
     na.value = "grey80"
   ) +
   scale_x_datetime(
