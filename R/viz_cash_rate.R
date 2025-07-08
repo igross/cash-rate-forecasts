@@ -466,11 +466,14 @@ area <- ggplot(top3_df, aes(
     c(min(x, na.rm = TRUE), as.POSIXct(next_meeting) + hours(17))
   },
     breaks = function(x) {
-      start <- lubridate::floor_date(min(x), "day") + hours(10)
-      end   <- as.POSIXct(next_meeting) + hours(10)
-      alldays <- seq(from = start, to = end, by = "1 day")
-      alldays[!lubridate::wday(alldays) %in% c(1, 7)]   # Mon-Fri 10 a.m.
-    },
+  start <- lubridate::floor_date(min(x, na.rm = TRUE), "day") + hours(10)
+  end   <- as.POSIXct(next_meeting) + hours(10)
+
+  if (start > end) return(NULL)  # safety check
+
+  alldays <- seq(from = start, to = end, by = "1 day")
+  alldays[!lubridate::wday(alldays) %in% c(1, 7)]  # exclude weekends
+}
     date_labels = "%d %b",
     expand = c(0, 0)
   ) +
