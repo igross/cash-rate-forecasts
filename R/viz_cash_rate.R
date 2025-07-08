@@ -318,7 +318,7 @@ top3_df <- all_estimates_buckets %>%
     ),
     move = factor(
       move,
-      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
+      levels = c("-75 bp cut","-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike","+75 bp hike")
     )
   ) %>%
   select(-diff_center)
@@ -421,34 +421,27 @@ htmlwidgets::saveWidget(
 )
 
 top3_df <- top3_df %>%
-  complete(scrape_time, move, fill = list(probability = 0)) %>%
-  # Fully sanitize the scrape_time column
-  mutate(
-    scrape_time = as.POSIXct(unlist(scrape_time), tz = "Australia/Melbourne")
+  # make sure every scrape_time × move pair exists:
+  complete(
+    scrape_time,
+    move,
+    fill = list(probability = 0)
   ) %>%
-  filter(!is.na(scrape_time)) %>%
+  # re-lock the factor order so ggplot never re-orders it:
   mutate(
-    scrape_time_adj = scrape_time + lubridate::hours(10),
-    move = factor(move, levels = c(
-      "-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
-      "+25 bp hike", "+50 bp hike", "+75 bp hike"
-    ))
+    move = factor(
+      move,
+      levels = c(
+        "-75 bp cut",
+        "-50 bp cut",
+        "-25 bp cut",
+        "No change",
+        "+25 bp hike",
+        "+50 bp hike",
+        "+75 bp hike"
+      )
+    )
   )
-
-top3_df <- top3_df %>%
-  complete(scrape_time, move, fill = list(probability = 0)) %>%
-  mutate(
-    scrape_time_chr = as.character(scrape_time),
-    scrape_time     = as.POSIXct(scrape_time_chr, tz = "Australia/Melbourne"),
-    scrape_time_adj = scrape_time + lubridate::hours(10),
-    move = factor(move, levels = c(
-      "-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
-      "+25 bp hike", "+50 bp hike", "+75 bp hike"
-    ))
-  ) %>%
-  filter(!is.na(scrape_time_adj))
-
-str(top3_df$scrape_time_adj)
 
 # pick out only the colours you actually need, in exactly the order of your factor‐levels
 my_fill_cols <- c(
@@ -463,34 +456,30 @@ my_fill_cols <- c(
 
 # now your area plot will see exactly those 5 fills, in that locked‐in order:
 area <- ggplot(top3_df, aes(
-  x = scrape_time_adj,
-  y = probability,
-  fill = move,
-  group = move
-)) +
+    x    = scrape_time + hours(10),
+    y    = probability,
+    fill = move,
+    group= move
+  )) +
   geom_area(position = "stack", colour = NA, alpha = 0.9) +
   scale_fill_manual(
-    values = my_fill_cols,
-    breaks = levels(top3_df$move),
-    drop = FALSE,
-    name = "",
+    values = my_fill_cols,        # only the 5 that actually exist
+    breaks = levels(top3_df$move),# in the same order as your factor
+    drop   = FALSE,               # keep zero-prob days if you like
+    name   = "",
     na.value = "grey80"
   ) +
   scale_x_datetime(
-  limits = function(x) {
-    x <- as.POSIXct(unlist(x), tz = "Australia/Melbourne")
-    c(min(x, na.rm = TRUE), as.POSIXct(next_meeting) + hours(17))
-  },
+    limits = function(x) c(
+      min(x),
+      as.POSIXct(next_meeting) + hours(17)          # end exactly at meeting
+    ),
     breaks = function(x) {
-  start <- lubridate::floor_date(min(x, na.rm = TRUE), "day") + hours(10)
-  end   <- as.POSIXct(next_meeting) + hours(10)
-
-  if (start > end)
-    return(as.POSIXct(character(0), tz = "Australia/Melbourne"))  # <- change here
-
-  alldays <- seq(from = start, to = end, by = "1 day")
-  alldays[!lubridate::wday(alldays) %in% c(1, 7)]
-},
+      start <- lubridate::floor_date(min(x), "day") + hours(10)
+      end   <- as.POSIXct(next_meeting) + hours(10)
+      alldays <- seq(from = start, to = end, by = "1 day")
+      alldays[!lubridate::wday(alldays) %in% c(1, 7)]   # Mon-Fri 10 a.m.
+    },
     date_labels = "%d %b",
     expand = c(0, 0)
   ) +
@@ -526,7 +515,7 @@ ggsave("docs/area.png", area, width = 8, height = 5, dpi = 300)  # overwrites if
 # -------------------------------------------------
 area_int <- area +
   aes(text = paste0(
-    "", format(scrape_time, "%H:%M"), "<br>",
+    "", format(scrape_time + hours(10), "%H:%M"), "<br>",
     "Probability: ", scales::percent(probability, accuracy = 1)
   ))
 
