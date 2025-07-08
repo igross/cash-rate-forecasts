@@ -318,7 +318,7 @@ top3_df <- all_estimates_buckets %>%
     ),
     move = factor(
       move,
-      levels = c("-75 bp cut","-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike","+75 bp hike")
+      levels = c("-50 bp cut","-25 bp cut","No change","+25 bp hike","+50 bp hike")
     )
   ) %>%
   select(-diff_center)
@@ -494,7 +494,7 @@ area <- ggplot(top3_df, aes(
       format(as.Date(next_meeting), "%d %b %Y")
     ),
     subtitle = paste(
-      "as of", format(as.Date(latest_scrape + hours(10)), "%d %b %Y")
+      "as of", format(as.Date(latest_scrape), "%d %b %Y")
     ),
     x = "Forecast date",
     y = "Probability (stacked)"
