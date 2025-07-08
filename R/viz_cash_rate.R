@@ -425,10 +425,13 @@ top3_df <- top3_df %>%
   mutate(
     scrape_time = as.POSIXct(unlist(scrape_time), tz = "Australia/Melbourne"),
     scrape_time_adj = scrape_time + hours(10),
-    move = factor(move, levels = c(
-      "-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
-      "+25 bp hike", "+50 bp hike", "+75 bp hike"
-    ))
+    move = factor(
+      move,
+      levels = c(
+        "-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
+        "+25 bp hike", "+50 bp hike", "+75 bp hike"
+      )
+    )
   )
 
 # pick out only the colours you actually need, in exactly the order of your factor‐levels
@@ -458,10 +461,10 @@ area <- ggplot(top3_df, aes(
     na.value = "grey80"
   ) +
   scale_x_datetime(
-    limits = function(x) c(
-      min(x),
-      as.POSIXct(next_meeting) + hours(17)          # end exactly at meeting
-    ),
+  limits = function(x) {
+    x <- as.POSIXct(unlist(x), tz = "Australia/Melbourne")
+    c(min(x, na.rm = TRUE), as.POSIXct(next_meeting) + hours(17))
+  },
     breaks = function(x) {
       start <- lubridate::floor_date(min(x), "day") + hours(10)
       end   <- as.POSIXct(next_meeting) + hours(10)
