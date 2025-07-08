@@ -473,7 +473,7 @@ area <- ggplot(top3_df, aes(
 
   alldays <- seq(from = start, to = end, by = "1 day")
   alldays[!lubridate::wday(alldays) %in% c(1, 7)]  # exclude weekends
-}
+},
     date_labels = "%d %b",
     expand = c(0, 0)
   ) +
