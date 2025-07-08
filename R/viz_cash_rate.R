@@ -241,7 +241,7 @@ p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
   ) +
     labs(
       title    = paste("Cash Rate Outcome Probabilities —", format(as.Date(mt), "%d %B %Y")),
-      subtitle = subtitle <- paste("As of", format(as.Date(as.POSIXct(latest_scrape, tz = "Australia/Melbourne") + hours(10)), "%d %B %Y")),
+      subtitle = paste("As of", format(as.Date(latest_scrape), "%d %B %Y")),
       x        = "Target Rate (%)",
       y        = "Probability (%)"
     ) +
@@ -420,14 +420,28 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 
-
 top3_df <- top3_df %>%
-  mutate(
-    scrape_time = as.POSIXct(scrape_time, tz = "Australia/Melbourne"),
-    scrape_time_adj = as.POSIXct(scrape_time + hours(10), tz = "Australia/Melbourne")
+  # make sure every scrape_time × move pair exists:
+  complete(
+    scrape_time,
+    move,
+    fill = list(probability = 0)
   ) %>%
-  filter(!is.na(scrape_time_adj))
-
+  # re-lock the factor order so ggplot never re-orders it:
+  mutate(
+    move = factor(
+      move,
+      levels = c(
+        "-75 bp cut",
+        "-50 bp cut",
+        "-25 bp cut",
+        "No change",
+        "+25 bp hike",
+        "+50 bp hike",
+        "+75 bp hike"
+      )
+    )
+  )
 
 # pick out only the colours you actually need, in exactly the order of your factor‐levels
 my_fill_cols <- c(
@@ -441,8 +455,13 @@ my_fill_cols <- c(
 )[ levels(top3_df$move) ]
 
 # now your area plot will see exactly those 5 fills, in that locked‐in order:
-area <- ggplot(top3_df, aes(x = scrape_time_adj, y = probability, fill = move, group = move)) +
-  geom_area(position = "stack") +
+area <- ggplot(top3_df, aes(
+    x    = scrape_time + hours(10),
+    y    = probability,
+    fill = move,
+    group= move
+  )) +
+  geom_area(position = "stack", colour = NA, alpha = 0.9) +
   scale_fill_manual(
     values = my_fill_cols,        # only the 5 that actually exist
     breaks = levels(top3_df$move),# in the same order as your factor
@@ -475,7 +494,7 @@ area <- ggplot(top3_df, aes(x = scrape_time_adj, y = probability, fill = move, g
       format(as.Date(next_meeting), "%d %b %Y")
     ),
     subtitle = paste(
-      "as of", format(as.Date(latest_scrape), "%d %b %Y")
+      "as of", format(as.Date(latest_scrape + hours(10)), "%d %b %Y")
     ),
     x = "Forecast date",
     y = "Probability (stacked)"
@@ -514,4 +533,3 @@ htmlwidgets::saveWidget(
 
 # Save the `cars` data frame in R’s native “.rds” format:
 saveRDS(Filter(is.data.frame, mget(ls(), .GlobalEnv)), "all_dataframes.rds")
-
