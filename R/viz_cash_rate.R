@@ -485,10 +485,11 @@ area <- ggplot(top3_df, aes(
   start <- lubridate::floor_date(min(x, na.rm = TRUE), "day") + hours(10)
   end   <- as.POSIXct(next_meeting) + hours(10)
 
-  if (start > end) return(NULL)  # safety check
+  if (start > end)
+    return(as.POSIXct(character(0), tz = "Australia/Melbourne"))  # <- change here
 
   alldays <- seq(from = start, to = end, by = "1 day")
-  alldays[!lubridate::wday(alldays) %in% c(1, 7)]  # exclude weekends
+  alldays[!lubridate::wday(alldays) %in% c(1, 7)]
 },
     date_labels = "%d %b",
     expand = c(0, 0)
