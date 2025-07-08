@@ -420,15 +420,16 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 
+
 top3_df <- top3_df %>%
   mutate(scrape_time = as.POSIXct(scrape_time, tz = "Australia/Melbourne")) %>%
   complete(scrape_time, move, fill = list(probability = 0)) %>%
   mutate(
     scrape_time = as.POSIXct(scrape_time, tz = "Australia/Melbourne"),
-    scrape_time_adj = scrape_time + hours(10),
-    move = factor(move, levels = c("-75 bp cut", "-50 bp cut", "-25 bp cut", 
-                                   "No change", "+25 bp hike", "+50 bp hike", "+75 bp hike"))
-  )
+    scrape_time_adj = scrape_time + hours(10)
+  ) %>%
+  filter(!is.na(scrape_time_adj))
+
 
 # pick out only the colours you actually need, in exactly the order of your factor‐levels
 my_fill_cols <- c(
@@ -442,13 +443,8 @@ my_fill_cols <- c(
 )[ levels(top3_df$move) ]
 
 # now your area plot will see exactly those 5 fills, in that locked‐in order:
-area <- ggplot(top3_df, aes(
-    x    = scrape_time + hours(10),
-    y    = probability,
-    fill = move,
-    group= move
-  )) +
-  geom_area(position = "stack", colour = NA, alpha = 0.9) +
+area <- ggplot(top3_df, aes(x = scrape_time_adj, y = probability, fill = move, group = move)) +
+  geom_area(position = "stack") +
   scale_fill_manual(
     values = my_fill_cols,        # only the 5 that actually exist
     breaks = levels(top3_df$move),# in the same order as your factor
