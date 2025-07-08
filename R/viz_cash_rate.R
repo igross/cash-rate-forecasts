@@ -435,6 +435,21 @@ top3_df <- top3_df %>%
     ))
   )
 
+top3_df <- top3_df %>%
+  complete(scrape_time, move, fill = list(probability = 0)) %>%
+  mutate(
+    scrape_time_chr = as.character(scrape_time),
+    scrape_time     = as.POSIXct(scrape_time_chr, tz = "Australia/Melbourne"),
+    scrape_time_adj = scrape_time + lubridate::hours(10),
+    move = factor(move, levels = c(
+      "-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
+      "+25 bp hike", "+50 bp hike", "+75 bp hike"
+    ))
+  ) %>%
+  filter(!is.na(scrape_time_adj))
+
+str(top3_df$scrape_time_adj)
+
 # pick out only the colours you actually need, in exactly the order of your factor‐levels
 my_fill_cols <- c(
   "-75 bp cut" = "#000080",  # navy blue
