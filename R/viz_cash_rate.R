@@ -421,26 +421,13 @@ htmlwidgets::saveWidget(
 )
 
 top3_df <- top3_df %>%
-  # make sure every scrape_time × move pair exists:
-  complete(
-    scrape_time,
-    move,
-    fill = list(probability = 0)
-  ) %>%
-  # re-lock the factor order so ggplot never re-orders it:
+  mutate(scrape_time = as.POSIXct(scrape_time, tz = "Australia/Melbourne")) %>%
+  complete(scrape_time, move, fill = list(probability = 0)) %>%
   mutate(
-    move = factor(
-      move,
-      levels = c(
-        "-75 bp cut",
-        "-50 bp cut",
-        "-25 bp cut",
-        "No change",
-        "+25 bp hike",
-        "+50 bp hike",
-        "+75 bp hike"
-      )
-    )
+    scrape_time = as.POSIXct(scrape_time, tz = "Australia/Melbourne"),
+    scrape_time_adj = scrape_time + hours(10),
+    move = factor(move, levels = c("-75 bp cut", "-50 bp cut", "-25 bp cut", 
+                                   "No change", "+25 bp hike", "+50 bp hike", "+75 bp hike"))
   )
 
 # pick out only the colours you actually need, in exactly the order of your factor‐levels
