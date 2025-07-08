@@ -422,11 +422,9 @@ htmlwidgets::saveWidget(
 
 
 top3_df <- top3_df %>%
-  mutate(scrape_time = as.POSIXct(scrape_time, tz = "Australia/Melbourne")) %>%
-  complete(scrape_time, move, fill = list(probability = 0)) %>%
   mutate(
     scrape_time = as.POSIXct(scrape_time, tz = "Australia/Melbourne"),
-    scrape_time_adj = scrape_time + hours(10)
+    scrape_time_adj = as.POSIXct(scrape_time + hours(10), tz = "Australia/Melbourne")
   ) %>%
   filter(!is.na(scrape_time_adj))
 
