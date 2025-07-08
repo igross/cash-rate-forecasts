@@ -515,7 +515,7 @@ ggsave("docs/area.png", area, width = 8, height = 5, dpi = 300)  # overwrites if
 # -------------------------------------------------
 area_int <- area +
   aes(text = paste0(
-    "", format(scrape_time + hours(10), "%H:%M"), "<br>",
+    "", format(scrape_time, "%H:%M"), "<br>",
     "Probability: ", scales::percent(probability, accuracy = 1)
   ))
 
