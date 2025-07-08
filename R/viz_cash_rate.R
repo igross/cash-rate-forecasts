@@ -422,16 +422,17 @@ htmlwidgets::saveWidget(
 
 top3_df <- top3_df %>%
   complete(scrape_time, move, fill = list(probability = 0)) %>%
+  # Fully sanitize the scrape_time column
   mutate(
-    scrape_time = as.POSIXct(unlist(scrape_time), tz = "Australia/Melbourne"),
-    scrape_time_adj = scrape_time + hours(10),
-    move = factor(
-      move,
-      levels = c(
-        "-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
-        "+25 bp hike", "+50 bp hike", "+75 bp hike"
-      )
-    )
+    scrape_time = as.POSIXct(unlist(scrape_time), tz = "Australia/Melbourne")
+  ) %>%
+  filter(!is.na(scrape_time)) %>%
+  mutate(
+    scrape_time_adj = scrape_time + lubridate::hours(10),
+    move = factor(move, levels = c(
+      "-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
+      "+25 bp hike", "+50 bp hike", "+75 bp hike"
+    ))
   )
 
 # pick out only the colours you actually need, in exactly the order of your factor‐levels
