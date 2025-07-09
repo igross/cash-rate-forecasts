@@ -205,7 +205,7 @@ for (i in seq_len(nrow(all_estimates))) {
 all_estimates_buckets <- bind_rows(bucket_list)
 
 all_estimates_buckets %>% 
-  tail(20) %>% 
+  tail(50) %>% 
   print(n = Inf, width = Inf)
 
 # =============================================
@@ -227,6 +227,8 @@ for (mt in future_meetings) {
       scrape_time  == latest_scrape,
       meeting_date == mt
     )
+
+  print(bar_df)
 
   # d) create the bar chart
 p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
