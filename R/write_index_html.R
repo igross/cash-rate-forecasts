@@ -167,7 +167,7 @@ html <- sprintf('
 
   %s
 
-
+%s
   
 <h1>Cash Rate Target Probabilities By RBA Meeting </h1>
 
@@ -182,7 +182,7 @@ html <- sprintf('
 
 </body>
 </html>
-', interactive_line_section,meeting_section , intro_paragraph)
+', interactive_line_section,interactive_area_section,meeting_section , intro_paragraph)
 
 
 # Write output
