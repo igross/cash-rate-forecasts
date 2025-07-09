@@ -243,9 +243,9 @@ p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
   ) +
     labs(
       title    = paste("Cash Rate Outcome Probabilities —", format(as.Date(mt), "%d %B %Y")),
-      subtitle = paste(
+      subtitle =paste(
   "As of", 
-  format(with_tz(as.POSIXct(latest_scrape), tzone = "Australia/Sydney"), "%d %B %Y, %I:%M %p AEST")
+  format(with_tz(as.POSIXct(latest_scrape) + hours(10), tzone = "Australia/Sydney"), "%d %B %Y, %I:%M %p AEST")
 ),
       x        = "Target Rate (%)",
       y        = "Probability (%)"
