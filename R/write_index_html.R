@@ -73,22 +73,22 @@ interactive_line_section <- '
 
 
 interactive_area_section <- '
- 
   <div style="
       display: flex;
       justify-content: center;
       margin: 40px 0;
     ">
-    <iframe
+    <img
       src="area.png"
+      alt="Cash Rate Scenario Area Chart"
       style="
         width: 90%;
-        height: 800px;
-        border: none;
+        max-width: 1000px;
+        height: auto;
         border-radius: 15px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       "
-    ></iframe>
+    />
   </div>
 '
 
