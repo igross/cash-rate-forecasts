@@ -457,7 +457,7 @@ area <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
     expand = c(0, 0)
   ) +
   labs(
-    title    = glue::glue("Cash-Rate Scenarios up to the Meeting on {format(next_meeting, '%d %b %Y')}"),
+    title    = glue::glue("Cash Rate Scenarios up to the Meeting on {format(next_meeting, '%d %b %Y')}"),
     x = "Forecast date", y = "Probability"
   ) +
   theme_bw() +
