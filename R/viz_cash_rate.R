@@ -458,8 +458,7 @@ area <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
   ) +
   labs(
     title    = glue::glue("Cash-Rate Scenarios up to the Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue::glue("as of {format(as.Date(latest_scrape), '%d %b %Y')}"),
-    x = "Forecast date", y = "Probability (stacked)"
+    x = "Forecast date", y = "Probability"
   ) +
   theme_bw() +
   theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 12),
@@ -467,7 +466,7 @@ area <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
         axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14),
         legend.position = c(1.02, 0.5))
-ggsave("docs/area.png", area, width = 8, height = 5, dpi = 300)  # overwrites if rerun
+ggsave("docs/area.png", area, width = 10, height = 5, dpi = 300)  # overwrites if rerun
 
 # -------------------------------------------------
 # 2) Interactive version
