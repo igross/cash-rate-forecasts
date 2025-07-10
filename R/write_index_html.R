@@ -182,7 +182,7 @@ html <- sprintf('
 
 </body>
 </html>
-', interactive_line_section,interactive_area_section,meeting_section , intro_paragraph)
+', interactive_line_section,area_chart_section,meeting_section , intro_paragraph)
 
 
 # Write output
