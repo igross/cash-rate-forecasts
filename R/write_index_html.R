@@ -80,7 +80,7 @@ interactive_area_section <- '
       margin: 40px 0;
     ">
     <iframe
-      src="area_interactive.html"
+      src="area.png"
       style="
         width: 90%;
         height: 800px;
