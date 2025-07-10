@@ -1,0 +1,127 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rate Outcome Probabilities by RBA Meeting</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2rem;
+      color: #2c3e50;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 30px;
+      padding: 10px;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+    .chart-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 15px;
+      text-align: center;
+    }
+    .chart-card img {
+      width: 100%;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+ 
+
+
+  
+  <h1 style="margin-top:60px; text-align:center;">
+    Forecasts for the Next RBA Meeting
+  </h1>
+  <div style="
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    ">
+    <iframe
+      src="line_interactive.html"
+      style="
+        width: 90%;
+        height: 800px;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      "
+    ></iframe>
+  </div>
+
+
+
+  <h1 style="margin-top:60px;">Forecasts for the Next RBA Meeting</h1>
+  <div class="chart-card" style="max-width: 800px; margin: 0 auto;">
+    <img src="area.png" alt="Next RBA Meeting">
+  </div>
+  
+<h1>Cash Rate Target Probabilities By RBA Meeting </h1>
+
+<div class="grid"> <div class="chart-card">
+      <img src="rate_probabilities_20312.png" alt="20312" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20361.png" alt="20361" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20396.png" alt="20396" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20431.png" alt="20431" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20487.png" alt="20487" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20529.png" alt="20529" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20578.png" alt="20578" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20620.png" alt="20620" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20676.png" alt="20676" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20725.png" alt="20725" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20760.png" alt="20760" />
+    </div>
+<div class="chart-card">
+      <img src="rate_probabilities_20795.png" alt="20795" />
+    </div> </div>
+
+  
+  <p style="max-width: 800px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
+    This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia's cash rate,
+    based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
+  </p>
+
+
+
+
+
+
+</body>
+</html>
+
