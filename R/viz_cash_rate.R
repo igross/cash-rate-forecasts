@@ -464,9 +464,8 @@ area <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
   theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 12),
         axis.text.y  = element_text(size = 12),
         axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14),
-        legend.position = c(1.02, 0.5))
-ggsave("docs/area.png", area, width = 10, height = 5, dpi = 300)  # overwrites if rerun
+        axis.title.y = element_text(size = 14),)
+ggsave("docs/area.png", area, width = 12, height = 5, dpi = 300)  # overwrites if rerun
 
 # -------------------------------------------------
 # 2) Interactive version
