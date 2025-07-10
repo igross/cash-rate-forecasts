@@ -92,16 +92,15 @@ interactive_area_section <- '
   </div>
 '
 
-
-area_chart_section <- ""
-if (file.exists("docs/area.png")) {
-  area_chart_section <- '
+area_chart_section <- '
   <h1 style="margin-top:60px;">Forecasts for the Next RBA Meeting</h1>
-  <div class="chart-card" style="max-width: 800px; margin: 0 auto;">
-    <img src="area.png" alt="Next RBA Meeting">
+  <div class="chart-card" style="max-width: 1400px; margin: 0 auto;">
+    <img 
+      src="area.png" 
+      alt="Next RBA Meeting"
+      style="width: 100%; height: auto; border-radius: 12px;"
+    >
   </div>'
-}
-
 
 line_chart_section <- ""
 if (file.exists("docs/line.png")) {
