@@ -183,6 +183,8 @@ current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
   filter(date == max(date)) %>%
   pull(value)
 
+ current_rate <- if (use_override) override else current_rate
+
 current_center <- bucket_centers[ which.min( abs(bucket_centers - current_rate) ) ]
 
 bucket_list <- vector("list", nrow(all_estimates))
