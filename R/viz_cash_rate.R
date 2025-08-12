@@ -299,6 +299,9 @@ cutoff <- lubridate::ymd_hm(
   tz = "Australia/Melbourne"
 )
 
+print(cutoff)
+print(now_melb)
+
 next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
                     now_melb < cutoff) {
   today_melb                       # keep showing today’s meeting
@@ -308,6 +311,8 @@ next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
     slice_min(meeting_date) %>%
     pull(meeting_date)
 }
+
+print(next_meeting)
 # —————————————————————————————————————————————————————————————————————
 # build top3_df and turn the numeric bucket centers into descriptive moves
 # —————————————————————————————————————————————————————————————————————
