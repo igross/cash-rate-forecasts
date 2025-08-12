@@ -72,7 +72,21 @@ use_override   <- !is.null(override) &&
 initial_rt     <- if (use_override) override else latest_rt
 
 all_times <- sort(unique(cash_rate$scrape_time))
-scrapes   <- all_times[all_times > last_meeting]   # every scrape after the last decision
+
+# New logic for filtering scrapes based on 2:30 PM AEST cutoff
+now_melb <- lubridate::now(tzone = "Australia/Melbourne")
+cutoff_time <- lubridate::ymd_hm(paste0(Sys.Date(), " 14:30"), tz = "Australia/Melbourne")
+
+# If it's before 2:30 PM AEST, include yesterday's data
+if (now_melb < cutoff_time) {
+  # Include data from yesterday onwards
+  cutoff_date <- Sys.Date() - 1
+} else {
+  # After 2:30 PM, only include today's data
+  cutoff_date <- Sys.Date()
+}
+
+scrapes <- all_times[all_times >= cutoff_date & all_times > last_meeting]
 
 # =============================================
 # 5) Build implied‐mean panel for each scrape × meeting
