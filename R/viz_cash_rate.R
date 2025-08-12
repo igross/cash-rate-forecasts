@@ -295,7 +295,7 @@ now_melb  <- lubridate::now(tzone = "Australia/Melbourne")
 today_melb <- as.Date(now_melb)
 
 cutoff <- lubridate::ymd_hm(
-  paste0(today_melb, " 15:30"),
+  paste0(today_melb, " 15:00"),
   tz = "Australia/Melbourne"
 )
 
