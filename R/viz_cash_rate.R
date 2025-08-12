@@ -91,7 +91,7 @@ print(now_melb)
 print(cutoff_time)
 
 
-scrapes <- all_times[all_times >= cutoff_date & all_times > last_meeting]
+scrapes <- all_times[all_times >= cutoff_date | all_times > last_meeting]
 
 print(scrapes)
 
