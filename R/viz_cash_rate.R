@@ -29,7 +29,7 @@ latest_rt <- read_rba(series_id = "FIRMMCRTD") |>
              slice_max(date, n = 1, with_ties = FALSE) |>
              pull(value)
 
-  override <- 3.85
+  override <- 3.60
   
 
 
