@@ -75,6 +75,9 @@ print(use_override)
 
 initial_rt     <- if (use_override) override else latest_rt
 
+  print(initial_rt)
+
+
 all_times <- sort(unique(cash_rate$scrape_time))
 
 # New logic for filtering scrapes based on 2:30 PM AEST cutoff
