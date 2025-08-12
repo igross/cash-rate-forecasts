@@ -66,8 +66,12 @@ meeting_schedule <- tibble(
 last_meeting   <- max(meeting_schedule$meeting_date[
                         meeting_schedule$meeting_date <= Sys.Date()])
 
+print(last_meeting)
+
 use_override   <- !is.null(override) &&
                   Sys.Date() - last_meeting <= 1
+
+print(use_override)
 
 initial_rt     <- if (use_override) override else latest_rt
 
