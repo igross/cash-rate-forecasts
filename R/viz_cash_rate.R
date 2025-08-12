@@ -90,6 +90,8 @@ print(last_meeting)
 print(now_melb)
 print(cutoff_time)
 
+print(all_times)
+
 scrapes <- all_times[all_times >= cutoff_date & all_times > last_meeting]
 
 # =============================================
