@@ -36,6 +36,9 @@ latest_rt <- read_rba(series_id = "FIRMMCRTD") |>
 spread <- 0.00
 cash_rate$cash_rate <- cash_rate$cash_rate+spread
 
+
+if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
+
 # =============================================
 # 3) Define RBA meeting schedule
 # =============================================
@@ -525,3 +528,63 @@ htmlwidgets::saveWidget(
 
 # Save the `cars` data frame in R’s native “.rds” format:
 saveRDS(Filter(is.data.frame, mget(ls(), .GlobalEnv)), "all_dataframes.rds")
+
+# -----------------------------
+# Line chart
+# -----------------------------
+
+# Rolling "latest" (always overwritten)
+ggsave("docs/line.png", line, width = 8, height = 5, dpi = 300)
+
+# Archived per meeting (never overwritten)
+ggsave(
+  filename = paste0("docs/meetings/line_", format(next_meeting, "%Y%m%d"), ".png"),
+  plot     = line,
+  width    = 8,
+  height   = 5,
+  dpi      = 300
+)
+
+# Interactive (latest only)
+htmlwidgets::saveWidget(
+  interactive_line,
+  file          = "docs/line_interactive.html",
+  selfcontained = TRUE
+)
+
+# Interactive archived
+htmlwidgets::saveWidget(
+  interactive_line,
+  file          = paste0("docs/meetings/line_interactive_", format(next_meeting, "%Y%m%d"), ".html"),
+  selfcontained = TRUE
+)
+
+# -----------------------------
+# Area chart
+# -----------------------------
+
+# Rolling "latest" (always overwritten)
+ggsave("docs/area.png", area, width = 12, height = 5, dpi = 300)
+
+# Archived per meeting (never overwritten)
+ggsave(
+  filename = paste0("docs/meetings/area_", format(next_meeting, "%Y%m%d"), ".png"),
+  plot     = area,
+  width    = 12,
+  height   = 5,
+  dpi      = 300
+)
+
+# Interactive (latest only)
+htmlwidgets::saveWidget(
+  interactive_area,
+  file          = "docs/area_interactive.html",
+  selfcontained = TRUE
+)
+
+# Interactive archived
+htmlwidgets::saveWidget(
+  interactive_area,
+  file          = paste0("docs/meetings/area_interactive_", format(next_meeting, "%Y%m%d"), ".html"),
+  selfcontained = TRUE
+)
