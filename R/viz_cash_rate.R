@@ -61,6 +61,79 @@ meeting_schedule <- tibble(
   ) %>% 
   select(expiry, meeting_date)
 
+manual_releases <- tribble(
+  ~dataset,           ~datetime,
+
+  # -------------------
+  # 2025
+  # -------------------
+  # CPI
+  "CPI",  ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
+
+  # WPI
+  "WPI",  ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2025-05-14 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2025-08-13 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2025-11-12 11:30", tz = "Australia/Melbourne"),
+
+  # National Accounts
+  "National Accounts", ymd_hm("2025-03-05 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-06-04 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-09-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-12-03 11:30", tz = "Australia/Melbourne"),
+
+  # Labour Force (monthly)
+  "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-02-13 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-03-13 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-04-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-05-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-06-12 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-07-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-08-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-09-11 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-10-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-11-13 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-12-11 11:30", tz = "Australia/Melbourne"),
+
+  # -------------------
+  # 2026
+  # -------------------
+  # CPI
+  "CPI",  ymd_hm("2026-01-28 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
+
+  # WPI
+  "WPI",  ymd_hm("2026-02-18 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2026-05-13 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2026-08-12 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2026-11-11 11:30", tz = "Australia/Melbourne"),
+
+  # National Accounts
+  "National Accounts", ymd_hm("2026-03-04 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-06-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-09-02 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-12-02 11:30", tz = "Australia/Melbourne"),
+
+  # Labour Force (monthly)
+  "Labour Force", ymd_hm("2026-01-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-02-12 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-03-12 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-04-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-05-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-06-11 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-07-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-08-13 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-09-10 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-10-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-11-12 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-12-10 11:30", tz = "Australia/Melbourne")
+)
 
 
 # =============================================
