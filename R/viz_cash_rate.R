@@ -474,10 +474,6 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
   geom_vline(data = abs_releases,
              aes(xintercept = datetime, colour = dataset),
              linetype = "dashed", alpha = 0.6) +
-  # label at top
-  geom_text(data = abs_releases,
-            aes(x = datetime, y = max(df$value), label = dataset, colour = dataset),
-            angle = 90, vjust = -0.4, hjust = 0, size = 3, show.legend = FALSE) +
   theme_minimal() +
   theme_bw() +
   theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 12),
