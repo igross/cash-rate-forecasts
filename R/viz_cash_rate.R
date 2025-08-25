@@ -504,7 +504,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
   geom_vline(data = abs_releases,
              aes(xintercept = datetime, colour = dataset),
              linetype = "dashed", alpha = 0.8) +
-  guides(colour = guide_legend(override.aes = list(linetype = c(rep("solid", 7), rep("dashed", 5))))) +
+#  guides(colour = guide_legend(override.aes = list(linetype = c(rep("solid", 7), rep("dashed", 5))))) +
   theme_minimal() +
   theme_bw() +
   theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
