@@ -478,7 +478,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
                "-25 bp cut" = "#5FA4D4", "No change" = "#BFBFBF",
                "+25 bp hike" = "#E07C7C", "+50 bp hike" = "#B50000",
                "+75 bp hike" = "#800000"),
-    drop = FALSE, name = ""
+    name = ""   
   ) +
   scale_x_datetime(
     limits      = c(start_xlim, end_xlim),
