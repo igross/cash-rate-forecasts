@@ -501,7 +501,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
              linetype = "dashed", alpha = 0.9) +
   theme_minimal() +
   theme_bw() +
-  theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 12),
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
         axis.text.y  = element_text(size = 12),
         axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14),
