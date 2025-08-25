@@ -474,15 +474,21 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
                             colour = move, group = move)) +
   geom_line(linewidth = 1.2) +
   scale_colour_manual(
-    values = c("-75 bp cut" = "#000080", "-50 bp cut" = "#004B8E",
+values = c("-75 bp cut" = "#000080", "-50 bp cut" = "#004B8E",
                "-25 bp cut" = "#5FA4D4", "No change" = "#BFBFBF",
                "+25 bp hike" = "#E07C7C", "+50 bp hike" = "#B50000",
-               "+75 bp hike" = "#800000"),
+               "+75 bp hike" = "#800000",
+               # Add colors for data releases
+               "CPI" = "#FF6B35", 
+               "CPI Indicator" = "#FF8C42",
+               "WPI" = "#52796F", 
+               "National Accounts" = "#2F3E46",
+               "Labour Force" = "#8E44AD"),
     name = ""   
   ) +
   scale_x_datetime(
     limits      = c(start_xlim, end_xlim),
-    date_breaks = "1 day",
+    date_breaks = "2 day",
     date_labels = "%d %b",
     expand      = c(0, 0)
   ) +
@@ -498,7 +504,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
  # release vertical lines
   geom_vline(data = abs_releases,
              aes(xintercept = datetime, colour = dataset),
-             linetype = "dashed", alpha = 0.9) +
+             linetype = "dashed", alpha = 0.8) +
   theme_minimal() +
   theme_bw() +
   theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
