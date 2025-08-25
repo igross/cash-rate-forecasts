@@ -73,7 +73,33 @@ abs_releases <- tribble(
   "CPI",  ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
   "CPI",  ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
   "CPI",  ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
-
+  
+  # CPI Indicator (monthly)
+  "CPI Indicator", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-02-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-03-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-05-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-06-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-08-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-09-24 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-11-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-12-31 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-01-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-02-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-03-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-05-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-06-24 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-08-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-09-23 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-11-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-12-30 11:30", tz = "Australia/Melbourne"),
+  
   # WPI (quarterly)
   "WPI",  ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
   "WPI",  ymd_hm("2025-05-14 11:30", tz = "Australia/Melbourne"),
@@ -83,7 +109,7 @@ abs_releases <- tribble(
   "WPI",  ymd_hm("2026-05-13 11:30", tz = "Australia/Melbourne"),
   "WPI",  ymd_hm("2026-08-12 11:30", tz = "Australia/Melbourne"),
   "WPI",  ymd_hm("2026-11-11 11:30", tz = "Australia/Melbourne"),
-
+  
   # National Accounts (quarterly)
   "National Accounts", ymd_hm("2025-03-05 11:30", tz = "Australia/Melbourne"),
   "National Accounts", ymd_hm("2025-06-04 11:30", tz = "Australia/Melbourne"),
@@ -93,7 +119,7 @@ abs_releases <- tribble(
   "National Accounts", ymd_hm("2026-06-03 11:30", tz = "Australia/Melbourne"),
   "National Accounts", ymd_hm("2026-09-02 11:30", tz = "Australia/Melbourne"),
   "National Accounts", ymd_hm("2026-12-02 11:30", tz = "Australia/Melbourne"),
-
+  
   # Labour Force (monthly)
   "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-02-13 11:30", tz = "Australia/Melbourne"),
@@ -120,7 +146,6 @@ abs_releases <- tribble(
   "Labour Force", ymd_hm("2026-11-12 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-12-10 11:30", tz = "Australia/Melbourne")
 )
-
 
 # =============================================
 # 4) Identify last meeting, collect scrapes
