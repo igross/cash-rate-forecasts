@@ -485,7 +485,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
 print(abs_releases)
 
 # overwrite the previous PNG
-ggsave("docs/line.png", line, width = 8, height = 5, dpi = 300)
+ggsave("docs/line.png", line, width = 10, height = 5, dpi = 300)
 
 
 # =============================================
