@@ -482,6 +482,8 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
         axis.title.y = element_text(size = 14),
         legend.position = c(1.02, 0.5))
 
+print(abs_releases)
+
 # overwrite the previous PNG
 ggsave("docs/line.png", line, width = 8, height = 5, dpi = 300)
 
