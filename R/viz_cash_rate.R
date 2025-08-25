@@ -479,11 +479,11 @@ values = c("-75 bp cut" = "#000080", "-50 bp cut" = "#004B8E",
                "+25 bp hike" = "#E07C7C", "+50 bp hike" = "#B50000",
                "+75 bp hike" = "#800000",
                # Add colors for data releases
-               "CPI" = "#8B7D7D",              # grey with red hue
-               "CPI Indicator" = "#7D7D8B",    # grey with blue hue
-               "WPI" = "#7D8B7D",              # grey with green hue
-               "National Accounts" = "#8B8B7D", # grey with yellow hue
-               "Labour Force" = "#8B7D8B"),    # grey with purple hue
+               "CPI" = "#B85450",              # muted red-grey
+               "CPI Indicator" = "#6B7AA0",    # muted blue-grey
+               "WPI" = "#5D8B63",              # muted green-grey
+               "National Accounts" = "#A0956B", # muted yellow-grey/olive
+               "Labour Force" = "#8B6B9D"),    # muted purple-grey
     name = ""   
   ) +
   scale_x_datetime(
