@@ -480,7 +480,8 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
         axis.text.y  = element_text(size = 12),
         axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14),
-        legend.position = c(1.02, 0.5))
+          legend.position = "right",  # ggplot will handle spacing automatically
+  legend.title = element_blank())
 
 print(abs_releases)
 
