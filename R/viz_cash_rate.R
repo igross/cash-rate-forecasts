@@ -523,16 +523,35 @@ ggsave("docs/line.png", line, width = 10, height = 5, dpi = 300)
 # =============================================
 # Interactive widget
 # =============================================
+# Create interactive version with better hover info for vertical lines
 line_int <- line +
   aes(text = paste0(
-    "", format(scrape_time + hours(10), "%H:%M"), "<br>",
+    "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
+    "Move: ", move, "<br>",
     "Probability: ", scales::percent(probability, accuracy = 1)
   ))
 
+# Convert to plotly
 interactive_line <- ggplotly(line_int, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
-    legend    = list(x = 1.02, y = 0.5, xanchor = "left")
+    legend = list(x = 1.02, y = 0.5, xanchor = "left"),
+    # Ensure vertical lines show up properly
+    showlegend = TRUE
+  ) %>%
+  # Add custom hover info for vertical lines
+  add_annotations(
+    data = abs_releases,
+    x = ~datetime,
+    y = 0.95,  # Position near top of chart
+    text = ~paste(dataset, format(datetime, "%d %b")),
+    showarrow = TRUE,
+    arrowhead = 2,
+    arrowsize = 0.5,
+    ax = 0,
+    ay = -30,
+    font = list(size = 8, color = "darkgrey"),
+    visible = "legendonly"  # Only show when hovering
   )
 
 htmlwidgets::saveWidget(
