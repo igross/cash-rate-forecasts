@@ -473,7 +473,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
  # release vertical lines
   geom_vline(data = abs_releases,
              aes(xintercept = datetime, colour = dataset),
-             linetype = "dashed", alpha = 0.6) +
+             linetype = "dashed", alpha = 0.9) +
   theme_minimal() +
   theme_bw() +
   theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 12),
