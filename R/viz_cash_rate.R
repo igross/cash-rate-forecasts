@@ -187,7 +187,7 @@ print(cutoff_time)
 
 scrapes <- all_times[all_times >= cutoff_date | all_times > last_meeting]
 
-print(scrapes)
+tail(scrapes)
 
 # =============================================
 # 5) Build implied‐mean panel for each scrape × meeting
@@ -322,7 +322,7 @@ for (i in seq_len(nrow(all_estimates))) {
 all_estimates_buckets <- bind_rows(bucket_list)
 
 all_estimates_buckets %>% 
-  tail(50) %>% 
+  tail(20) %>% 
   print(n = Inf, width = Inf)
 
 # =============================================
@@ -345,7 +345,8 @@ for (mt in future_meetings) {
       meeting_date == mt
     )
 
-  print(bar_df)
+
+  
 
   # d) create the bar chart
 p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
@@ -395,8 +396,7 @@ cutoff <- lubridate::ymd_hm(
   tz = "Australia/Melbourne"
 )
 
-print(cutoff)
-print(now_melb)
+
 
 next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
                     now_melb < cutoff) {
