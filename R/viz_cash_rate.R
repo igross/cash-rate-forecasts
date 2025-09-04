@@ -473,14 +473,19 @@ end_xlim   <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(17)
 
 
 # Create the base interactive plot without vertical lines
-line_int <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
+line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
                             colour = move, group = move)) +
   geom_line(linewidth = 1.2) +
   scale_colour_manual(
     values = c("-75 bp cut" = "#000080", "-50 bp cut" = "#004B8E",
                "-25 bp cut" = "#5FA4D4", "No change" = "#BFBFBF",
                "+25 bp hike" = "#E07C7C", "+50 bp hike" = "#B50000",
-               "+75 bp hike" = "#800000"),
+               "+75 bp hike" = "#800000",
+               "CPI" = "#B85450",
+               "CPI Indicator" = "#6B7AA0", 
+               "WPI" = "#5D8B63",
+               "National Accounts" = "#A0956B",
+               "Labour Force" = "#8B6B9D"),
     name = ""   
   ) +
   scale_x_datetime(
@@ -498,19 +503,18 @@ line_int <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
     subtitle = glue::glue("as of {format(as.Date(latest_scrape), '%d %b %Y')}"),
     x = "Forecast date", y = "Probability"
   ) +
-  aes(text = paste0(
-    "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
-    "Move: ", move, "<br>",
-    "Probability: ", scales::percent(probability, accuracy = 1)
-  )) +
-  theme_minimal() +
-  theme_bw() +
-  theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
-        axis.text.y  = element_text(size = 12),
-        axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14),
-        legend.position = "right",
-        legend.title = element_blank())
+  geom_vline(data = abs_releases,
+             aes(xintercept = datetime, colour = dataset),
+             linetype = "dashed", alpha = 0.8) +
+  theme_bw() +  # Use only ONE theme
+  theme(
+    axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
+    axis.text.y  = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = "right",
+    legend.title = element_blank()
+  )
 
 # Convert to plotly first
 interactive_line <- ggplotly(line_int, tooltip = "text")
