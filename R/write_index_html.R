@@ -100,17 +100,16 @@ area_chart_section <- '
       justify-content: center;
       margin: 40px 0;
     ">
-    <iframe
-      src="area_interactive.html"
+    <img 
+      src="area.png" 
+      alt="Next RBA Meeting Area Chart"
       style="
-        width: 90%;
-        max-width: 1400px;
-        height: 800px;
-        border: none;
+        width: 95%;
+        height: auto;
         border-radius: 15px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       "
-    ></iframe>
+    />
   </div>'
 
 line_chart_section <- ""
