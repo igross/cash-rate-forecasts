@@ -55,12 +55,16 @@ if (file.exists("docs/line.png")) {
   <h1 style="margin-top:60px; text-align:center;">
     Forecasts for the Next RBA Meeting
   </h1>
-  <div class="chart-card" style="max-width: 1000px; margin: 0 auto;">
+  <div style="
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    ">
     <img 
       src="line.png" 
       alt="Next RBA Meeting Line Chart"
       style="
-        width: 100%;
+        width: 95%;
         height: auto;
         border-radius: 15px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -91,12 +95,22 @@ interactive_area_section <- '
 
 area_chart_section <- '
   <h1 style="margin-top:60px;">Forecasts for the Next RBA Meeting</h1>
-  <div class="chart-card" style="max-width: 1400px; margin: 0 auto;">
-    <img 
-      src="area.png" 
-      alt="Next RBA Meeting"
-      style="width: 100%; height: auto; border-radius: 12px;"
-    >
+  <div style="
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    ">
+    <iframe
+      src="area_interactive.html"
+      style="
+        width: 90%;
+        max-width: 1400px;
+        height: 800px;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      "
+    ></iframe>
   </div>'
 
 line_chart_section <- ""
