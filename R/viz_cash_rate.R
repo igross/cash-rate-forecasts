@@ -472,7 +472,7 @@ end_xlim   <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(17)
 
 
 
-# Create the base interactive plot without vertical lines
+# Your existing line plot
 line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
                             colour = move, group = move)) +
   geom_line(linewidth = 1.2) +
@@ -506,42 +506,32 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
   geom_vline(data = abs_releases,
              aes(xintercept = datetime, colour = dataset),
              linetype = "dashed", alpha = 0.8) +
-  theme_bw() +  # Use only ONE theme
-  theme(
-    axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
-    axis.text.y  = element_text(size = 12),
-    axis.title.x = element_text(size = 14),
-    axis.title.y = element_text(size = 14),
-    legend.position = "right",
-    legend.title = element_blank()
-  )
+  theme_bw() +
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 9),
+        axis.text.y  = element_text(size = 12),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        legend.position = "right",
+        legend.title = element_blank())
 
-# Convert to plotly first
-interactive_line <- ggplotly(line_int, tooltip = "text")
+# Save the static plot
+ggsave("docs/line.png", line, width = 10, height = 5, dpi = 300)
 
-# Then add vertical lines using plotly
-for(i in 1:nrow(abs_releases)) {
-  interactive_line <- interactive_line %>%
-    add_segments(
-      x = abs_releases$datetime[i], 
-      xend = abs_releases$datetime[i],
-      y = 0, 
-      yend = 1,
-      line = list(color = abs_releases$color[i], dash = "dash", width = 2),
-      name = abs_releases$dataset[i],
-      showlegend = TRUE,
-      hovertemplate = paste0(abs_releases$dataset[i], "<br>", 
-                           format(abs_releases$datetime[i], "%d %b %Y"), 
-                           "<extra></extra>")
-    )
-}
+# NOW create line_int for interactive plot
+line_int <- line +
+  aes(text = paste0(
+    "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
+    "Move: ", move, "<br>",
+    "Probability: ", scales::percent(probability, accuracy = 1)
+  ))
 
-interactive_line <- interactive_line %>%
+# Convert to plotly
+interactive_line <- ggplotly(line_int, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
-    legend = list(x = 1.02, y = 0.5, xanchor = "left")
+    legend = list(x = 1.02, y = 0.5, xanchor = "left"),
+    showlegend = TRUE
   )
-
 
 
 htmlwidgets::saveWidget(
