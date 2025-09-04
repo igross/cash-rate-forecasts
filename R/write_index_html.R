@@ -19,7 +19,7 @@ labels <- png_files |>
   str_remove("^rate_probabilities_") |>
   str_remove("\\.png$") 
 
-# If label is “May_2025” or “05_2025”, try both formats
+# If label is "May_2025" or "05_2025", try both formats
 dates <- suppressWarnings(
   as.Date(paste0("01 ", labels), "%d %B %Y")
 )
@@ -48,29 +48,26 @@ if (file.exists("docs/rate_fan_chart.png")) {
   </div>'
 }
 
-
-interactive_line_section <- '
+# CHANGED: Replace interactive line chart with static PNG
+interactive_line_section <- ''
+if (file.exists("docs/line.png")) {
+  interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
     Forecasts for the Next RBA Meeting
   </h1>
-  <div style="
-      display: flex;
-      justify-content: center;
-      margin: 40px 0;
-    ">
-    <iframe
-      src="line_interactive.html"
+  <div class="chart-card" style="max-width: 1000px; margin: 0 auto;">
+    <img 
+      src="line.png" 
+      alt="Next RBA Meeting Line Chart"
       style="
-        width: 90%;
-        height: 800px;
-        border: none;
+        width: 100%;
+        height: auto;
         border-radius: 15px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       "
-    ></iframe>
-  </div>
-'
-
+    />
+  </div>'
+}
 
 interactive_area_section <- '
   <div style="
