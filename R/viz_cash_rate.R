@@ -822,7 +822,7 @@ col_pos <- "#FF2A2A"   # vivid red
 n_left  <- mid - 1
 n_right <- L - mid
 
-gamma_center <- 2.0     # >1 → stronger change near centre (tunable: 1.6–2.5)
+gamma_center <- 3.0     # >1 → stronger change near centre (tunable: 1.6–2.5)
 
 # Color ramps in perceptual space
 cr_left  <- grDevices::colorRamp(c(col_neg, col_mid), space = "Lab")
