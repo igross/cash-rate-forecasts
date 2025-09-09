@@ -790,6 +790,10 @@ move_levels_bps <- seq(-bp_span, bp_span, by = step_bp)
 label_move <- function(x) if (x < 0) paste0(abs(x), " bp cut") else if (x == 0) "No change" else paste0("+", x, " bp hike")
 move_levels_lbl <- vapply(move_levels_bps, label_move, character(1))
 
+  legend_bps    <- seq(-100, 100, by = 25)
+label_move    <- function(x) if (x < 0) paste0(abs(x), " bp cut") else if (x == 0) "No change" else paste0("+", x, " bp hike")
+legend_breaks <- vapply(legend_bps, label_move, character(1))
+
 all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
   dplyr::mutate(
     move = dplyr::case_when(
@@ -912,8 +916,12 @@ area_mt <- ggplot2::ggplot(
     alpha    = 0.95,
     colour   = NA
   ) +
-  ggplot2::scale_fill_manual(values = fill_map, breaks = move_levels_lbl,
-                             drop = FALSE, name = "") +
+  ggplot2::scale_fill_manual(
+  values = fill_map,
+  breaks = legend_breaks,     # only show -100..+100 in legend
+  drop   = FALSE,
+  name   = ""
+  )+
   ggplot2::scale_x_datetime(
     limits = c(start_xlim_mt, end_xlim_mt),
     breaks = breaks_vec,
