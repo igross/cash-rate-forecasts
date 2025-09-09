@@ -706,7 +706,7 @@ htmlwidgets::saveWidget(
 #  • Uses the full sample of scrapes you retained
 #  • One PNG per meeting under docs/meetings/
 #  • X axis: exactly 30 equally spaced ticks
-#  • Colours: No change grey; ±25 is lightest tint; saturation increases with magnitude
+#  • Colours: original near-centre, darker variants for |move| ≥ 100
 #  • Robust to NA/Inf stdev and degenerate probability sums
 # =============================================
 
@@ -807,41 +807,65 @@ future_meetings_all <- meeting_schedule %>%
   dplyr::pull(meeting_date)
 
 # ---------------------------------------------
-# Colour palette — monotonic saturation outward
-#  • 'No change' stays grey
-#  • ±25 is the lightest blue/red tint
-#  • Saturation increases with |move| up to ±300
+# Colour palette — use original centre colours; darken ≥100 bp
+# Original area colours:
+#   cuts:  -25 = #5FA4D4, -50 = #004B8E, -75 = #000080
+#   no chg:       #BFBFBF
+#   hikes: +25 = #E07C7C, +50 = #B50000, +75 = #800000
+# For |move| ≥ 100 bp, darken the ±75 base progressively.
 # ---------------------------------------------
-L   <- length(move_levels_lbl)
-mid <- which(move_levels_bps == 0)
+col_cut_25 <- "#5FA4D4"
+col_cut_50 <- "#004B8E"
+col_cut_75 <- "#000080"
+col_nochg  <- "#BFBFBF"
+col_hike_25<- "#E07C7C"
+col_hike_50<- "#B50000"
+col_hike_75<- "#800000"
 
-col_neg <- "#0030FF"   # vivid blue
-col_mid <- "#DADADA"   # light grey (centre only)
-col_pos <- "#FF2A2A"   # vivid red
+darken_hex <- function(hex, factor = 0.8) {
+  rgbv <- grDevices::col2rgb(hex)
+  rgbv <- pmax(0, pmin(255, as.numeric(rgbv) * factor))
+  grDevices::rgb(rgbv[1]/255, rgbv[2]/255, rgbv[3]/255)
+}
 
-n_left  <- mid - 1         # number of negative bins (exclude centre)
-n_right <- L - mid         # number of positive bins (exclude centre)
+# Darkness ramp for |move| >= 100: 100 -> 0.90, 300 -> 0.50 (monotonic)
+dark_factor_for_mag <- function(mag) {
+  if (mag < 100) return(1)
+  mag <- min(max(mag, 100), 300)
+  0.90 - (mag - 100) * (0.40 / 200)  # linear to 0.50 at 300
+}
 
-gamma_center <- 1.4        # >1 keeps ±25 lighter than ±50 while still ramping up
+# Build palette in the exact order of move_levels_bps / move_levels_lbl
+L <- length(move_levels_bps)
+col_vec <- character(L)
 
-# Perceptual ramps from grey -> colour
-cr_left  <- grDevices::colorRamp(c(col_mid, col_neg), space = "Lab")
-cr_right <- grDevices::colorRamp(c(col_mid, col_pos), space = "Lab")
+for (k in seq_along(move_levels_bps)) {
+  bps <- move_levels_bps[k]
+  lab <- move_levels_lbl[k]
 
-# Sample positions strictly between 0 and 1 so ±25 ≠ grey
-# Left side (labels ordered -300,...,-25): reverse to match order
-u_left  <- if (n_left  > 0) (1:n_left)  / (n_left  + 1) else numeric(0)   # small → near grey; large → near blue
-u_right <- if (n_right > 0) (1:n_right) / (n_right + 1) else numeric(0)   # small → near grey; large → near red
-
-cols_left_asc  <- if (n_left  > 0) grDevices::rgb(cr_left(u_left^gamma_center),   maxColorValue = 255) else character(0)
-cols_right_asc <- if (n_right > 0) grDevices::rgb(cr_right(u_right^gamma_center), maxColorValue = 255) else character(0)
-
-# Map to factor order: negatives are -300..-25, so reverse the left side
-cols_left  <- rev(cols_left_asc)     # -300 deepest blue ... -25 lightest blue
-cols_right <- cols_right_asc         # +25 lightest red ... +300 deepest red
-
-pal <- c(cols_left, col_mid, cols_right)
-fill_map <- stats::setNames(pal, move_levels_lbl)
+  if (bps == 0) {
+    col_vec[k] <- col_nochg
+  } else if (bps < 0) {
+    mag <- abs(bps)
+    col_vec[k] <- dplyr::case_when(
+      mag == 25 ~ col_cut_25,
+      mag == 50 ~ col_cut_50,
+      mag == 75 ~ col_cut_75,
+      mag >= 100 ~ darken_hex(col_cut_75, dark_factor_for_mag(mag)),
+      TRUE ~ col_cut_25
+    )
+  } else { # bps > 0
+    mag <- bps
+    col_vec[k] <- dplyr::case_when(
+      mag == 25 ~ col_hike_25,
+      mag == 50 ~ col_hike_50,
+      mag == 75 ~ col_hike_75,
+      mag >= 100 ~ darken_hex(col_hike_75, dark_factor_for_mag(mag)),
+      TRUE ~ col_hike_25
+    )
+  }
+}
+fill_map <- stats::setNames(col_vec, move_levels_lbl)
 
 # Helpers for labels and filenames
 fmt_date <- function(d) strftime(as.Date(d), "%d %b %Y")
@@ -903,4 +927,5 @@ for (mt in future_meetings_all) {
     dpi      = 300
   )
 }
+
 
