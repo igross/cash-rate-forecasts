@@ -705,14 +705,15 @@ htmlwidgets::saveWidget(
 #  • ±300 bp range in 25 bp steps
 #  • Uses the full sample of scrapes you retained
 #  • One PNG per meeting under docs/meetings/
-#  • X axis: 30 equally spaced ticks
-#  • Colours: stronger blue/red, minimal grey only at 'No change'
+#  • X axis: exactly 30 equally spaced ticks
+#  • Colours: centre-biased gradient (more change near 'No change')
+#  • Robust to NA/Inf stdev and degenerate probability sums
 # =============================================
 
 bp_span <- 300L
 step_bp <- 25L
 
-# Fallback SD in case any invalid values remain
+# Fallback SD if any invalid values remain
 sd_fallback <- suppressWarnings(stats::median(all_estimates$stdev[is.finite(all_estimates$stdev)], na.rm = TRUE))
 if (!is.finite(sd_fallback) || sd_fallback <= 0) sd_fallback <- 0.01
 
@@ -805,23 +806,39 @@ future_meetings_all <- meeting_schedule %>%
   dplyr::filter(meeting_date > Sys.Date()) %>%
   dplyr::pull(meeting_date)
 
-# Colour map: strong blue/red, minimal grey only at center
+# ---------------------------------------------
+# Centre-biased diverging palette construction
+#   • More colour change near 'No change'
+#   • Less colour change near extremes
+#   • Only the centre bin is grey
+# ---------------------------------------------
 L   <- length(move_levels_lbl)
 mid <- which(move_levels_bps == 0)
+
 col_neg <- "#0030FF"   # vivid blue
-col_mid <- "#DADADA"   # light grey (only for 'No change')
+col_mid <- "#DADADA"   # light grey (centre only)
 col_pos <- "#FF2A2A"   # vivid red
 
-# Build left and right gradients, then enforce mid as grey
-left_fun  <- grDevices::colorRampPalette(c(col_mid, col_neg))
-right_fun <- grDevices::colorRampPalette(c(col_mid, col_pos))
-left_cols  <- if (mid > 1) left_fun(mid) else character(0)            # includes center at end
-right_cols <- right_fun(L - mid + 1)                                  # includes center at start
-pal <- c(rev(left_cols[-mid]), col_mid, right_cols[-1])               # remove duplicated center
-if (length(pal) != L) {
-  pal <- grDevices::colorRampPalette(c(col_neg, col_mid, col_pos))(L)
-  pal[mid] <- col_mid
-}
+n_left  <- mid - 1
+n_right <- L - mid
+
+gamma_center <- 2.0     # >1 → stronger change near centre (tunable: 1.6–2.5)
+
+# Color ramps in perceptual space
+cr_left  <- grDevices::colorRamp(c(col_neg, col_mid), space = "Lab")
+cr_right <- grDevices::colorRamp(c(col_mid, col_pos), space = "Lab")
+
+# Sample positions with centre bias (u^gamma)
+u_left  <- if (n_left  > 0) seq(0, 1, length.out = n_left)  else numeric(0)
+u_right <- if (n_right > 0) seq(0, 1, length.out = n_right) else numeric(0)
+
+u_left_b  <- u_left^gamma_center
+u_right_b <- u_right^gamma_center
+
+cols_left  <- if (n_left  > 0) grDevices::rgb(cr_left(u_left_b),  maxColorValue = 255) else character(0)
+cols_right <- if (n_right > 0) grDevices::rgb(cr_right(u_right_b), maxColorValue = 255) else character(0)
+
+pal <- c(cols_left, col_mid, cols_right)
 fill_map <- stats::setNames(pal, move_levels_lbl)
 
 # Helpers for labels and filenames
@@ -841,7 +858,8 @@ for (mt in future_meetings_all) {
   start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
   end_xlim_mt   <- lubridate::as_datetime(as.Date(mt), tz = "Australia/Melbourne") + lubridate::hours(17)
 
- n_ticks <- 30L
+  # Exactly 30 equally spaced ticks
+  n_ticks   <- 30L
   breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
 
   area_mt <- ggplot2::ggplot(df_mt, ggplot2::aes(x = scrape_time + lubridate::hours(10),
@@ -851,8 +869,8 @@ for (mt in future_meetings_all) {
                                drop = FALSE, name = "") +
     ggplot2::scale_x_datetime(
       limits = c(start_xlim_mt, end_xlim_mt),
-      breaks = breaks_vec,                         # exactly 30 equally spaced ticks
-      labels = function(x) strftime(x, "%d %b"),   # avoid scales::label_datetime
+      breaks = breaks_vec,
+      labels = function(x) strftime(x, "%d %b"),
       expand = c(0, 0)
     ) +
     ggplot2::scale_y_continuous(
@@ -882,14 +900,6 @@ for (mt in future_meetings_all) {
     height   = 5,
     dpi      = 300
   )
-
-
-  ggplot2::ggsave(
-    filename = paste0("docs/meetings/area_all_moves_", fmt_file(mt), ".png"),
-    plot     = area_mt,
-    width    = 12,
-    height   = 5,
-    dpi      = 300
-  )
 }
+
 
