@@ -884,40 +884,62 @@ for (mt in future_meetings_all) {
   start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
   end_xlim_mt   <- lubridate::as_datetime(as.Date(mt), tz = "Australia/Melbourne") + lubridate::hours(17)
 
-  # Exactly 30 equally spaced ticks
-  n_ticks    <- 30L
-  breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+  # After creating df_mt
+df_mt <- df_mt %>%
+  dplyr::mutate(
+    # Re-assert factor order just in case
+    move = factor(move, levels = move_levels_lbl),
+    # Explicit stack order: 1 = biggest cut (bottom) ... center ... biggest hike (top)
+    stack_id = match(as.character(move), move_levels_lbl)
+  )
 
-  area_mt <- ggplot2::ggplot(df_mt, ggplot2::aes(x = scrape_time + lubridate::hours(10),
-                                                 y = probability, fill = move)) +
-    ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
-    ggplot2::scale_fill_manual(values = fill_map, breaks = move_levels_lbl,
-                               drop = FALSE, name = "") +
-    ggplot2::scale_x_datetime(
-      limits = c(start_xlim_mt, end_xlim_mt),
-      breaks = breaks_vec,
-      labels = function(x) strftime(x, "%d %b"),
-      expand = c(0, 0)
-    ) +
-    ggplot2::scale_y_continuous(
-      limits = c(0, 1),
-      labels = scales::percent_format(accuracy = 1),
-      expand = c(0, 0)
-    ) +
-    ggplot2::labs(
-      title    = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(mt)),
-      subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
-      x = "Forecast date", y = "Probability"
-    ) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(
-      axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
-      axis.text.y  = ggplot2::element_text(size = 12),
-      axis.title.x = ggplot2::element_text(size = 14),
-      axis.title.y = ggplot2::element_text(size = 14),
-      legend.position = "right",
-      legend.title    = ggplot2::element_blank()
-    )
+# Build exactly 30 equally spaced ticks
+n_ticks    <- 30L
+breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+
+area_mt <- ggplot2::ggplot(
+  df_mt,
+  ggplot2::aes(
+    x     = scrape_time + lubridate::hours(10),
+    y     = probability,
+    fill  = move,
+    group = move,
+    order = stack_id            # <- enforce stack order
+  )
+) +
+  ggplot2::geom_area(
+    position = ggplot2::position_stack(reverse = FALSE),  # set TRUE to flip
+    alpha    = 0.95,
+    colour   = NA
+  ) +
+  ggplot2::scale_fill_manual(values = fill_map, breaks = move_levels_lbl,
+                             drop = FALSE, name = "") +
+  ggplot2::scale_x_datetime(
+    limits = c(start_xlim_mt, end_xlim_mt),
+    breaks = breaks_vec,
+    labels = function(x) strftime(x, "%d %b"),
+    expand = c(0, 0)
+  ) +
+  ggplot2::scale_y_continuous(
+    limits = c(0, 1),
+    labels = scales::percent_format(accuracy = 1),
+    expand = c(0, 0)
+  ) +
+  ggplot2::labs(
+    title    = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(mt)),
+    subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
+    x = "Forecast date", y = "Probability"
+  ) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+    axis.text.y  = ggplot2::element_text(size = 12),
+    axis.title.x = ggplot2::element_text(size = 14),
+    axis.title.y = ggplot2::element_text(size = 14),
+    legend.position = "right",
+    legend.title    = ggplot2::element_blank()
+  )
+
 
   ggplot2::ggsave(
     filename = paste0("docs/meetings/area_all_moves_", fmt_file(mt), ".png"),
