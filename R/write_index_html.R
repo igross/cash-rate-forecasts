@@ -1,12 +1,11 @@
 # write_index_html.R
 
 suppressPackageStartupMessages({
-  library(lubridate)
   library(stringr)
 })
 
 intro_paragraph <- '
-  <p style="max-width: 800px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
+  <p style="max-width: 900px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
     This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia\'s cash rate,
     based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
   </p>'
@@ -14,36 +13,32 @@ intro_paragraph <- '
 # Ensure target directory exists
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-# Find PNGs for meeting charts (returned as basenames)
-png_basenames <- list.files("docs/meetings", pattern = "^area_all_moves_.*\\.png$", full.names = FALSE)
+# Find meeting PNGs (basenames), then build relative paths from docs/index.html
+png_basenames <- list.files("docs/meetings", pattern = "^area_all_moves_\\d{8}\\.png$", full.names = FALSE)
 
-# Build relative paths from docs/index.html to the images
+# Sort by the yyyymmdd in filename (newest first)
+if (length(png_basenames) > 0) {
+  dates_chr <- str_match(png_basenames, "area_all_moves_(\\d{8})\\.png")[, 2]
+  ord <- order(dates_chr, decreasing = TRUE, na.last = TRUE)
+  png_basenames <- png_basenames[ord]
+}
+
 png_files_rel <- file.path("meetings", png_basenames)
 
-# Build image cards (no visible labels)
+# Build image cards
 cards <- character(0)
 if (length(png_files_rel) > 0) {
   cards <- vapply(
     png_files_rel,
     function(file) sprintf('<div class="chart-card">
-      <img src="%s" alt="%s" />
+      <img src="%s" alt="%s" loading="lazy" />
     </div>', file, file),
     character(1)
   )
 }
 
-# Optional fan chart
-fan_chart_section <- ""
-if (file.exists("docs/rate_fan_chart.png")) {
-  fan_chart_section <- '
-  <h1 style="margin-top:60px;">Forecast Path with Uncertainty Bands</h1>
-  <div class="chart-card" style="max-width: 800px; margin: 0 auto;">
-    <img src="rate_fan_chart.png" alt="Fan Chart of Forecast Path">
-  </div>'
-}
-
-# Static next-meeting line chart
-interactive_line_section <- ''
+# Optional sections for next-meeting charts
+interactive_line_section <- ""
 if (file.exists("docs/line.png")) {
   interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
@@ -67,28 +62,9 @@ if (file.exists("docs/line.png")) {
   </div>'
 }
 
-interactive_area_section <- '
-  <div style="
-      display: flex;
-      justify-content: center;
-      margin: 40px 0;
-    ">
-    <img
-      src="area.png"
-      alt="Cash Rate Scenario Area Chart"
-      style="
-        width: 80%;
-        max-width: 1000px;
-        height: auto;
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      "
-    />
-  </div>
-'
-
-area_chart_section <- '
-  <h1 style="margin-top:60px;">Forecasts for the Next RBA Meeting</h1>
+area_chart_section <- ""
+if (file.exists("docs/area.png")) {
+  area_chart_section <- '
   <div style="
       display: flex;
       justify-content: center;
@@ -105,17 +81,9 @@ area_chart_section <- '
       "
     />
   </div>'
-
-line_chart_section <- ""
-if (file.exists("docs/line.png")) {
-  line_chart_section <- '
-  <h1 style="margin-top:60px;">Forecasts for the Next RBA Meeting</h1>
-  <div class="chart-card" style="max-width: 800px; margin: 0 auto;">
-    <img src="line.png" alt="Next RBA Meeting">
-  </div>'
 }
 
-# Compose main chart section
+# Meeting grid section
 meeting_section <- if (length(cards) > 0) {
   paste('<div class="grid">', paste(cards, collapse = "\n"), '</div>')
 } else {
@@ -144,22 +112,36 @@ html <- sprintf('
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); /* larger tiles */
       gap: 30px;
       padding: 10px;
-      max-width: 2000px;
+      max-width: 2200px; /* allow a wider grid on big screens */
       margin: 0 auto;
     }
     .chart-card {
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      padding: 15px;
+      padding: 18px; /* slightly larger padding to match bigger tiles */
       text-align: center;
     }
     .chart-card img {
       width: 100%%;
       border-radius: 6px;
+    }
+
+    /* Optional: on smaller screens, ensure readability */
+    @media (max-width: 1024px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        max-width: 1400px;
+      }
+    }
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+        max-width: 95vw;
+      }
     }
   </style>
 </head>
@@ -181,5 +163,4 @@ html <- sprintf('
 
 # Write output
 writeLines(html, "docs/index.html")
-message("✅ index.html written with ", length(png_basenames), " charts.",
-        if (fan_chart_section != "") " Fan chart included." else " No fan chart.")
+message("✅ index.html written with ", length(png_files_rel), " meeting charts (larger tiles).")
