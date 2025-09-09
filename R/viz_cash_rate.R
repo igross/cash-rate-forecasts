@@ -706,7 +706,7 @@ htmlwidgets::saveWidget(
 #  • Uses the full sample of scrapes you retained
 #  • One PNG per meeting under docs/meetings/
 #  • X axis: exactly 30 equally spaced ticks
-#  • Colours: centre-biased gradient (more change near 'No change')
+#  • Colours: centre-biased gradient with boosted ±25bp
 #  • Robust to NA/Inf stdev and degenerate probability sums
 # =============================================
 
@@ -807,10 +807,10 @@ future_meetings_all <- meeting_schedule %>%
   dplyr::pull(meeting_date)
 
 # ---------------------------------------------
-# Centre-biased diverging palette construction
-#   • More colour change near 'No change'
-#   • Less colour change near extremes
-#   • Only the centre bin is grey
+# Centre-biased diverging palette with explicit ±25 boost
+#   • Keep 'No change' grey
+#   • Make ±25 visibly more blue/red
+#   • Far tails change more slowly
 # ---------------------------------------------
 L   <- length(move_levels_lbl)
 mid <- which(move_levels_bps == 0)
@@ -819,25 +819,35 @@ col_neg <- "#0030FF"   # vivid blue
 col_mid <- "#DADADA"   # light grey (centre only)
 col_pos <- "#FF2A2A"   # vivid red
 
-n_left  <- mid - 1
-n_right <- L - mid
+n_left  <- mid - 1         # number of negative bins (exclude centre)
+n_right <- L - mid         # number of positive bins (exclude centre)
 
-gamma_center <- 1.0     # >1 → stronger change near centre (tunable: 1.6–2.5)
+gamma_center <- 2.0        # >1 → stronger change near centre (tune 1.6–2.5)
+u_boost      <- 0.18       # smaller → more saturated ±25 (tune 0.12–0.25)
 
-# Color ramps in perceptual space
+# Perceptual ramps
 cr_left  <- grDevices::colorRamp(c(col_neg, col_mid), space = "Lab")
 cr_right <- grDevices::colorRamp(c(col_mid, col_pos), space = "Lab")
 
-# Sample positions with centre bias (u^gamma)
-u_left  <- if (n_left  > 0) seq(0, 1, length.out = n_left)  else numeric(0)
-u_right <- if (n_right > 0) seq(0, 1, length.out = n_right) else numeric(0)
+# Sample positions excluding the exact centre for side ramps
+u_left_raw  <- if (n_left  > 0) seq(0, 1 - 1/n_left,          length.out = n_left)  else numeric(0)
+u_right_raw <- if (n_right > 0) seq(1/n_right, 1,             length.out = n_right) else numeric(0)
 
-u_left_b  <- u_left^gamma_center
-u_right_b <- u_right^gamma_center
+# Apply centre bias
+u_left_b  <- u_left_raw^gamma_center
+u_right_b <- u_right_raw^gamma_center
 
+# Build colours
 cols_left  <- if (n_left  > 0) grDevices::rgb(cr_left(u_left_b),  maxColorValue = 255) else character(0)
 cols_right <- if (n_right > 0) grDevices::rgb(cr_right(u_right_b), maxColorValue = 255) else character(0)
 
+# Explicitly boost the ±25 colours:
+#  - The last left colour corresponds to -25
+#  - The first right colour corresponds to +25
+if (n_left >= 1)  cols_left[n_left]   <- grDevices::rgb(cr_left(u_boost),  maxColorValue = 255)
+if (n_right >= 1) cols_right[1]       <- grDevices::rgb(cr_right(u_boost), maxColorValue = 255)
+
+# Assemble full palette: negatives, centre grey, positives
 pal <- c(cols_left, col_mid, cols_right)
 fill_map <- stats::setNames(pal, move_levels_lbl)
 
@@ -859,7 +869,7 @@ for (mt in future_meetings_all) {
   end_xlim_mt   <- lubridate::as_datetime(as.Date(mt), tz = "Australia/Melbourne") + lubridate::hours(17)
 
   # Exactly 30 equally spaced ticks
-  n_ticks   <- 30L
+  n_ticks    <- 30L
   breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
 
   area_mt <- ggplot2::ggplot(df_mt, ggplot2::aes(x = scrape_time + lubridate::hours(10),
@@ -901,5 +911,4 @@ for (mt in future_meetings_all) {
     dpi      = 300
   )
 }
-
 
