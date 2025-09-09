@@ -841,6 +841,9 @@ for (mt in future_meetings_all) {
   start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
   end_xlim_mt   <- lubridate::as_datetime(as.Date(mt), tz = "Australia/Melbourne") + lubridate::hours(17)
 
+ n_ticks <- 30L
+  breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+
   area_mt <- ggplot2::ggplot(df_mt, ggplot2::aes(x = scrape_time + lubridate::hours(10),
                                                  y = probability, fill = move)) +
     ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
@@ -848,8 +851,8 @@ for (mt in future_meetings_all) {
                                drop = FALSE, name = "") +
     ggplot2::scale_x_datetime(
       limits = c(start_xlim_mt, end_xlim_mt),
-      breaks = scales::breaks_pretty(n = 30),                    # 30 equally spaced ticks
-      labels = scales::label_datetime("%d %b"),
+      breaks = breaks_vec,                         # exactly 30 equally spaced ticks
+      labels = function(x) strftime(x, "%d %b"),   # avoid scales::label_datetime
       expand = c(0, 0)
     ) +
     ggplot2::scale_y_continuous(
@@ -871,6 +874,15 @@ for (mt in future_meetings_all) {
       legend.position = "right",
       legend.title    = ggplot2::element_blank()
     )
+
+  ggplot2::ggsave(
+    filename = paste0("docs/meetings/area_all_moves_", fmt_file(mt), ".png"),
+    plot     = area_mt,
+    width    = 12,
+    height   = 5,
+    dpi      = 300
+  )
+
 
   ggplot2::ggsave(
     filename = paste0("docs/meetings/area_all_moves_", fmt_file(mt), ".png"),
