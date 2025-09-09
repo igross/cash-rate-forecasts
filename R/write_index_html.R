@@ -5,37 +5,31 @@ suppressPackageStartupMessages({
   library(stringr)
 })
 
-
 intro_paragraph <- '
   <p style="max-width: 800px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
     This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia\'s cash rate,
     based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
   </p>'
 
-# Find PNGs for meeting charts
-png_files <- list.files("docs/meetings", pattern = "^area_all_moves_.*\\.png$", full.names = FALSE)
+# Ensure target directory exists
+if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-labels <- png_files |>
-  str_remove("^rate_probabilities_") |>
-  str_remove("\\.png$") 
+# Find PNGs for meeting charts (returned as basenames)
+png_basenames <- list.files("docs/meetings", pattern = "^area_all_moves_.*\\.png$", full.names = FALSE)
 
-# If label is "May_2025" or "05_2025", try both formats
-dates <- suppressWarnings(
-  as.Date(paste0("01 ", labels), "%d %B %Y")
-)
-dates_na <- which(is.na(dates))
-if (length(dates_na) > 0) {
-  dates[dates_na] <- as.Date(paste0("01 ", labels[dates_na]), "%d_%Y")
-}
+# Build relative paths from docs/index.html to the images
+png_files_rel <- file.path("meetings", png_basenames)
 
 # Build image cards (no visible labels)
 cards <- character(0)
-if (length(png_files) > 0) {
-  cards <- mapply(function(file, label) {
-    sprintf('<div class="chart-card">
+if (length(png_files_rel) > 0) {
+  cards <- vapply(
+    png_files_rel,
+    function(file) sprintf('<div class="chart-card">
       <img src="%s" alt="%s" />
-    </div>', file, label)
-  }, png_files, labels)
+    </div>', file, file),
+    character(1)
+  )
 }
 
 # Optional fan chart
@@ -48,7 +42,7 @@ if (file.exists("docs/rate_fan_chart.png")) {
   </div>'
 }
 
-# CHANGED: Replace interactive line chart with static PNG
+# Static next-meeting line chart
 interactive_line_section <- ''
 if (file.exists("docs/line.png")) {
   interactive_line_section <- '
@@ -171,30 +165,21 @@ html <- sprintf('
 </head>
 <body>
 
- 
-
-
   %s
 
-%s
+  %s
   
-<h1>Cash Rate Target Probabilities By RBA Meeting </h1>
-
-%s
+  <h1>Cash Rate Target Probabilities By RBA Meeting</h1>
 
   %s
 
-
-
-
-
+  %s
 
 </body>
 </html>
-', interactive_line_section,area_chart_section,meeting_section , intro_paragraph)
-
+', interactive_line_section, area_chart_section, meeting_section, intro_paragraph)
 
 # Write output
 writeLines(html, "docs/index.html")
-message("✅ index.html written with ", length(png_files), " charts.",
+message("✅ index.html written with ", length(png_basenames), " charts.",
         if (fan_chart_section != "") " Fan chart included." else " No fan chart.")
