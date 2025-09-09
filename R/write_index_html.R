@@ -16,10 +16,11 @@ if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 # Find meeting PNGs (basenames), then build relative paths from docs/index.html
 png_basenames <- list.files("docs/meetings", pattern = "^area_all_moves_\\d{8}\\.png$", full.names = FALSE)
 
-# Sort by the yyyymmdd in filename (newest first)
+# Sort by the yyyymmdd in filename (earliest first)
 if (length(png_basenames) > 0) {
   dates_chr <- str_match(png_basenames, "area_all_moves_(\\d{8})\\.png")[, 2]
-  ord <- order(dates_chr, decreasing = TRUE, na.last = TRUE)
+  dates_ord <- as.Date(dates_chr, format = "%Y%m%d")
+  ord <- order(dates_ord, decreasing = FALSE, na.last = TRUE)  # earliest -> latest
   png_basenames <- png_basenames[ord]
 }
 
@@ -83,7 +84,7 @@ if (file.exists("docs/area.png")) {
   </div>'
 }
 
-# Meeting grid section
+# Meeting grid section (now ordered earliest -> latest)
 meeting_section <- if (length(cards) > 0) {
   paste('<div class="grid">', paste(cards, collapse = "\n"), '</div>')
 } else {
@@ -163,4 +164,4 @@ html <- sprintf('
 
 # Write output
 writeLines(html, "docs/index.html")
-message("✅ index.html written with ", length(png_files_rel), " meeting charts (larger tiles).")
+message("✅ index.html written with ", length(png_files_rel), " meeting charts (earliest first).")
