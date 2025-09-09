@@ -13,7 +13,7 @@ intro_paragraph <- '
   </p>'
 
 # Find PNGs for meeting charts
-png_files <- list.files("docs", pattern = "^rate_probabilities_.*\\.png$", full.names = FALSE)
+png_files <- list.files("docs/meetings", pattern = "^area_all_moves_.*\\.png$", full.names = FALSE)
 
 labels <- png_files |>
   str_remove("^rate_probabilities_") |>
