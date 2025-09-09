@@ -147,7 +147,7 @@ html <- sprintf('
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 30px;
       padding: 10px;
-      max-width: 1500px;
+      max-width: 2000px;
       margin: 0 auto;
     }
     .chart-card {
