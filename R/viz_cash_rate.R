@@ -685,3 +685,157 @@ htmlwidgets::saveWidget(
   file          = paste0("docs/meetings/area_interactive_", format(next_meeting, "%Y%m%d"), ".html"),
   selfcontained = TRUE
 )
+
+
+# =============================================
+# NEW: Area charts for ALL future meetings (static)
+#  • ±300 bp range in 25 bp steps
+#  • Uses the full sample of scrapes you retained
+#  • One PNG per meeting under docs/meetings/
+# =============================================
+
+# 1) Build an extended bucket support around the current rate (±300 bp)
+bp_span <- 300L                            # basis points
+step_bp <- 25L
+step_pct <- step_bp / 100                 # 0.25%
+
+# Re-anchor the current "no change" centre to the nearest 25bp
+# (keeps behavior consistent even if current_rate isn't exactly on a 25bp grid)
+current_center_ext <- round(current_rate / 0.25) * 0.25
+
+bucket_min <- max(0, floor((current_center_ext - bp_span/100) / 0.25) * 0.25)
+bucket_max <- ceiling((current_center_ext + bp_span/100) / 0.25) * 0.25
+bucket_centers_ext <- seq(bucket_min, bucket_max, by = 0.25)
+
+half_width_ext <- 0.125   # same 25bp-wide buckets as before
+
+# 2) Recompute bucketed probabilities over the extended support
+bucket_list_ext <- vector("list", nrow(all_estimates))
+for (i in seq_len(nrow(all_estimates))) {
+  mu_i    <- all_estimates$implied_mean[i]
+  sigma_i <- all_estimates$stdev[i]
+  d_i     <- all_estimates$days_to_meeting[i]
+
+  # Probabilistic method across extended bucket range
+  p_vec <- sapply(bucket_centers_ext, function(b) {
+    lower <- b - half_width_ext
+    upper <- b + half_width_ext
+    pnorm(upper, mean = mu_i, sd = sigma_i) - pnorm(lower, mean = mu_i, sd = sigma_i)
+  })
+  p_vec[p_vec < 0]    <- 0
+  p_vec[p_vec < 0.01] <- 0
+  if (sum(p_vec) > 0) {
+    p_vec <- p_vec / sum(p_vec)
+  }
+
+  # Linear method (two nearest buckets)
+  nearest <- order(abs(bucket_centers_ext - mu_i))[1:2]
+  b1 <- min(bucket_centers_ext[nearest])
+  b2 <- max(bucket_centers_ext[nearest])
+  w2 <- (mu_i - b1) / (b2 - b1)
+  l_vec <- numeric(length(bucket_centers_ext))
+  l_vec[which(bucket_centers_ext == b1)] <- 1 - w2
+  l_vec[which(bucket_centers_ext == b2)] <- w2
+
+  # Blend by days to meeting
+  blend <- blend_weight(d_i)
+  v <- blend * l_vec + (1 - blend) * p_vec
+
+  bucket_list_ext[[i]] <- tibble::tibble(
+    scrape_time     = all_estimates$scrape_time[i],
+    meeting_date    = all_estimates$meeting_date[i],
+    implied_mean    = mu_i,
+    stdev           = sigma_i,
+    days_to_meeting = d_i,
+    bucket          = bucket_centers_ext,
+    probability     = v
+  )
+}
+
+all_estimates_buckets_ext <- dplyr::bind_rows(bucket_list_ext) %>%
+  dplyr::mutate(
+    diff_bps = as.integer(round((bucket - current_center_ext) * 100L)),
+    # Clamp to ±300 (should already be in range by construction)
+    diff_bps = pmax(pmin(diff_bps, bp_span), -bp_span)
+  )
+
+# 3) Define move labels from -300 to +300 (25 bp steps)
+move_levels_bps <- seq(-bp_span, bp_span, by = step_bp)
+move_levels_lbl <- c(
+  paste0(move_levels_bps[move_levels_bps < 0], " bp cut"),
+  "No change",
+  paste0("+", move_levels_bps[move_levels_bps > 0], " bp hike")
+)
+
+all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
+  dplyr::mutate(
+    move = dplyr::case_when(
+      diff_bps == 0L ~ "No change",
+      diff_bps <  0L ~ paste0(diff_bps, " bp cut"),
+      TRUE           ~ paste0("+", diff_bps, " bp hike")
+    ),
+    move = factor(move, levels = move_levels_lbl)
+  )
+
+# 4) Build stacked area charts for every future meeting
+future_meetings_all <- meeting_schedule$meeting_date[meeting_schedule$meeting_date > Sys.Date()]
+
+# Simple diverging palette: blue -> grey -> red (length = number of move bands)
+pal <- grDevices::colorRampPalette(c("#000080", "#BFBFBF", "#800000"))(length(move_levels_lbl))
+fill_map <- stats::setNames(pal, move_levels_lbl)
+
+for (mt in future_meetings_all) {
+  df_mt <- all_estimates_buckets_ext %>%
+    dplyr::filter(meeting_date == mt) %>%
+    dplyr::group_by(scrape_time, move) %>%
+    dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
+    tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
+    dplyr::arrange(scrape_time, move)
+
+  if (nrow(df_mt) == 0) next
+
+  start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
+  end_xlim_mt   <- as.POSIXct(mt, tz = "Australia/Melbourne") + lubridate::hours(17)
+
+  area_mt <- ggplot2::ggplot(df_mt, ggplot2::aes(x = scrape_time + lubridate::hours(10),
+                                                 y = probability,
+                                                 fill = move)) +
+    ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
+    ggplot2::scale_fill_manual(values = fill_map, breaks = move_levels_lbl,
+                               drop = FALSE, name = "") +
+    ggplot2::scale_x_datetime(
+      limits      = c(start_xlim_mt, end_xlim_mt),
+      date_breaks = "1 day",
+      date_labels = "%d %b",
+      expand      = c(0, 0)
+    ) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, 1),
+      labels = scales::percent_format(accuracy = 1),
+      expand = c(0, 0)
+    ) +
+    ggplot2::labs(
+      title    = paste0("Cash Rate Scenarios up to the Meeting on ",
+                        format(mt, "%d %b %Y")),
+      subtitle = "Move bands shown from -300 bp to +300 bp",
+      x        = "Forecast date", y = "Probability"
+    ) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+      axis.text.y  = ggplot2::element_text(size = 12),
+      axis.title.x = ggplot2::element_text(size = 14),
+      axis.title.y = ggplot2::element_text(size = 14),
+      legend.position = "right",
+      legend.title    = ggplot2::element_blank()
+    )
+
+  ggplot2::ggsave(
+    filename = paste0("docs/meetings/area_all_moves_", format(mt, "%Y%m%d"), ".png"),
+    plot     = area_mt,
+    width    = 12,
+    height   = 5,
+    dpi      = 300
+  )
+}
+
