@@ -257,6 +257,19 @@ all_estimates <- all_list %>%
   rename(stdev = finalrmse)
 
 
+max_rmse <- suppressWarnings(max(rmse_days$finalrmse, na.rm = TRUE))
+if (!is.finite(max_rmse)) {
+  stop("No finite RMSE values found in rmse_days$finalrmse")
+}
+
+bad_sd <- !is.finite(all_estimates$stdev) | is.na(all_estimates$stdev) | all_estimates$stdev <= 0
+n_bad  <- sum(bad_sd, na.rm = TRUE)
+
+if (n_bad > 0) {
+  message(sprintf("Replacing %d missing/invalid stdev(s) with max RMSE = %.4f", n_bad, max_rmse))
+  all_estimates$stdev[bad_sd] <- max_rmse
+}
+
 
 all_estimates%>% tail(100) %>% print(n = Inf,  width = Inf)
 
