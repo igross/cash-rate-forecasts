@@ -813,7 +813,7 @@ col_mid <- "#DADADA"   # light grey (only for 'No change')
 col_pos <- "#FF2A2A"   # vivid red
 
 # Build left and right gradients, then enforce mid as grey
-left_fun  <- grDevices::colorRampPalette(c(col_neg, col_mid))
+left_fun  <- grDevices::colorRampPalette(c(col_mid, col_neg))
 right_fun <- grDevices::colorRampPalette(c(col_mid, col_pos))
 left_cols  <- if (mid > 1) left_fun(mid) else character(0)            # includes center at end
 right_cols <- right_fun(L - mid + 1)                                  # includes center at start
