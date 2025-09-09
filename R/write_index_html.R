@@ -104,7 +104,7 @@ area_chart_section <- '
       src="area.png" 
       alt="Next RBA Meeting Area Chart"
       style="
-        width: 95%;
+        width: 80%;
         height: auto;
         border-radius: 15px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
