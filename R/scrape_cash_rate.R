@@ -18,11 +18,8 @@ dates_in_name <- str_match(basename(old_csvs),
 file_dates <- as.Date(dates_in_name, format = "%Y-%m-%d")
 
 # 4. compute cutoff
-cutoff_date <- Sys.Date() - weeks(8)
-
-is_old       <- !is.na(file_dates) & file_dates < cutoff_date
 is_weekend   <- !is.na(file_dates) & lubridate::wday(file_dates) %in% c(1, 7)
-to_remove    <- old_csvs[is_old | is_weekend]
+to_remove    <- old_csvs[is_weekend]
 
  # 6. remove them (if any)
  if (length(to_remove) > 0) {
