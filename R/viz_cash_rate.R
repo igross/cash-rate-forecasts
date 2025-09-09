@@ -705,8 +705,8 @@ htmlwidgets::saveWidget(
 #  • ±300 bp range in 25 bp steps
 #  • Uses the full sample of scrapes you retained
 #  • One PNG per meeting under docs/meetings/
-#  • Avoids base::format() in labels/filenames (uses strftime)
-#  • Robust to NA/Inf stdev and degenerate probability sums
+#  • X axis: 30 equally spaced ticks
+#  • Colours: stronger blue/red, minimal grey only at 'No change'
 # =============================================
 
 bp_span <- 300L
@@ -749,7 +749,7 @@ for (i in seq_len(nrow(all_estimates))) {
   if (is.finite(s) && s > 0) {
     p_vec <- p_vec / s
   } else {
-    p_vec[] = 0
+    p_vec[] <- 0
   }
 
   # Linear component (two nearest buckets), clamped
@@ -784,7 +784,7 @@ all_estimates_buckets_ext <- dplyr::bind_rows(bucket_list_ext) %>%
     diff_bps = pmax(pmin(diff_bps, bp_span), -bp_span)
   )
 
-# Move labels -300:+300 (25bp steps), avoiding format()
+# Move labels -300:+300 (25bp steps)
 move_levels_bps <- seq(-bp_span, bp_span, by = step_bp)
 label_move <- function(x) if (x < 0) paste0(abs(x), " bp cut") else if (x == 0) "No change" else paste0("+", x, " bp hike")
 move_levels_lbl <- vapply(move_levels_bps, label_move, character(1))
@@ -799,17 +799,32 @@ all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
     move = factor(move, levels = move_levels_lbl)
   )
 
-# Future meetings (force Date type, avoid implicit formatting)
+# Future meetings (force Date type)
 future_meetings_all <- meeting_schedule %>%
   dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
   dplyr::filter(meeting_date > Sys.Date()) %>%
   dplyr::pull(meeting_date)
 
-# Diverging palette: blue -> grey -> red
-pal <- grDevices::colorRampPalette(c("#000080", "#BFBFBF", "#800000"))(length(move_levels_lbl))
+# Colour map: strong blue/red, minimal grey only at center
+L   <- length(move_levels_lbl)
+mid <- which(move_levels_bps == 0)
+col_neg <- "#0030FF"   # vivid blue
+col_mid <- "#DADADA"   # light grey (only for 'No change')
+col_pos <- "#FF2A2A"   # vivid red
+
+# Build left and right gradients, then enforce mid as grey
+left_fun  <- grDevices::colorRampPalette(c(col_neg, col_mid))
+right_fun <- grDevices::colorRampPalette(c(col_mid, col_pos))
+left_cols  <- if (mid > 1) left_fun(mid) else character(0)            # includes center at end
+right_cols <- right_fun(L - mid + 1)                                  # includes center at start
+pal <- c(rev(left_cols[-mid]), col_mid, right_cols[-1])               # remove duplicated center
+if (length(pal) != L) {
+  pal <- grDevices::colorRampPalette(c(col_neg, col_mid, col_pos))(L)
+  pal[mid] <- col_mid
+}
 fill_map <- stats::setNames(pal, move_levels_lbl)
 
-# Helper: safe date label and filename date
+# Helpers for labels and filenames
 fmt_date <- function(d) strftime(as.Date(d), "%d %b %Y")
 fmt_file <- function(d) strftime(as.Date(d), "%Y%m%d")
 
@@ -831,11 +846,17 @@ for (mt in future_meetings_all) {
     ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
     ggplot2::scale_fill_manual(values = fill_map, breaks = move_levels_lbl,
                                drop = FALSE, name = "") +
-    ggplot2::scale_x_datetime(limits = c(start_xlim_mt, end_xlim_mt),
-                              date_breaks = "1 day", date_labels = "%d %b", expand = c(0, 0)) +
-    ggplot2::scale_y_continuous(limits = c(0, 1),
-                                labels = scales::percent_format(accuracy = 1),
-                                expand = c(0, 0)) +
+    ggplot2::scale_x_datetime(
+      limits = c(start_xlim_mt, end_xlim_mt),
+      breaks = scales::breaks_pretty(n = 30),                    # 30 equally spaced ticks
+      labels = scales::label_datetime("%d %b"),
+      expand = c(0, 0)
+    ) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, 1),
+      labels = scales::percent_format(accuracy = 1),
+      expand = c(0, 0)
+    ) +
     ggplot2::labs(
       title    = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(mt)),
       subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
