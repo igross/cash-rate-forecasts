@@ -901,6 +901,8 @@ df_mt <- df_mt %>%
 n_ticks    <- 30L
 breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
 
+print(df_mt)
+  
 area_mt <- ggplot2::ggplot(
   df_mt,
   ggplot2::aes(
