@@ -132,19 +132,19 @@ abs_releases <- tribble(
   "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-10-16 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-11-13 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-12-11 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-12-18 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-01-15 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-02-12 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-03-12 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-04-16 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-05-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-06-11 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-06-18 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-07-16 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-08-13 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-09-10 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-09-17 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-10-15 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-11-12 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-12-10 11:30", tz = "Australia/Melbourne")
+  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne")
 )
 
 # =============================================
