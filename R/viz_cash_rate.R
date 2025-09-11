@@ -129,7 +129,7 @@ abs_releases <- tribble(
   "Labour Force", ymd_hm("2025-06-12 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-07-17 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-08-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-09-11 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-10-16 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-11-13 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-12-11 11:30", tz = "Australia/Melbourne"),
