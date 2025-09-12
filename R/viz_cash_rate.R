@@ -553,6 +553,7 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 
+# For the main area chart (top3_df):
 top3_df <- top3_df %>%
   # make sure every scrape_time × move pair exists:
   complete(
@@ -560,11 +561,12 @@ top3_df <- top3_df %>%
     move,
     fill = list(probability = 0)
   ) %>%
-  # re-lock the factor order so ggplot never re-orders it:
+  # CRITICAL: Reverse the factor levels so stacking works correctly
+  # We want: biggest cuts at bottom, no change in middle, biggest hikes at top
   mutate(
     move = factor(
       move,
-      levels = c(
+      levels = rev(c(  # <- Note the rev() here!
         "-75 bp cut",
         "-50 bp cut",
         "-25 bp cut",
@@ -572,28 +574,34 @@ top3_df <- top3_df %>%
         "+25 bp hike",
         "+50 bp hike",
         "+75 bp hike"
-      )
+      ))
     )
   )
 
-# pick out only the colours you actually need, in exactly the order of your factor‐levels
+# Update the color mapping to match the reversed levels
 my_fill_cols <- c(
   "-75 bp cut" = "#000080",  # navy blue
-  "-50 bp cut"         = "#004B8E",
-  "-25 bp cut"         = "#5FA4D4",
-  "No change"          = "#BFBFBF",
-  "+25 bp hike"        = "#E07C7C",
-  "+50 bp hike"        = "#B50000",
-  "+75 bp hike"= "#800000"   # dark red
-)[ levels(top3_df$move) ]
+  "-50 bp cut" = "#004B8E",
+  "-25 bp cut" = "#5FA4D4",
+  "No change"  = "#BFBFBF",
+  "+25 bp hike" = "#E07C7C",
+  "+50 bp hike" = "#B50000",
+  "+75 bp hike" = "#800000"   # dark red
+)
 
-# now your area plot will see exactly those 5 fills, in that locked‐in order:
-
+# Create area chart with corrected stacking
 area <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
-                            fill = move, group = move)) +
-  geom_area(position = "stack", alpha = 0.9, colour = NA) +
-  scale_fill_manual(values = my_fill_cols, breaks = levels(top3_df$move),
-                    drop = FALSE, name = "", na.value = "grey80") +
+                            fill = move)) +  # Remove group = move
+  geom_area(position = "stack", alpha = 0.9, colour = NA) +  # Use default stacking
+  scale_fill_manual(
+    values = my_fill_cols,
+    # Show legend in logical order (cuts to hikes)
+    breaks = c("-75 bp cut", "-50 bp cut", "-25 bp cut", "No change", 
+               "+25 bp hike", "+50 bp hike", "+75 bp hike"),
+    drop = FALSE, 
+    name = "", 
+    na.value = "grey80"
+  ) +
   scale_x_datetime(
     limits      = c(start_xlim, end_xlim),
     date_breaks = "1 day",
@@ -612,269 +620,9 @@ area <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
   theme(axis.text.x  = element_text(angle = 45, hjust = 1, size = 12),
         axis.text.y  = element_text(size = 12),
         axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14),)
-ggsave("docs/area.png", area, width = 12, height = 5, dpi = 300)  # overwrites if rerun
+        axis.title.y = element_text(size = 14))
 
-# -------------------------------------------------
-# 2) Interactive version
-# -------------------------------------------------
-area_int <- area +
-  aes(text = paste0(
-    "", format(scrape_time + hours(10), "%H:%M"), "<br>",
-    "Probability: ", scales::percent(probability, accuracy = 1)
-  ))
-
-interactive_area <- ggplotly(area_int, tooltip = "text") %>%
-  layout(
-    hovermode = "x unified",
-    legend    = list(x = 1.02, y = 0.5, xanchor = "left")
-  )
-
-htmlwidgets::saveWidget(
-  interactive_area,
-  file          = "docs/area_interactive.html",
-  selfcontained = TRUE
-)
-
-# Save the `cars` data frame in R’s native “.rds” format:
-saveRDS(Filter(is.data.frame, mget(ls(), .GlobalEnv)), "all_dataframes.rds")
-
-# -----------------------------
-# Line chart
-# -----------------------------
-
-# Rolling "latest" (always overwritten)
-ggsave("docs/line.png", line, width = 8, height = 5, dpi = 300)
-
-# Archived per meeting (never overwritten)
-ggsave(
-  filename = paste0("docs/meetings/line_", format(next_meeting, "%Y%m%d"), ".png"),
-  plot     = line,
-  width    = 8,
-  height   = 5,
-  dpi      = 300
-)
-
-# Interactive (latest only)
-htmlwidgets::saveWidget(
-  interactive_line,
-  file          = "docs/line_interactive.html",
-  selfcontained = TRUE
-)
-
-# Interactive archived
-htmlwidgets::saveWidget(
-  interactive_line,
-  file          = paste0("docs/meetings/line_interactive_", format(next_meeting, "%Y%m%d"), ".html"),
-  selfcontained = TRUE
-)
-
-# -----------------------------
-# Area chart
-# -----------------------------
-
-# Rolling "latest" (always overwritten)
-ggsave("docs/area.png", area, width = 12, height = 5, dpi = 300)
-
-# Archived per meeting (never overwritten)
-ggsave(
-  filename = paste0("docs/meetings/area_", format(next_meeting, "%Y%m%d"), ".png"),
-  plot     = area,
-  width    = 12,
-  height   = 5,
-  dpi      = 300
-)
-
-# Interactive (latest only)
-htmlwidgets::saveWidget(
-  interactive_area,
-  file          = "docs/area_interactive.html",
-  selfcontained = TRUE
-)
-
-# Interactive archived
-htmlwidgets::saveWidget(
-  interactive_area,
-  file          = paste0("docs/meetings/area_interactive_", format(next_meeting, "%Y%m%d"), ".html"),
-  selfcontained = TRUE
-)
-
-
-# =============================================
-# Area charts for ALL future meetings (static)
-#  • ±300 bp range in 25 bp steps
-#  • Uses the full sample of scrapes you retained
-#  • One PNG per meeting under docs/meetings/
-#  • X axis: exactly 30 equally spaced ticks
-#  • Colours: original near-centre, darker variants for |move| ≥ 100
-#  • Robust to NA/Inf stdev and degenerate probability sums
-# =============================================
-
-bp_span <- 300L
-step_bp <- 25L
-
-# Fallback SD if any invalid values remain
-sd_fallback <- suppressWarnings(stats::median(all_estimates$stdev[is.finite(all_estimates$stdev)], na.rm = TRUE))
-if (!is.finite(sd_fallback) || sd_fallback <= 0) sd_fallback <- 0.01
-
-# Re-anchor the "no change" centre to nearest 25bp
-current_center_ext <- round(current_rate / 0.25) * 0.25
-
-# Bucket support: current ± 300 bp, non-negative rates
-bucket_min <- max(0, floor((current_center_ext - bp_span/100) / 0.25) * 0.25)
-bucket_max <- ceiling((current_center_ext + bp_span/100) / 0.25) * 0.25
-bucket_centers_ext <- seq(bucket_min, bucket_max, by = 0.25)
-half_width_ext <- 0.125   # 25 bp-wide buckets
-
-# Compute bucketed probabilities across the extended support
-bucket_list_ext <- vector("list", nrow(all_estimates))
-for (i in seq_len(nrow(all_estimates))) {
-  mu_i    <- all_estimates$implied_mean[i]
-  sigma_i <- all_estimates$stdev[i]
-  d_i     <- all_estimates$days_to_meeting[i]
-
-  if (!is.finite(mu_i)) next
-  if (!is.finite(sigma_i) || sigma_i <= 0) sigma_i <- sd_fallback
-
-  # Probabilistic component
-  p_vec <- sapply(bucket_centers_ext, function(b) {
-    lower <- b - half_width_ext
-    upper <- b + half_width_ext
-    pnorm(upper, mean = mu_i, sd = sigma_i) - pnorm(lower, mean = mu_i, sd = sigma_i)
-  })
-
-  # Clean and normalise
-  p_vec[!is.finite(p_vec) | p_vec < 0] <- 0
-  p_vec[p_vec < 0.01] <- 0
-  s <- sum(p_vec, na.rm = TRUE)
-  if (is.finite(s) && s > 0) {
-    p_vec <- p_vec / s
-  } else {
-    p_vec[] <- 0
-  }
-
-  # Linear component (two nearest buckets), clamped
-  nearest <- order(abs(bucket_centers_ext - mu_i))[1:2]
-  b1 <- min(bucket_centers_ext[nearest])
-  b2 <- max(bucket_centers_ext[nearest])
-  denom <- (b2 - b1)
-  w2 <- if (denom > 0) (mu_i - b1) / denom else 0
-  w2 <- min(max(w2, 0), 1)
-  l_vec <- numeric(length(bucket_centers_ext))
-  l_vec[which(bucket_centers_ext == b1)] <- 1 - w2
-  l_vec[which(bucket_centers_ext == b2)] <- w2
-
-  # Blend by days to meeting
-  blend <- blend_weight(d_i)
-  v <- blend * l_vec + (1 - blend) * p_vec
-
-  bucket_list_ext[[i]] <- tibble::tibble(
-    scrape_time     = all_estimates$scrape_time[i],
-    meeting_date    = all_estimates$meeting_date[i],
-    implied_mean    = mu_i,
-    stdev           = sigma_i,
-    days_to_meeting = d_i,
-    bucket          = bucket_centers_ext,
-    probability     = v
-  )
-}
-
-all_estimates_buckets_ext <- dplyr::bind_rows(bucket_list_ext) %>%
-  dplyr::mutate(
-    diff_bps = as.integer(round((bucket - current_center_ext) * 100L)),
-    diff_bps = pmax(pmin(diff_bps, bp_span), -bp_span)
-  )
-
-# Move labels -300:+300 (25bp steps)
-move_levels_bps <- seq(bp_span, -bp_span, by = -step_bp)  # 300, 275, 250, ..., -275, -300
-label_move <- function(x) if (x < 0) paste0(abs(x), " bp cut") else if (x == 0) "No change" else paste0("+", x, " bp hike")
-move_levels_lbl <- vapply(move_levels_bps, label_move, character(1))
-  
-legend_bps    <- seq(100, -100, by = -25)  # 100, 75, 50, 25, 0, -25, -50, -75, -100
-legend_breaks <- vapply(legend_bps, label_move, character(1))
-
-
-all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
-  dplyr::mutate(
-    move = dplyr::case_when(
-      diff_bps == 0L ~ "No change",
-      diff_bps <  0L ~ paste0(abs(diff_bps), " bp cut"),
-      TRUE           ~ paste0("+", diff_bps, " bp hike")
-    ),
-    move = factor(move, levels = move_levels_lbl)  # Now properly ordered hike→cut
-  )
-
-# Future meetings (force Date type)
-future_meetings_all <- meeting_schedule %>%
-  dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
-  dplyr::filter(meeting_date > Sys.Date()) %>%
-  dplyr::pull(meeting_date)
-
-# ---------------------------------------------
-# Colour palette — use original centre colours; darken ≥100 bp
-# Original area colours:
-#   cuts:  -25 = #5FA4D4, -50 = #004B8E, -75 = #000080
-#   no chg:       #BFBFBF
-#   hikes: +25 = #E07C7C, +50 = #B50000, +75 = #800000
-# For |move| ≥ 100 bp, darken the ±75 base progressively.
-# ---------------------------------------------
-col_cut_25 <- "#5FA4D4"
-col_cut_50 <- "#004B8E"
-col_cut_75 <- "#000080"
-col_nochg  <- "#BFBFBF"
-col_hike_25<- "#E07C7C"
-col_hike_50<- "#B50000"
-col_hike_75<- "#800000"
-
-darken_hex <- function(hex, factor = 0.8) {
-  rgbv <- grDevices::col2rgb(hex)
-  rgbv <- pmax(0, pmin(255, as.numeric(rgbv) * factor))
-  grDevices::rgb(rgbv[1]/255, rgbv[2]/255, rgbv[3]/255)
-}
-
-# Darkness ramp for |move| >= 100: 100 -> 0.90, 300 -> 0.50 (monotonic)
-dark_factor_for_mag <- function(mag) {
-  if (mag < 100) return(1)
-  mag <- min(max(mag, 100), 300)
-  0.90 - (mag - 100) * (0.40 / 200)  # linear to 0.50 at 300
-}
-
-# Build palette in the exact order of move_levels_bps / move_levels_lbl
-L <- length(move_levels_bps)
-col_vec <- character(L)
-
-for (k in seq_along(move_levels_bps)) {
-  bps <- move_levels_bps[k]
-  lab <- move_levels_lbl[k]
-
-  if (bps == 0) {
-    col_vec[k] <- col_nochg
-  } else if (bps < 0) {
-    mag <- abs(bps)
-    col_vec[k] <- dplyr::case_when(
-      mag == 25 ~ col_cut_25,
-      mag == 50 ~ col_cut_50,
-      mag == 75 ~ col_cut_75,
-      mag >= 100 ~ darken_hex(col_cut_75, dark_factor_for_mag(mag)),
-      TRUE ~ col_cut_25
-    )
-  } else { # bps > 0
-    mag <- bps
-    col_vec[k] <- dplyr::case_when(
-      mag == 25 ~ col_hike_25,
-      mag == 50 ~ col_hike_50,
-      mag == 75 ~ col_hike_75,
-      mag >= 100 ~ darken_hex(col_hike_75, dark_factor_for_mag(mag)),
-      TRUE ~ col_hike_25
-    )
-  }
-}
-fill_map <- stats::setNames(col_vec, move_levels_lbl)
-
-# Helpers for labels and filenames
-fmt_date <- function(d) strftime(as.Date(d), "%d %b %Y")
-fmt_file <- function(d) strftime(as.Date(d), "%Y%m%d")
-
+# For the extended area charts (all future meetings):
 for (mt in future_meetings_all) {
   df_mt <- all_estimates_buckets_ext %>%
     dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
@@ -930,15 +678,15 @@ for (mt in future_meetings_all) {
     next
   }
 
+  # CRITICAL FIX: Proper factor ordering for stacking
   df_mt <- df_mt %>%
     dplyr::mutate(
-      # Re-assert factor order just in case
-      move = factor(move, levels = move_levels_lbl),
-      # Explicit stack order: 1 = biggest cut (bottom) ... center ... biggest hike (top)
-      stack_id = match(as.character(move), move_levels_lbl)
+      # Convert move to factor with REVERSED levels for proper stacking
+      # This ensures biggest cuts stack at bottom, hikes at top
+      move = factor(move, levels = rev(move_levels_lbl))
     ) %>%
-    # Remove any rows with NA stack_id (moves not in our levels)
-    dplyr::filter(!is.na(stack_id))
+    # Remove any rows with moves not in our levels
+    dplyr::filter(!is.na(move))
 
   # Final check after all processing
   if (nrow(df_mt) == 0) {
@@ -957,21 +705,20 @@ for (mt in future_meetings_all) {
     area_mt <- ggplot2::ggplot(
       df_mt,
       ggplot2::aes(
-        x     = scrape_time + lubridate::hours(10),
-        y     = probability,
-        fill  = move,
-        group = move,
-        order = stack_id            # <- enforce stack order
-      )
+        x    = scrape_time + lubridate::hours(10),
+        y    = probability,
+        fill = move
+      )  # Removed group and order - let ggplot handle it
     ) +
       ggplot2::geom_area(
-        position = ggplot2::position_stack(reverse = FALSE),  # set TRUE to flip
+        position = "stack",  # Use simple stacking
         alpha    = 0.95,
         colour   = NA
       ) +
       ggplot2::scale_fill_manual(
         values = fill_map,
-        breaks = legend_breaks,     # only show -100..+100 in legend
+        # Show legend in stacking order (biggest cut to biggest hike)
+        breaks = legend_breaks,  # This should now reflect cut→hike order  
         drop   = FALSE,
         name   = ""
       ) +
@@ -1020,5 +767,3 @@ for (mt in future_meetings_all) {
     print(summary(df_mt))
   })
 }
-
-
