@@ -786,13 +786,13 @@ all_estimates_buckets_ext <- dplyr::bind_rows(bucket_list_ext) %>%
   )
 
 # Move labels -300:+300 (25bp steps)
-move_levels_bps <- seq(-bp_span, bp_span, by = step_bp)
+move_levels_bps <- seq(bp_span, -bp_span, by = -step_bp)  # 300, 275, 250, ..., -275, -300
 label_move <- function(x) if (x < 0) paste0(abs(x), " bp cut") else if (x == 0) "No change" else paste0("+", x, " bp hike")
 move_levels_lbl <- vapply(move_levels_bps, label_move, character(1))
-
-  legend_bps    <- seq(-100, 100, by = 25)
-label_move    <- function(x) if (x < 0) paste0(abs(x), " bp cut") else if (x == 0) "No change" else paste0("+", x, " bp hike")
+  
+legend_bps    <- seq(100, -100, by = -25)  # 100, 75, 50, 25, 0, -25, -50, -75, -100
 legend_breaks <- vapply(legend_bps, label_move, character(1))
+
 
 all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
   dplyr::mutate(
@@ -801,7 +801,7 @@ all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
       diff_bps <  0L ~ paste0(abs(diff_bps), " bp cut"),
       TRUE           ~ paste0("+", diff_bps, " bp hike")
     ),
-    move = factor(move, levels = move_levels_lbl)
+    move = factor(move, levels = move_levels_lbl)  # Now properly ordered hike→cut
   )
 
 # Future meetings (force Date type)
