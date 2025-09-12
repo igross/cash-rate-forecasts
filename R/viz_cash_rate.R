@@ -883,7 +883,7 @@ for (mt in future_meetings_all) {
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, move)
 
-  if (nrow(df_mt) == 0) next {
+  if (nrow(df_mt) == 0) next 
 
   start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
   end_xlim_mt   <- lubridate::as_datetime(as.Date(mt), tz = "Australia/Melbourne") + lubridate::hours(17)
@@ -959,5 +959,5 @@ area_mt <- ggplot2::ggplot(
     dpi      = 300
   )
 }
-}
+
 
