@@ -883,81 +883,142 @@ for (mt in future_meetings_all) {
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, move)
 
-  if (nrow(df_mt) == 0) next 
+  # Enhanced debugging and validation
+  cat("Processing meeting:", as.character(mt), "\n")
+  cat("df_mt dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
+  
+  # Check for empty or invalid data
+  if (nrow(df_mt) == 0) {
+    cat("Skipping - no data for meeting\n")
+    next 
+  }
+  
+  # Check for valid scrape_time data
+  valid_times <- !is.na(df_mt$scrape_time) & is.finite(as.numeric(df_mt$scrape_time))
+  if (!any(valid_times)) {
+    cat("Skipping - no valid scrape times\n")
+    next
+  }
+  
+  # Filter to only valid data
+  df_mt <- df_mt %>%
+    dplyr::filter(
+      !is.na(scrape_time),
+      is.finite(as.numeric(scrape_time)),
+      !is.na(probability),
+      is.finite(probability)
+    )
+  
+  if (nrow(df_mt) == 0) {
+    cat("Skipping - no valid data after filtering\n")
+    next
+  }
+  
+  # Check we have at least 2 time points for a meaningful plot
+  unique_times <- length(unique(df_mt$scrape_time))
+  if (unique_times < 2) {
+    cat("Skipping - insufficient time points (", unique_times, ")\n")
+    next
+  }
 
   start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
   end_xlim_mt   <- lubridate::as_datetime(as.Date(mt), tz = "Australia/Melbourne") + lubridate::hours(17)
 
-  # After creating df_mt
-df_mt <- df_mt %>%
-  dplyr::mutate(
-    # Re-assert factor order just in case
-    move = factor(move, levels = move_levels_lbl),
-    # Explicit stack order: 1 = biggest cut (bottom) ... center ... biggest hike (top)
-    stack_id = match(as.character(move), move_levels_lbl)
-  )
+  # Ensure we have valid time limits
+  if (!is.finite(as.numeric(start_xlim_mt)) || !is.finite(as.numeric(end_xlim_mt))) {
+    cat("Skipping - invalid time limits\n")
+    next
+  }
 
-# Build exactly 30 equally spaced ticks
-n_ticks    <- 30L
-breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+  df_mt <- df_mt %>%
+    dplyr::mutate(
+      # Re-assert factor order just in case
+      move = factor(move, levels = move_levels_lbl),
+      # Explicit stack order: 1 = biggest cut (bottom) ... center ... biggest hike (top)
+      stack_id = match(as.character(move), move_levels_lbl)
+    ) %>%
+    # Remove any rows with NA stack_id (moves not in our levels)
+    dplyr::filter(!is.na(stack_id))
 
-print(df_mt)
+  # Final check after all processing
+  if (nrow(df_mt) == 0) {
+    cat("Skipping - no data after final processing\n")
+    next
+  }
+
+  # Build exactly 30 equally spaced ticks
+  n_ticks    <- 30L
+  breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+
+  cat("Creating plot with", nrow(df_mt), "data points\n")
   
-area_mt <- ggplot2::ggplot(
-  df_mt,
-  ggplot2::aes(
-    x     = scrape_time + lubridate::hours(10),
-    y     = probability,
-    fill  = move,
-    group = move,
-    order = stack_id            # <- enforce stack order
-  )
-) +
-  ggplot2::geom_area(
-    position = ggplot2::position_stack(reverse = FALSE),  # set TRUE to flip
-    alpha    = 0.95,
-    colour   = NA
-  ) +
-  ggplot2::scale_fill_manual(
-  values = fill_map,
-  breaks = legend_breaks,     # only show -100..+100 in legend
-  drop   = FALSE,
-  name   = ""
-  )+
-  ggplot2::scale_x_datetime(
-    limits = c(start_xlim_mt, end_xlim_mt),
-    breaks = breaks_vec,
-    labels = function(x) strftime(x, "%d %b"),
-    expand = c(0, 0)
-  ) +
-  ggplot2::scale_y_continuous(
-    limits = c(0, 1),
-    labels = scales::percent_format(accuracy = 1),
-    expand = c(0, 0)
-  ) +
-  ggplot2::labs(
-    title    = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(mt)),
-    subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
-    x = "Forecast date", y = "Probability"
-  ) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(
-    axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
-    axis.text.y  = ggplot2::element_text(size = 12),
-    axis.title.x = ggplot2::element_text(size = 14),
-    axis.title.y = ggplot2::element_text(size = 14),
-    legend.position = "right",
-    legend.title    = ggplot2::element_blank()
-  )
+  # Try-catch around the plotting to handle any remaining issues
+  tryCatch({
+    area_mt <- ggplot2::ggplot(
+      df_mt,
+      ggplot2::aes(
+        x     = scrape_time + lubridate::hours(10),
+        y     = probability,
+        fill  = move,
+        group = move,
+        order = stack_id            # <- enforce stack order
+      )
+    ) +
+      ggplot2::geom_area(
+        position = ggplot2::position_stack(reverse = FALSE),  # set TRUE to flip
+        alpha    = 0.95,
+        colour   = NA
+      ) +
+      ggplot2::scale_fill_manual(
+        values = fill_map,
+        breaks = legend_breaks,     # only show -100..+100 in legend
+        drop   = FALSE,
+        name   = ""
+      ) +
+      ggplot2::scale_x_datetime(
+        limits = c(start_xlim_mt, end_xlim_mt),
+        breaks = breaks_vec,
+        labels = function(x) strftime(x, "%d %b"),
+        expand = c(0, 0)
+      ) +
+      ggplot2::scale_y_continuous(
+        limits = c(0, 1),
+        labels = scales::percent_format(accuracy = 1),
+        expand = c(0, 0)
+      ) +
+      ggplot2::labs(
+        title    = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(mt)),
+        subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
+        x = "Forecast date", y = "Probability"
+      ) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y  = ggplot2::element_text(size = 12),
+        axis.title.x = ggplot2::element_text(size = 14),
+        axis.title.y = ggplot2::element_text(size = 14),
+        legend.position = "right",
+        legend.title    = ggplot2::element_blank()
+      )
 
-
-  ggplot2::ggsave(
-    filename = paste0("docs/meetings/area_all_moves_", fmt_file(mt), ".png"),
-    plot     = area_mt,
-    width    = 12,
-    height   = 5,
-    dpi      = 300
-  )
+    filename <- paste0("docs/meetings/area_all_moves_", fmt_file(mt), ".png")
+    cat("Saving to:", filename, "\n")
+    
+    ggplot2::ggsave(
+      filename = filename,
+      plot     = area_mt,
+      width    = 12,
+      height   = 5,
+      dpi      = 300
+    )
+    
+    cat("Successfully saved plot for", as.character(mt), "\n")
+    
+  }, error = function(e) {
+    cat("Error creating plot for meeting", as.character(mt), ":", e$message, "\n")
+    cat("Data summary:\n")
+    print(summary(df_mt))
+  })
 }
 
 
