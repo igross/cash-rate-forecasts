@@ -553,6 +553,125 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 
+
+
+# Add this code before the area charts loop to create all_estimates_buckets_ext:
+
+# Extended range bucketing (±300 bp range in 25 bp steps)
+bp_span <- 300L
+step_bp <- 25L
+
+# Fallback SD if any invalid values remain
+sd_fallback <- suppressWarnings(stats::median(all_estimates$stdev[is.finite(all_estimates$stdev)], na.rm = TRUE))
+if (!is.finite(sd_fallback) || sd_fallback <= 0) sd_fallback <- 0.01
+
+# Re-anchor the "no change" centre to nearest 25bp
+current_center_ext <- round(current_rate / 0.25) * 0.25
+
+# Bucket support: current ± 300 bp, non-negative rates
+bucket_min <- max(0, floor((current_center_ext - bp_span/100) / 0.25) * 0.25)
+bucket_max <- ceiling((current_center_ext + bp_span/100) / 0.25) * 0.25
+bucket_centers_ext <- seq(bucket_min, bucket_max, by = 0.25)
+half_width_ext <- 0.125   # 25 bp-wide buckets
+
+# Check if all_estimates exists and has data
+if (!exists("all_estimates") || nrow(all_estimates) == 0) {
+  stop("all_estimates object not found or empty. Make sure the earlier bucketing code ran successfully.")
+}
+
+cat("Creating extended buckets for", nrow(all_estimates), "estimate rows\n")
+cat("Bucket range:", min(bucket_centers_ext), "to", max(bucket_centers_ext), "\n")
+
+# Compute bucketed probabilities across the extended support
+bucket_list_ext <- vector("list", nrow(all_estimates))
+for (i in seq_len(nrow(all_estimates))) {
+  mu_i    <- all_estimates$implied_mean[i]
+  sigma_i <- all_estimates$stdev[i]
+  d_i     <- all_estimates$days_to_meeting[i]
+
+  if (!is.finite(mu_i)) next
+  if (!is.finite(sigma_i) || sigma_i <= 0) sigma_i <- sd_fallback
+
+  # Probabilistic component
+  p_vec <- sapply(bucket_centers_ext, function(b) {
+    lower <- b - half_width_ext
+    upper <- b + half_width_ext
+    pnorm(upper, mean = mu_i, sd = sigma_i) - pnorm(lower, mean = mu_i, sd = sigma_i)
+  })
+
+  # Clean and normalise
+  p_vec[!is.finite(p_vec) | p_vec < 0] <- 0
+  p_vec[p_vec < 0.01] <- 0
+  s <- sum(p_vec, na.rm = TRUE)
+  if (is.finite(s) && s > 0) {
+    p_vec <- p_vec / s
+  } else {
+    p_vec[] <- 0
+  }
+
+  # Linear component (two nearest buckets), clamped
+  nearest <- order(abs(bucket_centers_ext - mu_i))[1:2]
+  b1 <- min(bucket_centers_ext[nearest])
+  b2 <- max(bucket_centers_ext[nearest])
+  denom <- (b2 - b1)
+  w2 <- if (denom > 0) (mu_i - b1) / denom else 0
+  w2 <- min(max(w2, 0), 1)
+  l_vec <- numeric(length(bucket_centers_ext))
+  l_vec[which(bucket_centers_ext == b1)] <- 1 - w2
+  l_vec[which(bucket_centers_ext == b2)] <- w2
+
+  # Blend by days to meeting
+  blend <- blend_weight(d_i)
+  v <- blend * l_vec + (1 - blend) * p_vec
+
+  bucket_list_ext[[i]] <- tibble::tibble(
+    scrape_time     = all_estimates$scrape_time[i],
+    meeting_date    = all_estimates$meeting_date[i],
+    implied_mean    = mu_i,
+    stdev           = sigma_i,
+    days_to_meeting = d_i,
+    bucket          = bucket_centers_ext,
+    probability     = v
+  )
+}
+
+# Combine all buckets
+all_estimates_buckets_ext <- dplyr::bind_rows(bucket_list_ext) %>%
+  dplyr::mutate(
+    diff_bps = as.integer(round((bucket - current_center_ext) * 100L)),
+    diff_bps = pmax(pmin(diff_bps, bp_span), -bp_span)
+  )
+
+# Move levels ordered from biggest CUT to biggest HIKE (for proper stacking)
+move_levels_bps <- seq(-bp_span, bp_span, by = step_bp)  # -300, -275, -250, ..., 275, 300
+label_move <- function(x) if (x < 0) paste0(abs(x), " bp cut") else if (x == 0) "No change" else paste0("+", x, " bp hike")
+move_levels_lbl <- vapply(move_levels_bps, label_move, character(1))
+
+# Legend breaks (for the -100 to +100 range, ordered cut→hike for consistency)
+legend_bps    <- seq(-100, 100, by = 25)  # -100, -75, -50, -25, 0, 25, 50, 75, 100
+legend_breaks <- vapply(legend_bps, label_move, character(1))
+
+# Add move labels
+all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
+  dplyr::mutate(
+    move = dplyr::case_when(
+      diff_bps == 0L ~ "No change",
+      diff_bps <  0L ~ paste0(abs(diff_bps), " bp cut"),
+      TRUE           ~ paste0("+", diff_bps, " bp hike")
+    ),
+    move = factor(move, levels = move_levels_lbl)  # Now properly ordered cut→hike
+  )
+
+cat("Extended buckets created:", nrow(all_estimates_buckets_ext), "rows\n")
+cat("Unique moves:", length(unique(all_estimates_buckets_ext$move)), "\n")
+
+# Verify the object was created successfully
+if (!exists("all_estimates_buckets_ext") || nrow(all_estimates_buckets_ext) == 0) {
+  stop("Failed to create all_estimates_buckets_ext")
+} else {
+  cat("✓ all_estimates_buckets_ext created successfully\n")
+}
+
 # For the main area chart (top3_df):
 top3_df <- top3_df %>%
   # make sure every scrape_time × move pair exists:
