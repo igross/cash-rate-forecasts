@@ -622,6 +622,16 @@ area <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
         axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14))
 
+
+future_meetings_all <- meeting_schedule %>%
+  dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
+  dplyr::filter(meeting_date > Sys.Date()) %>%
+  dplyr::pull(meeting_date)
+
+# Debug output to verify
+cat("Future meetings found:", length(future_meetings_all), "\n")
+cat("Meetings:", paste(future_meetings_all, collapse = ", "), "\n")
+
 # For the extended area charts (all future meetings):
 for (mt in future_meetings_all) {
   df_mt <- all_estimates_buckets_ext %>%
