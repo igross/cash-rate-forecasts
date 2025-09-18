@@ -895,4 +895,95 @@ for (mt in future_meetings_all) {
     cat("Data summary:\n")
     print(summary(df_mt))
   })
+
+
+# Add this code right after the area chart loop, before the final closing brace
+
+# Create CSV output directory if it doesn't exist
+if (!dir.exists("docs/meetings/csv")) dir.create("docs/meetings/csv", recursive = TRUE)
+
+# Export data for all future meetings as CSV files
+for (mt in future_meetings_all) {
+  df_mt_csv <- all_estimates_buckets_ext %>%
+    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+    dplyr::group_by(scrape_time, move, diff_bps) %>%
+    dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
+    tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
+    dplyr::arrange(scrape_time, diff_bps) %>%
+    dplyr::mutate(
+      # Add formatted datetime columns for easier reading
+      scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
+      meeting_date = as.Date(mt),
+      # Add a readable bucket column
+      bucket_rate = case_when(
+        diff_bps == 0 ~ current_center_ext,
+        TRUE ~ current_center_ext + (diff_bps / 100)
+      )
+    ) %>%
+    dplyr::select(
+      meeting_date,
+      scrape_time,
+      scrape_datetime_aest,
+      move,
+      diff_bps,
+      bucket_rate,
+      probability
+    )
+  
+  # Skip if no data
+  if (nrow(df_mt_csv) == 0) {
+    cat("Skipping CSV export - no data for meeting", as.character(mt), "\n")
+    next
+  }
+  
+  # Export to CSV
+  csv_filename <- paste0("docs/meetings/csv/area_data_", fmt_file(mt), ".csv")
+  
+  tryCatch({
+    readr::write_csv(df_mt_csv, csv_filename)
+    cat("CSV exported:", csv_filename, "\n")
+  }, error = function(e) {
+    cat("Error exporting CSV for meeting", as.character(mt), ":", e$message, "\n")
+  })
+}
+
+# Also create a combined CSV with all meetings data
+combined_csv <- all_estimates_buckets_ext %>%
+  dplyr::filter(as.Date(meeting_date) %in% future_meetings_all) %>%
+  dplyr::group_by(meeting_date, scrape_time, move, diff_bps) %>%
+  dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
+  dplyr::arrange(meeting_date, scrape_time, diff_bps) %>%
+  dplyr::mutate(
+    # Add formatted datetime columns for easier reading
+    scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
+    meeting_date = as.Date(meeting_date),
+    # Add a readable bucket column
+    bucket_rate = case_when(
+      diff_bps == 0 ~ current_center_ext,
+      TRUE ~ current_center_ext + (diff_bps / 100)
+    )
+  ) %>%
+  dplyr::select(
+    meeting_date,
+    scrape_time,
+    scrape_datetime_aest,
+    move,
+    diff_bps,
+    bucket_rate,
+    probability
+  )
+
+# Export combined CSV
+if (nrow(combined_csv) > 0) {
+  tryCatch({
+    readr::write_csv(combined_csv, "docs/meetings/csv/all_meetings_area_data.csv")
+    cat("Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv\n")
+  }, error = function(e) {
+    cat("Error exporting combined CSV:", e$message, "\n")
+  })
+}
+
+cat("CSV export completed for area plot data\n")
+
+  
 }
