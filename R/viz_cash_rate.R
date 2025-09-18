@@ -564,7 +564,7 @@ sd_fallback <- suppressWarnings(stats::median(all_estimates$stdev[is.finite(all_
 if (!is.finite(sd_fallback) || sd_fallback <= 0) sd_fallback <- 0.01
 
 # Re-anchor the "no change" centre to nearest 25bp
-current_center_ext <- round(current_rate / 0.25) * 0.25
+current_center_ext <- current_rate
 
 # Bucket support: current ± 300 bp, non-negative rates
 bucket_min <- max(0, floor((current_center_ext - bp_span/100) / 0.25) * 0.25)
