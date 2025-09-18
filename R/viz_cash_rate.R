@@ -899,6 +899,46 @@ for (mt in future_meetings_all) {
 
 # Add this code right after the area chart loop, before the final closing brace
 
+# Define helper functions if they don't exist
+if (!exists("fmt_date")) {
+  fmt_date <- function(x) format(as.Date(x), "%d %B %Y")
+}
+if (!exists("fmt_file")) {
+  fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
+}
+
+# Also need to define fill_map if it doesn't exist
+if (!exists("fill_map")) {
+  # Create a comprehensive fill map for all possible moves
+  all_moves <- unique(all_estimates_buckets_ext$move)
+  all_moves <- all_moves[!is.na(all_moves)]
+  
+  # Generate colors: blue for cuts, grey for no change, red for hikes
+  n_moves <- length(all_moves)
+  fill_map <- setNames(rep("#BFBFBF", n_moves), all_moves)  # default grey
+  
+  # Apply colors based on move type
+  for (mv in all_moves) {
+    if (grepl("cut", mv, ignore.case = TRUE)) {
+      # Cuts: shades of blue (darker = bigger cut)
+      if (grepl("300|275|250|225|200", mv)) fill_map[mv] <- "#000080"  # very dark blue
+      else if (grepl("175|150|125|100", mv)) fill_map[mv] <- "#0033A0"
+      else if (grepl("75", mv)) fill_map[mv] <- "#004B8E"
+      else if (grepl("50", mv)) fill_map[mv] <- "#1A5CB0"
+      else if (grepl("25", mv)) fill_map[mv] <- "#5FA4D4"
+    } else if (grepl("hike", mv, ignore.case = TRUE)) {
+      # Hikes: shades of red (darker = bigger hike)
+      if (grepl("300|275|250|225|200", mv)) fill_map[mv] <- "#800000"  # very dark red
+      else if (grepl("175|150|125|100", mv)) fill_map[mv] <- "#A00000"
+      else if (grepl("75", mv)) fill_map[mv] <- "#B50000"
+      else if (grepl("50", mv)) fill_map[mv] <- "#C71010"
+      else if (grepl("25", mv)) fill_map[mv] <- "#E07C7C"
+    } else if (grepl("No change", mv, ignore.case = TRUE)) {
+      fill_map[mv] <- "#BFBFBF"  # grey for no change
+    }
+  }
+}
+
 # Create CSV output directory if it doesn't exist
 if (!dir.exists("docs/meetings/csv")) dir.create("docs/meetings/csv", recursive = TRUE)
 
@@ -936,11 +976,11 @@ for (mt in future_meetings_all) {
     next
   }
   
-  # Export to CSV
+  # Export to CSV using the same format as your PNG files
   csv_filename <- paste0("docs/meetings/csv/area_data_", fmt_file(mt), ".csv")
   
   tryCatch({
-    readr::write_csv(df_mt_csv, csv_filename)
+    write.csv(df_mt_csv, csv_filename, row.names = FALSE)
     cat("CSV exported:", csv_filename, "\n")
   }, error = function(e) {
     cat("Error exporting CSV for meeting", as.character(mt), ":", e$message, "\n")
@@ -976,7 +1016,7 @@ combined_csv <- all_estimates_buckets_ext %>%
 # Export combined CSV
 if (nrow(combined_csv) > 0) {
   tryCatch({
-    readr::write_csv(combined_csv, "docs/meetings/csv/all_meetings_area_data.csv")
+    write.csv(combined_csv, "docs/meetings/csv/all_meetings_area_data.csv", row.names = FALSE)
     cat("Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv\n")
   }, error = function(e) {
     cat("Error exporting combined CSV:", e$message, "\n")
@@ -984,6 +1024,5 @@ if (nrow(combined_csv) > 0) {
 }
 
 cat("CSV export completed for area plot data\n")
-
   
 }
