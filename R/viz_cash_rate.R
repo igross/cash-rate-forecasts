@@ -567,8 +567,8 @@ if (!is.finite(sd_fallback) || sd_fallback <= 0) sd_fallback <- 0.01
 current_center_ext <- current_rate
 
 # Bucket support: current ± 300 bp, non-negative rates
-bucket_min <- max(0, floor((current_center_ext - bp_span/100) / 0.25) * 0.25)
-bucket_max <- ceiling((current_center_ext + bp_span/100) / 0.25) * 0.25
+bucket_min <- 0.1
+bucket_max <- 6.1
 bucket_centers_ext <- seq(bucket_min, bucket_max, by = 0.25)
 half_width_ext <- 0.125   # 25 bp-wide buckets
 
