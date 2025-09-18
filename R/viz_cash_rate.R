@@ -555,8 +555,6 @@ htmlwidgets::saveWidget(
 
 
 
-# Add this code before the area charts loop to create all_estimates_buckets_ext:
-
 # Extended range bucketing (±300 bp range in 25 bp steps)
 bp_span <- 300L
 step_bp <- 25L
@@ -939,14 +937,11 @@ if (!exists("fill_map")) {
   }
 }
 
-# Create CSV output directory if it doesn't exist
-if (!dir.exists("docs/meetings/csv")) dir.create("docs/meetings/csv", recursive = TRUE)
-
-# Export data for all future meetings as CSV files
+# Export data for all future meetings as CSV files - FIXED VERSION
 for (mt in future_meetings_all) {
   df_mt_csv <- all_estimates_buckets_ext %>%
     dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
-    dplyr::group_by(scrape_time, move, diff_bps) %>%
+    dplyr::group_by(scrape_time, move, diff_bps, bucket) %>%  # ADD bucket to group_by
     dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, diff_bps) %>%
@@ -954,11 +949,8 @@ for (mt in future_meetings_all) {
       # Add formatted datetime columns for easier reading
       scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
       meeting_date = as.Date(mt),
-      # Add a readable bucket column
-      bucket_rate = case_when(
-        diff_bps == 0 ~ current_center_ext,
-        TRUE ~ current_center_ext + (diff_bps / 100)
-      )
+      # FIXED: Use the actual bucket value instead of calculating from current_center_ext
+      bucket_rate = bucket  # This preserves the original 25bp-aligned bucket values
     ) %>%
     dplyr::select(
       meeting_date,
@@ -987,21 +979,18 @@ for (mt in future_meetings_all) {
   })
 }
 
-# Also create a combined CSV with all meetings data
+# Also create a combined CSV with all meetings data - FIXED VERSION
 combined_csv <- all_estimates_buckets_ext %>%
   dplyr::filter(as.Date(meeting_date) %in% future_meetings_all) %>%
-  dplyr::group_by(meeting_date, scrape_time, move, diff_bps) %>%
+  dplyr::group_by(meeting_date, scrape_time, move, diff_bps, bucket) %>%  # ADD bucket to group_by
   dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
   dplyr::arrange(meeting_date, scrape_time, diff_bps) %>%
   dplyr::mutate(
     # Add formatted datetime columns for easier reading
     scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
     meeting_date = as.Date(meeting_date),
-    # Add a readable bucket column
-    bucket_rate = case_when(
-      diff_bps == 0 ~ current_center_ext,
-      TRUE ~ current_center_ext + (diff_bps / 100)
-    )
+    # FIXED: Use the actual bucket value instead of calculating from current_center_ext  
+    bucket_rate = bucket  # This preserves the original 25bp-aligned bucket values
   ) %>%
   dplyr::select(
     meeting_date,
@@ -1023,6 +1012,19 @@ if (nrow(combined_csv) > 0) {
   })
 }
 
-cat("CSV export completed for area plot data\n")
+# Verification: Print some sample bucket_rate values to confirm they're on the RBA grid
+cat("\nVerification - Sample bucket_rate values:\n")
+if (nrow(combined_csv) > 0) {
+  sample_rates <- unique(combined_csv$bucket_rate)
+  sample_rates <- sort(sample_rates)[1:min(20, length(sample_rates))]
+  cat("First 20 unique bucket rates:", paste(sample_rates, collapse = ", "), "\n")
+  
+  # Check the decimal places
+  decimals <- (sample_rates * 100) %% 100
+  unique_decimals <- unique(decimals)
+  cat("Decimal endings (should be 10, 35, 60, 85):", paste(unique_decimals, collapse = ", "), "\n")
+}
+
+cat("CSV export completed with corrected bucket_rate values\n")
   
 }
