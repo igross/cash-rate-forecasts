@@ -35,112 +35,112 @@ are shown below:
     #> [1] FALSE
     #> [1] 3.6
     #> [1] "2025-08-12"
-    #> [1] "2025-09-18 15:22:50 AEST"
+    #> [1] "2025-09-18 15:28:39 AEST"
     #> [1] "2025-09-18 14:30:00 AEST"
     #> Replacing 19 missing/invalid stdev(s) with max RMSE = 1.3813
     #> # A tibble: 100 × 6
     #>     scrape_time         meeting_date implied_mean days_to_meeting previous_rate
     #>     <dttm>              <date>              <dbl>           <int>         <dbl>
-    #>   1 2025-09-18 03:20:18 2026-12-08           3.13             447          3.12
-    #>   2 2025-09-18 03:45:07 2025-09-30           3.58              13          3.6 
-    #>   3 2025-09-18 03:45:07 2025-11-04           3.37              48          3.58
-    #>   4 2025-09-18 03:45:07 2025-12-09           3.31              83          3.37
-    #>   5 2025-09-18 03:45:07 2026-02-03           3.18             139          3.31
-    #>   6 2025-09-18 03:45:07 2026-03-17           3.17             181          3.18
-    #>   7 2025-09-18 03:45:07 2026-05-05           2.96             230          3.17
-    #>   8 2025-09-18 03:45:07 2026-06-16           3.09             272          2.96
-    #>   9 2025-09-18 03:45:07 2026-08-11           3.12             328          3.09
-    #>  10 2025-09-18 03:45:07 2026-09-29           3.11             377          3.12
-    #>  11 2025-09-18 03:45:07 2026-11-03           3.12             412          3.11
-    #>  12 2025-09-18 03:45:07 2026-12-08           3.13             447          3.12
-    #>  13 2025-09-18 03:56:10 2025-09-30           3.58              13          3.6 
-    #>  14 2025-09-18 03:56:10 2025-11-04           3.37              48          3.58
-    #>  15 2025-09-18 03:56:10 2025-12-09           3.31              83          3.37
-    #>  16 2025-09-18 03:56:10 2026-02-03           3.18             139          3.31
-    #>  17 2025-09-18 03:56:10 2026-03-17           3.17             181          3.18
-    #>  18 2025-09-18 03:56:10 2026-05-05           2.96             230          3.17
-    #>  19 2025-09-18 03:56:10 2026-06-16           3.09             272          2.96
-    #>  20 2025-09-18 03:56:10 2026-08-11           3.12             328          3.09
-    #>  21 2025-09-18 03:56:10 2026-09-29           3.11             377          3.12
-    #>  22 2025-09-18 03:56:10 2026-11-03           3.12             412          3.11
-    #>  23 2025-09-18 03:56:10 2026-12-08           3.13             447          3.12
-    #>  24 2025-09-18 04:04:16 2025-09-30           3.58              13          3.6 
-    #>  25 2025-09-18 04:04:16 2025-11-04           3.37              48          3.58
-    #>  26 2025-09-18 04:04:16 2025-12-09           3.31              83          3.37
-    #>  27 2025-09-18 04:04:16 2026-02-03           3.18             139          3.31
-    #>  28 2025-09-18 04:04:16 2026-03-17           3.17             181          3.18
-    #>  29 2025-09-18 04:04:16 2026-05-05           2.96             230          3.17
-    #>  30 2025-09-18 04:04:16 2026-06-16           3.09             272          2.96
-    #>  31 2025-09-18 04:04:16 2026-08-11           3.12             328          3.09
-    #>  32 2025-09-18 04:04:16 2026-09-29           3.11             377          3.12
-    #>  33 2025-09-18 04:04:16 2026-11-03           3.12             412          3.11
-    #>  34 2025-09-18 04:04:16 2026-12-08           3.13             447          3.12
-    #>  35 2025-09-18 04:26:29 2025-09-30           3.58              13          3.6 
-    #>  36 2025-09-18 04:26:29 2025-11-04           3.37              48          3.58
-    #>  37 2025-09-18 04:26:29 2025-12-09           3.31              83          3.37
-    #>  38 2025-09-18 04:26:29 2026-02-03           3.18             139          3.31
-    #>  39 2025-09-18 04:26:29 2026-03-17           3.17             181          3.18
-    #>  40 2025-09-18 04:26:29 2026-05-05           2.96             230          3.17
-    #>  41 2025-09-18 04:26:29 2026-06-16           3.09             272          2.96
-    #>  42 2025-09-18 04:26:29 2026-08-11           3.12             328          3.09
-    #>  43 2025-09-18 04:26:29 2026-09-29           3.11             377          3.12
-    #>  44 2025-09-18 04:26:29 2026-11-03           3.12             412          3.11
-    #>  45 2025-09-18 04:26:29 2026-12-08           3.13             447          3.12
-    #>  46 2025-09-18 04:43:08 2025-09-30           3.58              13          3.6 
-    #>  47 2025-09-18 04:43:08 2025-11-04           3.37              48          3.58
-    #>  48 2025-09-18 04:43:08 2025-12-09           3.31              83          3.37
-    #>  49 2025-09-18 04:43:08 2026-02-03           3.18             139          3.31
-    #>  50 2025-09-18 04:43:08 2026-03-17           3.17             181          3.18
-    #>  51 2025-09-18 04:43:08 2026-05-05           2.96             230          3.17
-    #>  52 2025-09-18 04:43:08 2026-06-16           3.09             272          2.96
-    #>  53 2025-09-18 04:43:08 2026-08-11           3.12             328          3.09
-    #>  54 2025-09-18 04:43:08 2026-09-29           3.11             377          3.12
-    #>  55 2025-09-18 04:43:08 2026-11-03           3.12             412          3.11
-    #>  56 2025-09-18 04:43:08 2026-12-08           3.13             447          3.12
-    #>  57 2025-09-18 04:54:35 2025-09-30           3.58              13          3.6 
-    #>  58 2025-09-18 04:54:35 2025-11-04           3.37              48          3.58
-    #>  59 2025-09-18 04:54:35 2025-12-09           3.30              83          3.37
-    #>  60 2025-09-18 04:54:35 2026-02-03           3.18             139          3.30
-    #>  61 2025-09-18 04:54:35 2026-03-17           3.17             181          3.18
-    #>  62 2025-09-18 04:54:35 2026-05-05           2.96             230          3.17
-    #>  63 2025-09-18 04:54:35 2026-06-16           3.09             272          2.96
-    #>  64 2025-09-18 04:54:35 2026-08-11           3.12             328          3.09
-    #>  65 2025-09-18 04:54:35 2026-09-29           3.11             377          3.12
-    #>  66 2025-09-18 04:54:35 2026-11-03           3.12             412          3.11
-    #>  67 2025-09-18 04:54:35 2026-12-08           3.13             447          3.12
-    #>  68 2025-09-18 05:00:06 2025-09-30           3.58              13          3.6 
-    #>  69 2025-09-18 05:00:06 2025-11-04           3.37              48          3.58
-    #>  70 2025-09-18 05:00:06 2025-12-09           3.30              83          3.37
-    #>  71 2025-09-18 05:00:06 2026-02-03           3.18             139          3.30
-    #>  72 2025-09-18 05:00:06 2026-03-17           3.17             181          3.18
-    #>  73 2025-09-18 05:00:06 2026-05-05           2.96             230          3.17
-    #>  74 2025-09-18 05:00:06 2026-06-16           3.09             272          2.96
-    #>  75 2025-09-18 05:00:06 2026-08-11           3.12             328          3.09
-    #>  76 2025-09-18 05:00:06 2026-09-29           3.11             377          3.12
-    #>  77 2025-09-18 05:00:06 2026-11-03           3.12             412          3.11
-    #>  78 2025-09-18 05:00:06 2026-12-08           3.13             447          3.12
-    #>  79 2025-09-18 05:16:50 2025-09-30           3.58              13          3.6 
-    #>  80 2025-09-18 05:16:50 2025-11-04           3.37              48          3.58
-    #>  81 2025-09-18 05:16:50 2025-12-09           3.30              83          3.37
-    #>  82 2025-09-18 05:16:50 2026-02-03           3.18             139          3.30
-    #>  83 2025-09-18 05:16:50 2026-03-17           3.17             181          3.18
-    #>  84 2025-09-18 05:16:50 2026-05-05           2.96             230          3.17
-    #>  85 2025-09-18 05:16:50 2026-06-16           3.09             272          2.96
-    #>  86 2025-09-18 05:16:50 2026-08-11           3.12             328          3.09
-    #>  87 2025-09-18 05:16:50 2026-09-29           3.11             377          3.12
-    #>  88 2025-09-18 05:16:50 2026-11-03           3.12             412          3.11
-    #>  89 2025-09-18 05:16:50 2026-12-08           3.13             447          3.12
-    #>  90 2025-09-18 05:21:43 2025-09-30           3.58              13          3.6 
-    #>  91 2025-09-18 05:21:43 2025-11-04           3.37              48          3.58
-    #>  92 2025-09-18 05:21:43 2025-12-09           3.30              83          3.37
-    #>  93 2025-09-18 05:21:43 2026-02-03           3.18             139          3.30
-    #>  94 2025-09-18 05:21:43 2026-03-17           3.17             181          3.18
-    #>  95 2025-09-18 05:21:43 2026-05-05           2.96             230          3.17
-    #>  96 2025-09-18 05:21:43 2026-06-16           3.09             272          2.96
-    #>  97 2025-09-18 05:21:43 2026-08-11           3.12             328          3.09
-    #>  98 2025-09-18 05:21:43 2026-09-29           3.11             377          3.12
-    #>  99 2025-09-18 05:21:43 2026-11-03           3.12             412          3.11
-    #> 100 2025-09-18 05:21:43 2026-12-08           3.13             447          3.12
+    #>   1 2025-09-18 03:45:07 2026-12-08           3.13             447          3.12
+    #>   2 2025-09-18 03:56:10 2025-09-30           3.58              13          3.6 
+    #>   3 2025-09-18 03:56:10 2025-11-04           3.37              48          3.58
+    #>   4 2025-09-18 03:56:10 2025-12-09           3.31              83          3.37
+    #>   5 2025-09-18 03:56:10 2026-02-03           3.18             139          3.31
+    #>   6 2025-09-18 03:56:10 2026-03-17           3.17             181          3.18
+    #>   7 2025-09-18 03:56:10 2026-05-05           2.96             230          3.17
+    #>   8 2025-09-18 03:56:10 2026-06-16           3.09             272          2.96
+    #>   9 2025-09-18 03:56:10 2026-08-11           3.12             328          3.09
+    #>  10 2025-09-18 03:56:10 2026-09-29           3.11             377          3.12
+    #>  11 2025-09-18 03:56:10 2026-11-03           3.12             412          3.11
+    #>  12 2025-09-18 03:56:10 2026-12-08           3.13             447          3.12
+    #>  13 2025-09-18 04:04:16 2025-09-30           3.58              13          3.6 
+    #>  14 2025-09-18 04:04:16 2025-11-04           3.37              48          3.58
+    #>  15 2025-09-18 04:04:16 2025-12-09           3.31              83          3.37
+    #>  16 2025-09-18 04:04:16 2026-02-03           3.18             139          3.31
+    #>  17 2025-09-18 04:04:16 2026-03-17           3.17             181          3.18
+    #>  18 2025-09-18 04:04:16 2026-05-05           2.96             230          3.17
+    #>  19 2025-09-18 04:04:16 2026-06-16           3.09             272          2.96
+    #>  20 2025-09-18 04:04:16 2026-08-11           3.12             328          3.09
+    #>  21 2025-09-18 04:04:16 2026-09-29           3.11             377          3.12
+    #>  22 2025-09-18 04:04:16 2026-11-03           3.12             412          3.11
+    #>  23 2025-09-18 04:04:16 2026-12-08           3.13             447          3.12
+    #>  24 2025-09-18 04:26:29 2025-09-30           3.58              13          3.6 
+    #>  25 2025-09-18 04:26:29 2025-11-04           3.37              48          3.58
+    #>  26 2025-09-18 04:26:29 2025-12-09           3.31              83          3.37
+    #>  27 2025-09-18 04:26:29 2026-02-03           3.18             139          3.31
+    #>  28 2025-09-18 04:26:29 2026-03-17           3.17             181          3.18
+    #>  29 2025-09-18 04:26:29 2026-05-05           2.96             230          3.17
+    #>  30 2025-09-18 04:26:29 2026-06-16           3.09             272          2.96
+    #>  31 2025-09-18 04:26:29 2026-08-11           3.12             328          3.09
+    #>  32 2025-09-18 04:26:29 2026-09-29           3.11             377          3.12
+    #>  33 2025-09-18 04:26:29 2026-11-03           3.12             412          3.11
+    #>  34 2025-09-18 04:26:29 2026-12-08           3.13             447          3.12
+    #>  35 2025-09-18 04:43:08 2025-09-30           3.58              13          3.6 
+    #>  36 2025-09-18 04:43:08 2025-11-04           3.37              48          3.58
+    #>  37 2025-09-18 04:43:08 2025-12-09           3.31              83          3.37
+    #>  38 2025-09-18 04:43:08 2026-02-03           3.18             139          3.31
+    #>  39 2025-09-18 04:43:08 2026-03-17           3.17             181          3.18
+    #>  40 2025-09-18 04:43:08 2026-05-05           2.96             230          3.17
+    #>  41 2025-09-18 04:43:08 2026-06-16           3.09             272          2.96
+    #>  42 2025-09-18 04:43:08 2026-08-11           3.12             328          3.09
+    #>  43 2025-09-18 04:43:08 2026-09-29           3.11             377          3.12
+    #>  44 2025-09-18 04:43:08 2026-11-03           3.12             412          3.11
+    #>  45 2025-09-18 04:43:08 2026-12-08           3.13             447          3.12
+    #>  46 2025-09-18 04:54:35 2025-09-30           3.58              13          3.6 
+    #>  47 2025-09-18 04:54:35 2025-11-04           3.37              48          3.58
+    #>  48 2025-09-18 04:54:35 2025-12-09           3.30              83          3.37
+    #>  49 2025-09-18 04:54:35 2026-02-03           3.18             139          3.30
+    #>  50 2025-09-18 04:54:35 2026-03-17           3.17             181          3.18
+    #>  51 2025-09-18 04:54:35 2026-05-05           2.96             230          3.17
+    #>  52 2025-09-18 04:54:35 2026-06-16           3.09             272          2.96
+    #>  53 2025-09-18 04:54:35 2026-08-11           3.12             328          3.09
+    #>  54 2025-09-18 04:54:35 2026-09-29           3.11             377          3.12
+    #>  55 2025-09-18 04:54:35 2026-11-03           3.12             412          3.11
+    #>  56 2025-09-18 04:54:35 2026-12-08           3.13             447          3.12
+    #>  57 2025-09-18 05:00:06 2025-09-30           3.58              13          3.6 
+    #>  58 2025-09-18 05:00:06 2025-11-04           3.37              48          3.58
+    #>  59 2025-09-18 05:00:06 2025-12-09           3.30              83          3.37
+    #>  60 2025-09-18 05:00:06 2026-02-03           3.18             139          3.30
+    #>  61 2025-09-18 05:00:06 2026-03-17           3.17             181          3.18
+    #>  62 2025-09-18 05:00:06 2026-05-05           2.96             230          3.17
+    #>  63 2025-09-18 05:00:06 2026-06-16           3.09             272          2.96
+    #>  64 2025-09-18 05:00:06 2026-08-11           3.12             328          3.09
+    #>  65 2025-09-18 05:00:06 2026-09-29           3.11             377          3.12
+    #>  66 2025-09-18 05:00:06 2026-11-03           3.12             412          3.11
+    #>  67 2025-09-18 05:00:06 2026-12-08           3.13             447          3.12
+    #>  68 2025-09-18 05:16:50 2025-09-30           3.58              13          3.6 
+    #>  69 2025-09-18 05:16:50 2025-11-04           3.37              48          3.58
+    #>  70 2025-09-18 05:16:50 2025-12-09           3.30              83          3.37
+    #>  71 2025-09-18 05:16:50 2026-02-03           3.18             139          3.30
+    #>  72 2025-09-18 05:16:50 2026-03-17           3.17             181          3.18
+    #>  73 2025-09-18 05:16:50 2026-05-05           2.96             230          3.17
+    #>  74 2025-09-18 05:16:50 2026-06-16           3.09             272          2.96
+    #>  75 2025-09-18 05:16:50 2026-08-11           3.12             328          3.09
+    #>  76 2025-09-18 05:16:50 2026-09-29           3.11             377          3.12
+    #>  77 2025-09-18 05:16:50 2026-11-03           3.12             412          3.11
+    #>  78 2025-09-18 05:16:50 2026-12-08           3.13             447          3.12
+    #>  79 2025-09-18 05:21:43 2025-09-30           3.58              13          3.6 
+    #>  80 2025-09-18 05:21:43 2025-11-04           3.37              48          3.58
+    #>  81 2025-09-18 05:21:43 2025-12-09           3.30              83          3.37
+    #>  82 2025-09-18 05:21:43 2026-02-03           3.18             139          3.30
+    #>  83 2025-09-18 05:21:43 2026-03-17           3.17             181          3.18
+    #>  84 2025-09-18 05:21:43 2026-05-05           2.96             230          3.17
+    #>  85 2025-09-18 05:21:43 2026-06-16           3.09             272          2.96
+    #>  86 2025-09-18 05:21:43 2026-08-11           3.12             328          3.09
+    #>  87 2025-09-18 05:21:43 2026-09-29           3.11             377          3.12
+    #>  88 2025-09-18 05:21:43 2026-11-03           3.12             412          3.11
+    #>  89 2025-09-18 05:21:43 2026-12-08           3.13             447          3.12
+    #>  90 2025-09-18 05:27:36 2025-09-30           3.58              13          3.6 
+    #>  91 2025-09-18 05:27:36 2025-11-04           3.37              48          3.58
+    #>  92 2025-09-18 05:27:36 2025-12-09           3.30              83          3.37
+    #>  93 2025-09-18 05:27:36 2026-02-03           3.18             139          3.30
+    #>  94 2025-09-18 05:27:36 2026-03-17           3.17             181          3.18
+    #>  95 2025-09-18 05:27:36 2026-05-05           2.96             230          3.17
+    #>  96 2025-09-18 05:27:36 2026-06-16           3.09             272          2.96
+    #>  97 2025-09-18 05:27:36 2026-08-11           3.12             328          3.09
+    #>  98 2025-09-18 05:27:36 2026-09-29           3.11             377          3.12
+    #>  99 2025-09-18 05:27:36 2026-11-03           3.12             412          3.11
+    #> 100 2025-09-18 05:27:36 2026-12-08           3.13             447          3.12
     #>      stdev
     #>      <dbl>
     #>   1 1.26  
@@ -248,26 +248,26 @@ are shown below:
     #> # A tibble: 20 × 11
     #>    scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
     #>    <dttm>              <date>              <dbl> <dbl>           <int>  <dbl>
-    #>  1 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   1.35
-    #>  2 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   1.6 
-    #>  3 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   1.85
-    #>  4 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   2.1 
-    #>  5 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   2.35
-    #>  6 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   2.6 
-    #>  7 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   2.85
-    #>  8 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   3.1 
-    #>  9 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   3.35
-    #> 10 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   3.6 
-    #> 11 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   3.85
-    #> 12 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   4.1 
-    #> 13 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   4.35
-    #> 14 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   4.6 
-    #> 15 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   4.85
-    #> 16 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   5.1 
-    #> 17 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   5.35
-    #> 18 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   5.6 
-    #> 19 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   5.85
-    #> 20 2025-09-18 05:21:43 2026-12-08           3.13  1.26             447   6.1 
+    #>  1 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   1.35
+    #>  2 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   1.6 
+    #>  3 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   1.85
+    #>  4 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   2.1 
+    #>  5 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   2.35
+    #>  6 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   2.6 
+    #>  7 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   2.85
+    #>  8 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   3.1 
+    #>  9 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   3.35
+    #> 10 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   3.6 
+    #> 11 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   3.85
+    #> 12 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   4.1 
+    #> 13 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   4.35
+    #> 14 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   4.6 
+    #> 15 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   4.85
+    #> 16 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   5.1 
+    #> 17 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   5.35
+    #> 18 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   5.6 
+    #> 19 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   5.85
+    #> 20 2025-09-18 05:27:36 2026-12-08           3.13  1.26             447   6.1 
     #>    probability_linear probability_prob probability   diff diff_s
     #>                 <dbl>            <dbl>       <dbl>  <dbl>  <dbl>
     #>  1              0               0.0305      0.0305 -2.25  -1.22 
@@ -293,26 +293,26 @@ are shown below:
     #> [1] "2025-09-30"
     #> Warning: Removed 66 rows containing missing values or values outside the scale range
     #> (`geom_vline()`).
-    #> Creating extended buckets for 5616 estimate rows
-    #> Bucket range: 0.5 to 6.75 
-    #> Extended buckets created: 146016 rows
-    #> Unique moves: 3 
+    #> Creating extended buckets for 5627 estimate rows
+    #> Bucket range: 0.1 to 6.1 
+    #> Extended buckets created: 140675 rows
+    #> Unique moves: 23 
     #> ✓ all_estimates_buckets_ext created successfully
     #> Future meetings found: 11 
     #> Meetings: 2025-09-30, 2025-11-04, 2025-12-09, 2026-02-03, 2026-03-17, 2026-05-05, 2026-06-16, 2026-08-11, 2026-09-29, 2026-11-03, 2026-12-08 
     #> Processing meeting: 20361 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Error creating plot for meeting 20361 : object 'fill_map' not found 
     #> Data summary:
-    #>   scrape_time                            move       probability
-    #>  Min.   :2025-08-12 00:01:37   +300 bp hike: 507   Min.   :0   
-    #>  1st Qu.:2025-08-21 06:46:41   +275 bp hike: 507   1st Qu.:0   
-    #>  Median :2025-09-01 23:32:09   +250 bp hike: 507   Median :0   
-    #>  Mean   :2025-08-31 09:36:50   +225 bp hike: 507   Mean   :0   
-    #>  3rd Qu.:2025-09-09 23:42:16   +200 bp hike: 507   3rd Qu.:0   
-    #>  Max.   :2025-09-18 05:21:43   +175 bp hike: 507   Max.   :0   
-    #>                                (Other)     :9633               
+    #>   scrape_time                            move       probability    
+    #>  Min.   :2025-08-12 00:01:37   +300 bp hike: 508   Min.   :0.0000  
+    #>  1st Qu.:2025-08-21 07:05:56   +275 bp hike: 508   1st Qu.:0.0000  
+    #>  Median :2025-09-01 23:38:04   +250 bp hike: 508   Median :0.0000  
+    #>  Mean   :2025-08-31 10:27:22   +225 bp hike: 508   Mean   :0.0400  
+    #>  3rd Qu.:2025-09-09 23:45:00   +200 bp hike: 508   3rd Qu.:0.0000  
+    #>  Max.   :2025-09-18 05:27:36   +175 bp hike: 508   Max.   :0.9216  
+    #>                                (Other)     :9652                   
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
     #> CSV exported: docs/meetings/csv/area_data_2025-11-04.csv 
     #> CSV exported: docs/meetings/csv/area_data_2025-12-09.csv 
@@ -327,14 +327,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20396 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2025-11-04.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 820 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20396 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -351,14 +351,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20431 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2025-12-09.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1409 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20431 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -375,14 +375,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20487 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2026-02-03.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1959 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20487 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -399,14 +399,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20529 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2026-03-17.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1951 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20529 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -423,14 +423,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20578 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2026-05-05.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1829 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20578 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -447,14 +447,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20620 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2026-06-16.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1400 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20620 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -471,14 +471,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20676 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2026-08-11.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1438 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20676 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -495,14 +495,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20725 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2026-09-29.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 404 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20725 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -519,14 +519,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20760 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2026-11-03.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1551 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20760 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -543,14 +543,14 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
     #> Processing meeting: 20795 
-    #> df_mt dimensions: 13182 x 3 
-    #> Creating plot with 12675 data points
+    #> df_mt dimensions: 12700 x 3 
+    #> Creating plot with 12700 data points
     #> Saving to: docs/meetings/area_all_moves_2026-12-08.png
-    #> Warning: Removed 25 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1411 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Successfully saved plot for 20795 
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
@@ -567,6 +567,6 @@ are shown below:
     #> Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv
     #> 
     #> Verification - Sample bucket_rate values:
-    #> First 20 unique bucket rates: 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25 
-    #> Decimal endings (should be 10, 35, 60, 85): 50, 75, 0, 25 
+    #> First 20 unique bucket rates: 0.1, 0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6, 2.85, 3.1, 3.35, 3.6, 3.85, 4.1, 4.35, 4.6, 4.85 
+    #> Decimal endings (should be 10, 35, 60, 85): 10, 35, 60, 85, 10, 9.99999999999994, 34.9999999999999, 59.9999999999999, 84.9999999999999 
     #> CSV export completed with corrected bucket_rate values
