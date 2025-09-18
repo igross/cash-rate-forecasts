@@ -14,7 +14,7 @@ intro_paragraph <- '
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
 # Find meeting PNGs (basenames), then build relative paths from docs/index.html
-png_basenames <- list.files("docs/meetings", pattern = "^area_all_moves_\\d{8}\\.png$", full.names = FALSE)
+png_basenames <- list.files("docs/meetings", pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$", full.names = FALSE)
 
 # Sort by the yyyymmdd in filename (earliest first)
 if (length(png_basenames) > 0) {
