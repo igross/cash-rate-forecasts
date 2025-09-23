@@ -799,8 +799,13 @@ if (!dir.exists("docs/meetings/csv")) {
   dir.create("docs/meetings/csv", recursive = TRUE)
 }
 
-# 4. FIXED LOOP for creating area charts
+# ROBUST PLOTTING FIX - Handles ggplot conversion errors
+# Add this enhanced version to replace your current plotting loop
+
+# Enhanced plotting loop with better error handling and data validation
 for (mt in future_meetings_all) {
+  cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
+  
   df_mt <- all_estimates_buckets_ext %>%
     dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
     dplyr::group_by(scrape_time, move) %>%
@@ -808,9 +813,7 @@ for (mt in future_meetings_all) {
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, move)
 
-  # Enhanced debugging and validation
-  cat("Processing meeting:", as.character(mt), "\n")
-  cat("df_mt dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
+  cat("Initial df_mt dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
   
   # Check for empty or invalid data
   if (nrow(df_mt) == 0) {
@@ -818,91 +821,114 @@ for (mt in future_meetings_all) {
     next 
   }
   
-  # Check for valid scrape_time data
-  valid_times <- !is.na(df_mt$scrape_time) & is.finite(as.numeric(df_mt$scrape_time))
-  if (!any(valid_times)) {
-    cat("Skipping - no valid scrape times\n")
-    next
-  }
-  
-  # Filter to only valid data
+  # ENHANCED DATA CLEANING
   df_mt <- df_mt %>%
     dplyr::filter(
       !is.na(scrape_time),
       is.finite(as.numeric(scrape_time)),
       !is.na(probability),
-      is.finite(probability)
+      is.finite(probability),
+      probability >= 0,  # Remove negative probabilities
+      !is.na(move)       # Remove NA moves
+    ) %>%
+    # Fix any extreme values that might cause plotting issues
+    dplyr::mutate(
+      probability = pmin(probability, 1.0),  # Cap at 100%
+      probability = pmax(probability, 0.0)   # Floor at 0%
     )
   
+  cat("After cleaning dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
+  
   if (nrow(df_mt) == 0) {
-    cat("Skipping - no valid data after filtering\n")
+    cat("Skipping - no valid data after cleaning\n")
     next
   }
   
-  # Check we have at least 2 time points for a meaningful plot
+  # Check for sufficient time variation
   unique_times <- length(unique(df_mt$scrape_time))
   if (unique_times < 2) {
     cat("Skipping - insufficient time points (", unique_times, ")\n")
     next
   }
-
-  # Convert the meeting date properly (fixing the "20361" issue)
+  
+  # ROBUST DATE/TIME HANDLING
   meeting_date_proper <- as.Date(mt)
   start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
   end_xlim_mt   <- lubridate::as_datetime(meeting_date_proper, tz = "Australia/Melbourne") + lubridate::hours(17)
-
-  # Ensure we have valid time limits
-  if (!is.finite(as.numeric(start_xlim_mt)) || !is.finite(as.numeric(end_xlim_mt))) {
-    cat("Skipping - invalid time limits\n")
-    next
-  }
-
-  # CRITICAL FIX: Proper factor ordering for stacking
-  df_mt <- df_mt %>%
-    dplyr::mutate(
-      # Convert move to factor with REVERSED levels for proper stacking
-      move = factor(move, levels = rev(move_levels_lbl))
-    ) %>%
-    # Remove any rows with moves not in our levels
-    dplyr::filter(!is.na(move))
-
-  # Final check after all processing
-  if (nrow(df_mt) == 0) {
-    cat("Skipping - no data after final processing\n")
-    next
-  }
-
-  # Build exactly 30 equally spaced ticks
-  n_ticks    <- 30L
-  breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
-
-  cat("Creating plot with", nrow(df_mt), "data points\n")
   
-  # Try-catch around the plotting to handle any remaining issues
+  # Validate time limits
+  if (!is.finite(as.numeric(start_xlim_mt)) || !is.finite(as.numeric(end_xlim_mt)) || 
+      start_xlim_mt >= end_xlim_mt) {
+    cat("Skipping - invalid time limits\n")
+    cat("Start:", as.character(start_xlim_mt), "End:", as.character(end_xlim_mt), "\n")
+    next
+  }
+  
+  # PROPER FACTOR ORDERING WITH VALIDATION
+  # Only include moves that actually exist in the data
+  available_moves <- unique(df_mt$move[!is.na(df_mt$move)])
+  
+  # Filter move_levels_lbl to only include moves present in the data
+  valid_move_levels <- move_levels_lbl[move_levels_lbl %in% available_moves]
+  
+  df_mt <- df_mt %>%
+    dplyr::filter(move %in% valid_move_levels) %>%
+    dplyr::mutate(
+      move = factor(move, levels = rev(valid_move_levels))  # Reverse for proper stacking
+    ) %>%
+    dplyr::filter(!is.na(move))  # Remove any moves not in our factor levels
+  
+  cat("Final data dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
+  cat("Unique moves:", length(unique(df_mt$move)), "\n")
+  cat("Time range:", as.character(range(df_mt$scrape_time)), "\n")
+  
+  if (nrow(df_mt) == 0) {
+    cat("Skipping - no data after factor processing\n")
+    next
+  }
+  
+  # VALIDATE DATA INTEGRITY BEFORE PLOTTING
+  # Check for any infinite or extreme values
+  prob_range <- range(df_mt$probability, na.rm = TRUE)
+  cat("Probability range:", prob_range, "\n")
+  
+  # Check time consistency
+  time_range <- range(as.numeric(df_mt$scrape_time), na.rm = TRUE)
+  if (!all(is.finite(time_range))) {
+    cat("Skipping - invalid time range\n")
+    next
+  }
+  
+  # ROBUST PLOTTING WITH MULTIPLE FALLBACK STRATEGIES
+  filename <- paste0("docs/meetings/area_all_moves_", fmt_file(meeting_date_proper), ".png")
+  cat("Attempting to create plot and save to:", filename, "\n")
+  
+  plot_success <- FALSE
+  
+  # Strategy 1: Try the full plot
   tryCatch({
+    # Create a more conservative break sequence
+    time_span <- as.numeric(end_xlim_mt - start_xlim_mt)
+    n_breaks <- min(30, max(5, floor(time_span / (24 * 3600))))  # Max 30 breaks, min 5
+    breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_breaks)
+    
+    # Filter fill_map to only include moves present in data
+    fill_map_subset <- fill_map[names(fill_map) %in% available_moves]
+    
     area_mt <- ggplot2::ggplot(
       df_mt,
-      ggplot2::aes(
-        x    = scrape_time + lubridate::hours(10),
-        y    = probability,
-        fill = move
-      )
+      ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
     ) +
-      ggplot2::geom_area(
-        position = "stack",
-        alpha    = 0.95,
-        colour   = NA
-      ) +
+      ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
       ggplot2::scale_fill_manual(
-        values = fill_map,
-        breaks = legend_breaks,
-        drop   = FALSE,
-        name   = ""
+        values = fill_map_subset,
+        drop = FALSE,
+        name = ""
       ) +
       ggplot2::scale_x_datetime(
         limits = c(start_xlim_mt, end_xlim_mt),
         breaks = breaks_vec,
-        labels = function(x) strftime(x, "%d %b"),
+        labels = function(x) format(x, "%d %b"),
         expand = c(0, 0)
       ) +
       ggplot2::scale_y_continuous(
@@ -911,39 +937,71 @@ for (mt in future_meetings_all) {
         expand = c(0, 0)
       ) +
       ggplot2::labs(
-        title    = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
+        title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
         subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
-        x = "Forecast date", y = "Probability"
+        x = "Forecast date", 
+        y = "Probability"
       ) +
       ggplot2::theme_bw() +
       ggplot2::theme(
-        axis.text.x  = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
-        axis.text.y  = ggplot2::element_text(size = 12),
+        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = ggplot2::element_text(size = 12),
         axis.title.x = ggplot2::element_text(size = 14),
         axis.title.y = ggplot2::element_text(size = 14),
         legend.position = "right",
-        legend.title    = ggplot2::element_blank()
+        legend.title = ggplot2::element_blank()
       )
-
-    filename <- paste0("docs/meetings/area_all_moves_", fmt_file(meeting_date_proper), ".png")
-    cat("Saving to:", filename, "\n")
     
+    # Save with error handling
     ggplot2::ggsave(
       filename = filename,
-      plot     = area_mt,
-      width    = 12,
-      height   = 5,
-      dpi      = 300
+      plot = area_mt,
+      width = 12,
+      height = 5,
+      dpi = 300,
+      device = "png"
     )
     
-    cat("Successfully saved plot for", as.character(meeting_date_proper), "\n")
+    plot_success <- TRUE
+    cat("✓ Successfully saved plot for", as.character(meeting_date_proper), "\n")
     
   }, error = function(e) {
-    cat("Error creating plot for meeting", as.character(meeting_date_proper), ":", e$message, "\n")
-    cat("Data summary:\n")
-    print(summary(df_mt))
+    cat("Strategy 1 failed:", e$message, "\n")
+    
+    # Strategy 2: Try simplified plot without legends/breaks
+    tryCatch({
+      cat("Attempting simplified plot...\n")
+      
+      area_simple <- ggplot2::ggplot(df_mt, ggplot2::aes(x = scrape_time, y = probability, fill = move)) +
+        ggplot2::geom_area(position = "stack") +
+        ggplot2::scale_fill_manual(values = fill_map_subset) +
+        ggplot2::labs(title = paste("Meeting", fmt_date(meeting_date_proper))) +
+        ggplot2::theme_minimal()
+      
+      ggplot2::ggsave(filename, area_simple, width = 10, height = 4, dpi = 200)
+      plot_success <- TRUE
+      cat("✓ Saved simplified plot for", as.character(meeting_date_proper), "\n")
+      
+    }, error = function(e2) {
+      cat("Strategy 2 also failed:", e2$message, "\n")
+      
+      # Strategy 3: Export data for manual inspection
+      debug_file <- paste0("docs/meetings/debug_data_", fmt_file(meeting_date_proper), ".csv")
+      tryCatch({
+        write.csv(df_mt, debug_file, row.names = FALSE)
+        cat("✓ Exported debug data to:", debug_file, "\n")
+      }, error = function(e3) {
+        cat("Could not even export debug data:", e3$message, "\n")
+      })
+    })
   })
+  
+  if (!plot_success) {
+    cat("❌ Failed to create plot for meeting", as.character(meeting_date_proper), "\n")
+  }
 }
+
+cat("\n=== Plotting loop completed ===\n")
 
 # 5. FIXED CSV Export section
 for (mt in future_meetings_all) {
