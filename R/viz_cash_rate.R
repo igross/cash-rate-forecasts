@@ -749,7 +749,57 @@ future_meetings_all <- meeting_schedule %>%
 cat("Future meetings found:", length(future_meetings_all), "\n")
 cat("Meetings:", paste(future_meetings_all, collapse = ", "), "\n")
 
-# For the extended area charts (all future meetings):
+# 1. Define helper functions
+fmt_date <- function(x) format(as.Date(x), "%d %B %Y")
+fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
+
+# 2. Create the fill_map for all possible moves
+# First, get all unique moves from the extended buckets
+all_moves <- unique(all_estimates_buckets_ext$move)
+all_moves <- all_moves[!is.na(all_moves)]
+
+# Initialize with default grey
+fill_map <- setNames(rep("#BFBFBF", length(all_moves)), all_moves)
+
+# Apply colors based on move type - gradual from dark blue (big cuts) to dark red (big hikes)
+for (mv in all_moves) {
+  if (grepl("cut", mv, ignore.case = TRUE)) {
+    # Cuts: shades of blue (darker = bigger cut)
+    if (grepl("300|275|250|225|200", mv)) {
+      fill_map[mv] <- "#000080"  # very dark blue for large cuts
+    } else if (grepl("175|150|125|100", mv)) {
+      fill_map[mv] <- "#0033A0"  # dark blue
+    } else if (grepl("75", mv)) {
+      fill_map[mv] <- "#004B8E"  # medium-dark blue
+    } else if (grepl("50", mv)) {
+      fill_map[mv] <- "#1A5CB0"  # medium blue
+    } else if (grepl("25", mv)) {
+      fill_map[mv] <- "#5FA4D4"  # light blue
+    }
+  } else if (grepl("hike", mv, ignore.case = TRUE)) {
+    # Hikes: shades of red (darker = bigger hike)
+    if (grepl("300|275|250|225|200", mv)) {
+      fill_map[mv] <- "#800000"  # very dark red for large hikes
+    } else if (grepl("175|150|125|100", mv)) {
+      fill_map[mv] <- "#A00000"  # dark red
+    } else if (grepl("75", mv)) {
+      fill_map[mv] <- "#B50000"  # medium-dark red
+    } else if (grepl("50", mv)) {
+      fill_map[mv] <- "#C71010"  # medium red
+    } else if (grepl("25", mv)) {
+      fill_map[mv] <- "#E07C7C"  # light red
+    }
+  } else if (grepl("No change", mv, ignore.case = TRUE)) {
+    fill_map[mv] <- "#BFBFBF"  # grey for no change
+  }
+}
+
+# 3. Create the CSV directory if it doesn't exist
+if (!dir.exists("docs/meetings/csv")) {
+  dir.create("docs/meetings/csv", recursive = TRUE)
+}
+
+# 4. FIXED LOOP for creating area charts
 for (mt in future_meetings_all) {
   df_mt <- all_estimates_buckets_ext %>%
     dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
@@ -796,8 +846,10 @@ for (mt in future_meetings_all) {
     next
   }
 
+  # Convert the meeting date properly (fixing the "20361" issue)
+  meeting_date_proper <- as.Date(mt)
   start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
-  end_xlim_mt   <- lubridate::as_datetime(as.Date(mt), tz = "Australia/Melbourne") + lubridate::hours(17)
+  end_xlim_mt   <- lubridate::as_datetime(meeting_date_proper, tz = "Australia/Melbourne") + lubridate::hours(17)
 
   # Ensure we have valid time limits
   if (!is.finite(as.numeric(start_xlim_mt)) || !is.finite(as.numeric(end_xlim_mt))) {
@@ -809,7 +861,6 @@ for (mt in future_meetings_all) {
   df_mt <- df_mt %>%
     dplyr::mutate(
       # Convert move to factor with REVERSED levels for proper stacking
-      # This ensures biggest cuts stack at bottom, hikes at top
       move = factor(move, levels = rev(move_levels_lbl))
     ) %>%
     # Remove any rows with moves not in our levels
@@ -835,17 +886,16 @@ for (mt in future_meetings_all) {
         x    = scrape_time + lubridate::hours(10),
         y    = probability,
         fill = move
-      )  # Removed group and order - let ggplot handle it
+      )
     ) +
       ggplot2::geom_area(
-        position = "stack",  # Use simple stacking
+        position = "stack",
         alpha    = 0.95,
         colour   = NA
       ) +
       ggplot2::scale_fill_manual(
         values = fill_map,
-        # Show legend in stacking order (biggest cut to biggest hike)
-        breaks = legend_breaks,  # This should now reflect cut→hike order  
+        breaks = legend_breaks,
         drop   = FALSE,
         name   = ""
       ) +
@@ -861,7 +911,7 @@ for (mt in future_meetings_all) {
         expand = c(0, 0)
       ) +
       ggplot2::labs(
-        title    = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(mt)),
+        title    = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
         subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
         x = "Forecast date", y = "Probability"
       ) +
@@ -875,7 +925,7 @@ for (mt in future_meetings_all) {
         legend.title    = ggplot2::element_blank()
       )
 
-    filename <- paste0("docs/meetings/area_all_moves_", fmt_file(mt), ".png")
+    filename <- paste0("docs/meetings/area_all_moves_", fmt_file(meeting_date_proper), ".png")
     cat("Saving to:", filename, "\n")
     
     ggplot2::ggsave(
@@ -886,71 +936,27 @@ for (mt in future_meetings_all) {
       dpi      = 300
     )
     
-    cat("Successfully saved plot for", as.character(mt), "\n")
+    cat("Successfully saved plot for", as.character(meeting_date_proper), "\n")
     
   }, error = function(e) {
-    cat("Error creating plot for meeting", as.character(mt), ":", e$message, "\n")
+    cat("Error creating plot for meeting", as.character(meeting_date_proper), ":", e$message, "\n")
     cat("Data summary:\n")
     print(summary(df_mt))
   })
-
-
-# Add this code right after the area chart loop, before the final closing brace
-
-# Define helper functions if they don't exist
-if (!exists("fmt_date")) {
-  fmt_date <- function(x) format(as.Date(x), "%d %B %Y")
-}
-if (!exists("fmt_file")) {
-  fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
 }
 
-# Also need to define fill_map if it doesn't exist
-if (!exists("fill_map")) {
-  # Create a comprehensive fill map for all possible moves
-  all_moves <- unique(all_estimates_buckets_ext$move)
-  all_moves <- all_moves[!is.na(all_moves)]
-  
-  # Generate colors: blue for cuts, grey for no change, red for hikes
-  n_moves <- length(all_moves)
-  fill_map <- setNames(rep("#BFBFBF", n_moves), all_moves)  # default grey
-  
-  # Apply colors based on move type
-  for (mv in all_moves) {
-    if (grepl("cut", mv, ignore.case = TRUE)) {
-      # Cuts: shades of blue (darker = bigger cut)
-      if (grepl("300|275|250|225|200", mv)) fill_map[mv] <- "#000080"  # very dark blue
-      else if (grepl("175|150|125|100", mv)) fill_map[mv] <- "#0033A0"
-      else if (grepl("75", mv)) fill_map[mv] <- "#004B8E"
-      else if (grepl("50", mv)) fill_map[mv] <- "#1A5CB0"
-      else if (grepl("25", mv)) fill_map[mv] <- "#5FA4D4"
-    } else if (grepl("hike", mv, ignore.case = TRUE)) {
-      # Hikes: shades of red (darker = bigger hike)
-      if (grepl("300|275|250|225|200", mv)) fill_map[mv] <- "#800000"  # very dark red
-      else if (grepl("175|150|125|100", mv)) fill_map[mv] <- "#A00000"
-      else if (grepl("75", mv)) fill_map[mv] <- "#B50000"
-      else if (grepl("50", mv)) fill_map[mv] <- "#C71010"
-      else if (grepl("25", mv)) fill_map[mv] <- "#E07C7C"
-    } else if (grepl("No change", mv, ignore.case = TRUE)) {
-      fill_map[mv] <- "#BFBFBF"  # grey for no change
-    }
-  }
-}
-
-# Export data for all future meetings as CSV files - FIXED VERSION
+# 5. FIXED CSV Export section
 for (mt in future_meetings_all) {
   df_mt_csv <- all_estimates_buckets_ext %>%
     dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
-    dplyr::group_by(scrape_time, move, diff_bps, bucket) %>%  # ADD bucket to group_by
+    dplyr::group_by(scrape_time, move, diff_bps, bucket) %>%
     dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, diff_bps) %>%
     dplyr::mutate(
-      # Add formatted datetime columns for easier reading
       scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
       meeting_date = as.Date(mt),
-      # FIXED: Use the actual bucket value instead of calculating from current_center_ext
-      bucket_rate = bucket  # This preserves the original 25bp-aligned bucket values
+      bucket_rate = bucket
     ) %>%
     dplyr::select(
       meeting_date,
@@ -968,29 +974,27 @@ for (mt in future_meetings_all) {
     next
   }
   
-  # Export to CSV using the same format as your PNG files
-  csv_filename <- paste0("docs/meetings/csv/area_data_", fmt_file(mt), ".csv")
+  meeting_date_proper <- as.Date(mt)
+  csv_filename <- paste0("docs/meetings/csv/area_data_", fmt_file(meeting_date_proper), ".csv")
   
   tryCatch({
     write.csv(df_mt_csv, csv_filename, row.names = FALSE)
     cat("CSV exported:", csv_filename, "\n")
   }, error = function(e) {
-    cat("Error exporting CSV for meeting", as.character(mt), ":", e$message, "\n")
+    cat("Error exporting CSV for meeting", as.character(meeting_date_proper), ":", e$message, "\n")
   })
 }
 
-# Also create a combined CSV with all meetings data - FIXED VERSION
+# 6. Combined CSV export - FIXED VERSION
 combined_csv <- all_estimates_buckets_ext %>%
   dplyr::filter(as.Date(meeting_date) %in% future_meetings_all) %>%
-  dplyr::group_by(meeting_date, scrape_time, move, diff_bps, bucket) %>%  # ADD bucket to group_by
+  dplyr::group_by(meeting_date, scrape_time, move, diff_bps, bucket) %>%
   dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
   dplyr::arrange(meeting_date, scrape_time, diff_bps) %>%
   dplyr::mutate(
-    # Add formatted datetime columns for easier reading
     scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
     meeting_date = as.Date(meeting_date),
-    # FIXED: Use the actual bucket value instead of calculating from current_center_ext  
-    bucket_rate = bucket  # This preserves the original 25bp-aligned bucket values
+    bucket_rate = bucket
   ) %>%
   dplyr::select(
     meeting_date,
@@ -1012,19 +1016,16 @@ if (nrow(combined_csv) > 0) {
   })
 }
 
-# Verification: Print some sample bucket_rate values to confirm they're on the RBA grid
+# 7. Verification output
 cat("\nVerification - Sample bucket_rate values:\n")
 if (nrow(combined_csv) > 0) {
   sample_rates <- unique(combined_csv$bucket_rate)
   sample_rates <- sort(sample_rates)[1:min(20, length(sample_rates))]
   cat("First 20 unique bucket rates:", paste(sample_rates, collapse = ", "), "\n")
   
-  # Check the decimal places
   decimals <- (sample_rates * 100) %% 100
   unique_decimals <- unique(decimals)
   cat("Decimal endings (should be 10, 35, 60, 85):", paste(unique_decimals, collapse = ", "), "\n")
 }
 
-cat("CSV export completed with corrected bucket_rate values\n")
-  
-}
+cat("Analysis completed successfully!\n")
