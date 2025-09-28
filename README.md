@@ -35,7 +35,7 @@ are shown below:
     #> [1] FALSE
     #> [1] 3.6
     #> [1] "2025-08-12"
-    #> [1] "2025-09-28 17:18:19 AEST"
+    #> [1] "2025-09-29 09:20:14 AEST"
     #> [1] "2025-09-28 14:30:00 AEST"
     #> Replacing 19 missing/invalid stdev(s) with max RMSE = 1.3813
     #> # A tibble: 100 × 6
@@ -130,17 +130,17 @@ are shown below:
     #>  87 2025-09-26 06:58:03 2026-09-29           3.29             369          3.36
     #>  88 2025-09-26 06:58:03 2026-11-03           3.30             404          3.29
     #>  89 2025-09-26 06:58:03 2026-12-08           3.31             439          3.30
-    #>  90 2025-09-28 07:17:21 2025-09-30           3.59               3          3.6 
-    #>  91 2025-09-28 07:17:21 2025-11-04           3.48              38          3.59
-    #>  92 2025-09-28 07:17:21 2025-12-09           3.46              73          3.48
-    #>  93 2025-09-28 07:17:21 2026-02-03           3.34             129          3.46
-    #>  94 2025-09-28 07:17:21 2026-03-17           3.36             171          3.34
-    #>  95 2025-09-28 07:17:21 2026-05-05           2.93             220          3.36
-    #>  96 2025-09-28 07:17:21 2026-06-16           3.12             262          2.93
-    #>  97 2025-09-28 07:17:21 2026-08-11           3.36             318          3.12
-    #>  98 2025-09-28 07:17:21 2026-09-29           3.29             367          3.36
-    #>  99 2025-09-28 07:17:21 2026-11-03           3.30             402          3.29
-    #> 100 2025-09-28 07:17:21 2026-12-08           3.31             437          3.30
+    #>  90 2025-09-28 23:19:20 2025-09-30           3.59               2          3.6 
+    #>  91 2025-09-28 23:19:20 2025-11-04           3.48              37          3.59
+    #>  92 2025-09-28 23:19:20 2025-12-09           3.46              72          3.48
+    #>  93 2025-09-28 23:19:20 2026-02-03           3.34             128          3.46
+    #>  94 2025-09-28 23:19:20 2026-03-17           3.36             170          3.34
+    #>  95 2025-09-28 23:19:20 2026-05-05           2.93             219          3.36
+    #>  96 2025-09-28 23:19:20 2026-06-16           3.12             261          2.93
+    #>  97 2025-09-28 23:19:20 2026-08-11           3.36             317          3.12
+    #>  98 2025-09-28 23:19:20 2026-09-29           3.29             366          3.36
+    #>  99 2025-09-28 23:19:20 2026-11-03           3.30             401          3.29
+    #> 100 2025-09-28 23:19:20 2026-12-08           3.31             436          3.30
     #>      stdev
     #>      <dbl>
     #>   1 1.24  
@@ -233,12 +233,12 @@ are shown below:
     #>  88 1.13  
     #>  89 1.24  
     #>  90 0.0639
-    #>  91 0.132 
-    #>  92 0.343 
+    #>  91 0.129 
+    #>  92 0.340 
     #>  93 0.448 
-    #>  94 0.680 
+    #>  94 0.678 
     #>  95 0.846 
-    #>  96 0.953 
+    #>  96 0.943 
     #>  97 1.06  
     #>  98 1.06  
     #>  99 1.11  
@@ -248,46 +248,46 @@ are shown below:
     #> # A tibble: 20 × 11
     #>    scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
     #>    <dttm>              <date>              <dbl> <dbl>           <int>  <dbl>
-    #>  1 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   1.35
-    #>  2 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   1.6 
-    #>  3 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   1.85
-    #>  4 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   2.1 
-    #>  5 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   2.35
-    #>  6 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   2.6 
-    #>  7 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   2.85
-    #>  8 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   3.1 
-    #>  9 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   3.35
-    #> 10 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   3.6 
-    #> 11 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   3.85
-    #> 12 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   4.1 
-    #> 13 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   4.35
-    #> 14 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   4.6 
-    #> 15 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   4.85
-    #> 16 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   5.1 
-    #> 17 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   5.35
-    #> 18 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   5.6 
-    #> 19 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   5.85
-    #> 20 2025-09-28 07:17:21 2026-12-08           3.31  1.23             437   6.1 
+    #>  1 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   1.35
+    #>  2 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   1.6 
+    #>  3 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   1.85
+    #>  4 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   2.1 
+    #>  5 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   2.35
+    #>  6 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   2.6 
+    #>  7 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   2.85
+    #>  8 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   3.1 
+    #>  9 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   3.35
+    #> 10 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   3.6 
+    #> 11 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   3.85
+    #> 12 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   4.1 
+    #> 13 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   4.35
+    #> 14 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   4.6 
+    #> 15 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   4.85
+    #> 16 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   5.1 
+    #> 17 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   5.35
+    #> 18 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   5.6 
+    #> 19 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   5.85
+    #> 20 2025-09-28 23:19:20 2026-12-08           3.31  1.23             436   6.1 
     #>    probability_linear probability_prob probability   diff diff_s
     #>                 <dbl>            <dbl>       <dbl>  <dbl>  <dbl>
-    #>  1              0               0.0239      0.0239 -2.25  -1.22 
-    #>  2              0               0.0323      0.0323 -2     -1.19 
-    #>  3              0               0.0420      0.0420 -1.75  -1.15 
+    #>  1              0               0.0238      0.0238 -2.25  -1.22 
+    #>  2              0               0.0322      0.0322 -2     -1.19 
+    #>  3              0               0.0419      0.0419 -1.75  -1.15 
     #>  4              0               0.0523      0.0523 -1.5   -1.11 
     #>  5              0               0.0625      0.0625 -1.25  -1.06 
-    #>  6              0               0.0717      0.0717 -1     -1    
-    #>  7              0               0.0789      0.0789 -0.75  -0.931
-    #>  8              0.169           0.0834      0.0834 -0.5   -0.841
-    #>  9              0.831           0.0845      0.0845 -0.25  -0.707
-    #> 10              0               0.0822      0.0822  0      0    
-    #> 11              0               0.0768      0.0768  0.25   0.707
+    #>  6              0               0.0718      0.0718 -1     -1    
+    #>  7              0               0.0791      0.0791 -0.75  -0.931
+    #>  8              0.169           0.0836      0.0836 -0.5   -0.841
+    #>  9              0.831           0.0847      0.0847 -0.25  -0.707
+    #> 10              0               0.0824      0.0824  0      0    
+    #> 11              0               0.0769      0.0769  0.25   0.707
     #> 12              0               0.0688      0.0688  0.500  0.841
     #> 13              0               0.0591      0.0591  0.750  0.931
-    #> 14              0               0.0488      0.0488  1      1    
-    #> 15              0               0.0386      0.0386  1.25   1.06 
-    #> 16              0               0.0293      0.0293  1.5    1.11 
-    #> 17              0               0.0214      0.0214  1.75   1.15 
-    #> 18              0               0.0150      0.0150  2      1.19 
+    #> 14              0               0.0487      0.0487  1      1    
+    #> 15              0               0.0385      0.0385  1.25   1.06 
+    #> 16              0               0.0292      0.0292  1.5    1.11 
+    #> 17              0               0.0213      0.0213  1.75   1.15 
+    #> 18              0               0.0148      0.0148  2      1.19 
     #> 19              0               0           0       2.25   1.22 
     #> 20              0               0           0       2.5    1.26
     #> [1] "2025-09-30"
@@ -306,10 +306,10 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
-    #> Probability range: 0 0.976877 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
+    #> Probability range: 0 0.977918 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2025-09-30.png
-    #> Warning: Removed 1045 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1057 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> ✓ Successfully saved plot for 2025-09-30 
     #> 
@@ -318,7 +318,7 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
     #> Probability range: 0 0.5574795 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2025-11-04.png
     #> Warning: Removed 832 rows containing missing values or values outside the scale range
@@ -330,10 +330,10 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
-    #> Probability range: 0 0.2718882 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
+    #> Probability range: 0 0.2733721 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2025-12-09.png
-    #> Warning: Removed 1482 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1472 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> ✓ Successfully saved plot for 2025-12-09 
     #> 
@@ -342,7 +342,7 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
     #> Probability range: 0 0.222495 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2026-02-03.png
     #> Warning: Removed 2137 rows containing missing values or values outside the scale range
@@ -354,8 +354,8 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
-    #> Probability range: 0 0.1483571 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
+    #> Probability range: 0 0.1487018 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2026-03-17.png
     #> Warning: Removed 2052 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
@@ -366,10 +366,10 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
     #> Probability range: 0 0.12027 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2026-05-05.png
-    #> Warning: Removed 2242 rows containing missing values or values outside the scale range
+    #> Warning: Removed 2251 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> Strategy 1 failed: Problem while converting geom to grob. 
     #> Attempting simplified plot...
@@ -381,8 +381,8 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
-    #> Probability range: 0 0.107047 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
+    #> Probability range: 0 0.1080633 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2026-06-16.png
     #> Warning: Removed 1967 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
@@ -393,7 +393,7 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
     #> Probability range: 0 0.09710456 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2026-08-11.png
     #> Warning: Removed 1850 rows containing missing values or values outside the scale range
@@ -405,7 +405,7 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
     #> Probability range: 0 0.09708598 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2026-09-29.png
     #> Warning: Removed 794 rows containing missing values or values outside the scale range
@@ -417,10 +417,10 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
-    #> Probability range: 0 0.09231516 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
+    #> Probability range: 0 0.0927924 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2026-11-03.png
-    #> Warning: Removed 2329 rows containing missing values or values outside the scale range
+    #> Warning: Removed 2324 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> ✓ Successfully saved plot for 2026-11-03 
     #> 
@@ -429,15 +429,12 @@ are shown below:
     #> After cleaning dimensions: 15875 x 3 
     #> Final data dimensions: 15875 x 3 
     #> Unique moves: 25 
-    #> Time range: 2025-08-12 00:01:37 2025-09-28 07:17:21 
-    #> Probability range: 0 0.08451423 
+    #> Time range: 2025-08-12 00:01:37 2025-09-28 23:19:20 
+    #> Probability range: 0 0.08471618 
     #> Attempting to create plot and save to: docs/meetings/area_all_moves_2026-12-08.png
-    #> Warning: Removed 1976 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1971 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
-    #> Strategy 1 failed: Problem while converting geom to grob. 
-    #> Attempting simplified plot...
-    #> ✓ Saved simplified plot for 2026-12-08 
-    #> ❌ Failed to create plot for meeting 2026-12-08 
+    #> ✓ Successfully saved plot for 2026-12-08 
     #> 
     #> === Plotting loop completed ===
     #> CSV exported: docs/meetings/csv/area_data_2025-09-30.csv 
