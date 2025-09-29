@@ -938,7 +938,7 @@ for (mt in future_meetings_all) {
     )
 
     time_span <- as.numeric(end_xlim_mt - start_xlim_mt)
-    n_breaks <- min(30, max(5, floor(time_span / (24 * 3600))))  # Max 30 breaks, min 5
+    n_breaks <- min(30, max(25, floor(time_span / (24 * 3600))))  # Max 30 breaks, min 5
     breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_breaks)
     
     cat("Adding x-axis scale...\n")
