@@ -959,6 +959,23 @@ for (mt in future_meetings_all) {
       x = "Forecast date", 
       y = "Probability"
     )
+
+
+     # Define legend breaks (only -100bp to +100bp range)
+    legend_moves <- c("100 bp cut", "75 bp cut", "50 bp cut", "25 bp cut", 
+                     "No change", "+25 bp hike", "+50 bp hike", "+75 bp hike", "+100 bp hike")
+    
+    # Filter to only those that exist in the current meeting's data
+    legend_breaks <- legend_moves[legend_moves %in% available_moves]
+    
+    area_mt <- area_mt + ggplot2::scale_fill_manual(
+      values = fill_map_subset,
+      breaks = legend_breaks,  # Only show -100bp to +100bp in legend
+      drop = FALSE,
+      name = "",
+      guide = ggplot2::guide_legend(override.aes = list(alpha = 1))
+    )
+
     
     cat("Adding theme...\n")
     area_mt <- area_mt + ggplot2::theme_bw() +
