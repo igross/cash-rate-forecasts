@@ -936,14 +936,18 @@ for (mt in future_meetings_all) {
       drop = FALSE,
       name = ""
     )
+
+    time_span <- as.numeric(end_xlim_mt - start_xlim_mt)
+    n_breaks <- min(30, max(5, floor(time_span / (24 * 3600))))  # Max 30 breaks, min 5
+    breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_breaks)
     
     cat("Adding x-axis scale...\n")
-    area_mt <- area_mt + ggplot2::scale_x_datetime(
-      limits = c(start_xlim_mt, end_xlim_mt),
-      date_breaks = "2 days",
-      date_labels = "%d %b",
-      expand = c(0, 0)
-    )
+    area_mt <- area_mt +  ggplot2::scale_x_datetime(
+        limits = c(start_xlim_mt, end_xlim_mt),
+        breaks = breaks_vec,
+        labels = function(x) format(x, "%d %b"),
+        expand = c(0, 0)
+      ) 
     
     cat("Adding y-axis scale...\n")
     area_mt <- area_mt + ggplot2::scale_y_continuous(
