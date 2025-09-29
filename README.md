@@ -35,112 +35,112 @@ are shown below:
     #> [1] FALSE
     #> [1] 3.6
     #> [1] "2025-08-12"
-    #> [1] "2025-09-30 08:57:45 AEST"
+    #> [1] "2025-09-30 09:21:43 AEST"
     #> [1] "2025-09-29 14:30:00 AEST"
     #> Replacing 19 missing/invalid stdev(s) with max RMSE = 1.3813
     #> # A tibble: 100 × 6
     #>     scrape_time         meeting_date implied_mean days_to_meeting previous_rate
     #>     <dttm>              <date>              <dbl>           <int>         <dbl>
-    #>   1 2025-09-29 05:15:13 2026-12-08           3.31             436          3.30
-    #>   2 2025-09-29 05:35:35 2025-09-30           3.59               2          3.6 
-    #>   3 2025-09-29 05:35:35 2025-11-04           3.46              37          3.59
-    #>   4 2025-09-29 05:35:35 2025-12-09           3.41              72          3.46
-    #>   5 2025-09-29 05:35:35 2026-02-03           3.34             128          3.41
-    #>   6 2025-09-29 05:35:35 2026-03-17           3.36             170          3.34
-    #>   7 2025-09-29 05:35:35 2026-05-05           2.93             219          3.36
-    #>   8 2025-09-29 05:35:35 2026-06-16           3.12             261          2.93
-    #>   9 2025-09-29 05:35:35 2026-08-11           3.36             317          3.12
-    #>  10 2025-09-29 05:35:35 2026-09-29           3.29             366          3.36
-    #>  11 2025-09-29 05:35:35 2026-11-03           3.30             401          3.29
-    #>  12 2025-09-29 05:35:35 2026-12-08           3.31             436          3.30
-    #>  13 2025-09-29 05:47:12 2025-09-30           3.59               2          3.6 
-    #>  14 2025-09-29 05:47:12 2025-11-04           3.46              37          3.59
-    #>  15 2025-09-29 05:47:12 2025-12-09           3.41              72          3.46
-    #>  16 2025-09-29 05:47:12 2026-02-03           3.34             128          3.41
-    #>  17 2025-09-29 05:47:12 2026-03-17           3.36             170          3.34
-    #>  18 2025-09-29 05:47:12 2026-05-05           2.93             219          3.36
-    #>  19 2025-09-29 05:47:12 2026-06-16           3.12             261          2.93
-    #>  20 2025-09-29 05:47:12 2026-08-11           3.36             317          3.12
-    #>  21 2025-09-29 05:47:12 2026-09-29           3.29             366          3.36
-    #>  22 2025-09-29 05:47:12 2026-11-03           3.30             401          3.29
-    #>  23 2025-09-29 05:47:12 2026-12-08           3.31             436          3.30
-    #>  24 2025-09-29 05:58:38 2025-09-30           3.59               2          3.6 
-    #>  25 2025-09-29 05:58:38 2025-11-04           3.46              37          3.59
-    #>  26 2025-09-29 05:58:38 2025-12-09           3.41              72          3.46
-    #>  27 2025-09-29 05:58:38 2026-02-03           3.34             128          3.41
-    #>  28 2025-09-29 05:58:38 2026-03-17           3.36             170          3.34
-    #>  29 2025-09-29 05:58:38 2026-05-05           2.93             219          3.36
-    #>  30 2025-09-29 05:58:38 2026-06-16           3.12             261          2.93
-    #>  31 2025-09-29 05:58:38 2026-08-11           3.36             317          3.12
-    #>  32 2025-09-29 05:58:38 2026-09-29           3.29             366          3.36
-    #>  33 2025-09-29 05:58:38 2026-11-03           3.30             401          3.29
-    #>  34 2025-09-29 05:58:38 2026-12-08           3.31             436          3.30
-    #>  35 2025-09-29 06:41:13 2025-09-30           3.59               2          3.6 
-    #>  36 2025-09-29 06:41:13 2025-11-04           3.46              37          3.59
-    #>  37 2025-09-29 06:41:13 2025-12-09           3.41              72          3.46
-    #>  38 2025-09-29 06:41:13 2026-02-03           3.34             128          3.41
-    #>  39 2025-09-29 06:41:13 2026-03-17           3.36             170          3.34
-    #>  40 2025-09-29 06:41:13 2026-05-05           2.93             219          3.36
-    #>  41 2025-09-29 06:41:13 2026-06-16           3.12             261          2.93
-    #>  42 2025-09-29 06:41:13 2026-08-11           3.36             317          3.12
-    #>  43 2025-09-29 06:41:13 2026-09-29           3.29             366          3.36
-    #>  44 2025-09-29 06:41:13 2026-11-03           3.30             401          3.29
-    #>  45 2025-09-29 06:41:13 2026-12-08           3.31             436          3.30
-    #>  46 2025-09-29 06:57:35 2025-09-30           3.59               2          3.6 
-    #>  47 2025-09-29 06:57:35 2025-11-04           3.46              37          3.59
-    #>  48 2025-09-29 06:57:35 2025-12-09           3.41              72          3.46
-    #>  49 2025-09-29 06:57:35 2026-02-03           3.34             128          3.41
-    #>  50 2025-09-29 06:57:35 2026-03-17           3.36             170          3.34
-    #>  51 2025-09-29 06:57:35 2026-05-05           2.93             219          3.36
-    #>  52 2025-09-29 06:57:35 2026-06-16           3.12             261          2.93
-    #>  53 2025-09-29 06:57:35 2026-08-11           3.31             317          3.12
-    #>  54 2025-09-29 06:57:35 2026-09-29           3.26             366          3.31
-    #>  55 2025-09-29 06:57:35 2026-11-03           3.27             401          3.26
-    #>  56 2025-09-29 06:57:35 2026-12-08           3.28             436          3.27
-    #>  57 2025-09-29 12:19:06 2025-09-30           3.59               1          3.6 
-    #>  58 2025-09-29 12:19:06 2025-11-04           3.46              36          3.59
-    #>  59 2025-09-29 12:19:06 2025-12-09           3.41              71          3.46
-    #>  60 2025-09-29 12:19:06 2026-02-03           3.34             127          3.41
-    #>  61 2025-09-29 12:19:06 2026-03-17           3.36             169          3.34
-    #>  62 2025-09-29 12:19:06 2026-05-05           2.93             218          3.36
-    #>  63 2025-09-29 12:19:06 2026-06-16           3.12             260          2.93
-    #>  64 2025-09-29 12:19:06 2026-08-11           3.31             316          3.12
-    #>  65 2025-09-29 12:19:06 2026-09-29           3.26             365          3.31
-    #>  66 2025-09-29 12:19:06 2026-11-03           3.27             400          3.26
-    #>  67 2025-09-29 12:19:06 2026-12-08           3.28             435          3.27
-    #>  68 2025-09-29 12:28:34 2025-09-30           3.59               1          3.6 
-    #>  69 2025-09-29 12:28:34 2025-11-04           3.46              36          3.59
-    #>  70 2025-09-29 12:28:34 2025-12-09           3.41              71          3.46
-    #>  71 2025-09-29 12:28:34 2026-02-03           3.34             127          3.41
-    #>  72 2025-09-29 12:28:34 2026-03-17           3.36             169          3.34
-    #>  73 2025-09-29 12:28:34 2026-05-05           2.93             218          3.36
-    #>  74 2025-09-29 12:28:34 2026-06-16           3.12             260          2.93
-    #>  75 2025-09-29 12:28:34 2026-08-11           3.31             316          3.12
-    #>  76 2025-09-29 12:28:34 2026-09-29           3.26             365          3.31
-    #>  77 2025-09-29 12:28:34 2026-11-03           3.27             400          3.26
-    #>  78 2025-09-29 12:28:34 2026-12-08           3.28             435          3.27
-    #>  79 2025-09-29 12:38:02 2025-09-30           3.59               1          3.6 
-    #>  80 2025-09-29 12:38:02 2025-11-04           3.46              36          3.59
-    #>  81 2025-09-29 12:38:02 2025-12-09           3.41              71          3.46
-    #>  82 2025-09-29 12:38:02 2026-02-03           3.34             127          3.41
-    #>  83 2025-09-29 12:38:02 2026-03-17           3.36             169          3.34
-    #>  84 2025-09-29 12:38:02 2026-05-05           2.93             218          3.36
-    #>  85 2025-09-29 12:38:02 2026-06-16           3.12             260          2.93
-    #>  86 2025-09-29 12:38:02 2026-08-11           3.31             316          3.12
-    #>  87 2025-09-29 12:38:02 2026-09-29           3.26             365          3.31
-    #>  88 2025-09-29 12:38:02 2026-11-03           3.27             400          3.26
-    #>  89 2025-09-29 12:38:02 2026-12-08           3.28             435          3.27
-    #>  90 2025-09-29 22:56:39 2025-09-30           3.58               1          3.6 
-    #>  91 2025-09-29 22:56:39 2025-11-04           3.47              36          3.58
-    #>  92 2025-09-29 22:56:39 2025-12-09           3.41              71          3.47
-    #>  93 2025-09-29 22:56:39 2026-02-03           3.34             127          3.41
-    #>  94 2025-09-29 22:56:39 2026-03-17           3.36             169          3.34
-    #>  95 2025-09-29 22:56:39 2026-05-05           2.93             218          3.36
-    #>  96 2025-09-29 22:56:39 2026-06-16           3.12             260          2.93
-    #>  97 2025-09-29 22:56:39 2026-08-11           3.31             316          3.12
-    #>  98 2025-09-29 22:56:39 2026-09-29           3.26             365          3.31
-    #>  99 2025-09-29 22:56:39 2026-11-03           3.27             400          3.26
-    #> 100 2025-09-29 22:56:39 2026-12-08           3.28             435          3.27
+    #>   1 2025-09-29 05:35:35 2026-12-08           3.31             436          3.30
+    #>   2 2025-09-29 05:47:12 2025-09-30           3.59               2          3.6 
+    #>   3 2025-09-29 05:47:12 2025-11-04           3.46              37          3.59
+    #>   4 2025-09-29 05:47:12 2025-12-09           3.41              72          3.46
+    #>   5 2025-09-29 05:47:12 2026-02-03           3.34             128          3.41
+    #>   6 2025-09-29 05:47:12 2026-03-17           3.36             170          3.34
+    #>   7 2025-09-29 05:47:12 2026-05-05           2.93             219          3.36
+    #>   8 2025-09-29 05:47:12 2026-06-16           3.12             261          2.93
+    #>   9 2025-09-29 05:47:12 2026-08-11           3.36             317          3.12
+    #>  10 2025-09-29 05:47:12 2026-09-29           3.29             366          3.36
+    #>  11 2025-09-29 05:47:12 2026-11-03           3.30             401          3.29
+    #>  12 2025-09-29 05:47:12 2026-12-08           3.31             436          3.30
+    #>  13 2025-09-29 05:58:38 2025-09-30           3.59               2          3.6 
+    #>  14 2025-09-29 05:58:38 2025-11-04           3.46              37          3.59
+    #>  15 2025-09-29 05:58:38 2025-12-09           3.41              72          3.46
+    #>  16 2025-09-29 05:58:38 2026-02-03           3.34             128          3.41
+    #>  17 2025-09-29 05:58:38 2026-03-17           3.36             170          3.34
+    #>  18 2025-09-29 05:58:38 2026-05-05           2.93             219          3.36
+    #>  19 2025-09-29 05:58:38 2026-06-16           3.12             261          2.93
+    #>  20 2025-09-29 05:58:38 2026-08-11           3.36             317          3.12
+    #>  21 2025-09-29 05:58:38 2026-09-29           3.29             366          3.36
+    #>  22 2025-09-29 05:58:38 2026-11-03           3.30             401          3.29
+    #>  23 2025-09-29 05:58:38 2026-12-08           3.31             436          3.30
+    #>  24 2025-09-29 06:41:13 2025-09-30           3.59               2          3.6 
+    #>  25 2025-09-29 06:41:13 2025-11-04           3.46              37          3.59
+    #>  26 2025-09-29 06:41:13 2025-12-09           3.41              72          3.46
+    #>  27 2025-09-29 06:41:13 2026-02-03           3.34             128          3.41
+    #>  28 2025-09-29 06:41:13 2026-03-17           3.36             170          3.34
+    #>  29 2025-09-29 06:41:13 2026-05-05           2.93             219          3.36
+    #>  30 2025-09-29 06:41:13 2026-06-16           3.12             261          2.93
+    #>  31 2025-09-29 06:41:13 2026-08-11           3.36             317          3.12
+    #>  32 2025-09-29 06:41:13 2026-09-29           3.29             366          3.36
+    #>  33 2025-09-29 06:41:13 2026-11-03           3.30             401          3.29
+    #>  34 2025-09-29 06:41:13 2026-12-08           3.31             436          3.30
+    #>  35 2025-09-29 06:57:35 2025-09-30           3.59               2          3.6 
+    #>  36 2025-09-29 06:57:35 2025-11-04           3.46              37          3.59
+    #>  37 2025-09-29 06:57:35 2025-12-09           3.41              72          3.46
+    #>  38 2025-09-29 06:57:35 2026-02-03           3.34             128          3.41
+    #>  39 2025-09-29 06:57:35 2026-03-17           3.36             170          3.34
+    #>  40 2025-09-29 06:57:35 2026-05-05           2.93             219          3.36
+    #>  41 2025-09-29 06:57:35 2026-06-16           3.12             261          2.93
+    #>  42 2025-09-29 06:57:35 2026-08-11           3.31             317          3.12
+    #>  43 2025-09-29 06:57:35 2026-09-29           3.26             366          3.31
+    #>  44 2025-09-29 06:57:35 2026-11-03           3.27             401          3.26
+    #>  45 2025-09-29 06:57:35 2026-12-08           3.28             436          3.27
+    #>  46 2025-09-29 12:19:06 2025-09-30           3.59               1          3.6 
+    #>  47 2025-09-29 12:19:06 2025-11-04           3.46              36          3.59
+    #>  48 2025-09-29 12:19:06 2025-12-09           3.41              71          3.46
+    #>  49 2025-09-29 12:19:06 2026-02-03           3.34             127          3.41
+    #>  50 2025-09-29 12:19:06 2026-03-17           3.36             169          3.34
+    #>  51 2025-09-29 12:19:06 2026-05-05           2.93             218          3.36
+    #>  52 2025-09-29 12:19:06 2026-06-16           3.12             260          2.93
+    #>  53 2025-09-29 12:19:06 2026-08-11           3.31             316          3.12
+    #>  54 2025-09-29 12:19:06 2026-09-29           3.26             365          3.31
+    #>  55 2025-09-29 12:19:06 2026-11-03           3.27             400          3.26
+    #>  56 2025-09-29 12:19:06 2026-12-08           3.28             435          3.27
+    #>  57 2025-09-29 12:28:34 2025-09-30           3.59               1          3.6 
+    #>  58 2025-09-29 12:28:34 2025-11-04           3.46              36          3.59
+    #>  59 2025-09-29 12:28:34 2025-12-09           3.41              71          3.46
+    #>  60 2025-09-29 12:28:34 2026-02-03           3.34             127          3.41
+    #>  61 2025-09-29 12:28:34 2026-03-17           3.36             169          3.34
+    #>  62 2025-09-29 12:28:34 2026-05-05           2.93             218          3.36
+    #>  63 2025-09-29 12:28:34 2026-06-16           3.12             260          2.93
+    #>  64 2025-09-29 12:28:34 2026-08-11           3.31             316          3.12
+    #>  65 2025-09-29 12:28:34 2026-09-29           3.26             365          3.31
+    #>  66 2025-09-29 12:28:34 2026-11-03           3.27             400          3.26
+    #>  67 2025-09-29 12:28:34 2026-12-08           3.28             435          3.27
+    #>  68 2025-09-29 12:38:02 2025-09-30           3.59               1          3.6 
+    #>  69 2025-09-29 12:38:02 2025-11-04           3.46              36          3.59
+    #>  70 2025-09-29 12:38:02 2025-12-09           3.41              71          3.46
+    #>  71 2025-09-29 12:38:02 2026-02-03           3.34             127          3.41
+    #>  72 2025-09-29 12:38:02 2026-03-17           3.36             169          3.34
+    #>  73 2025-09-29 12:38:02 2026-05-05           2.93             218          3.36
+    #>  74 2025-09-29 12:38:02 2026-06-16           3.12             260          2.93
+    #>  75 2025-09-29 12:38:02 2026-08-11           3.31             316          3.12
+    #>  76 2025-09-29 12:38:02 2026-09-29           3.26             365          3.31
+    #>  77 2025-09-29 12:38:02 2026-11-03           3.27             400          3.26
+    #>  78 2025-09-29 12:38:02 2026-12-08           3.28             435          3.27
+    #>  79 2025-09-29 22:56:39 2025-09-30           3.58               1          3.6 
+    #>  80 2025-09-29 22:56:39 2025-11-04           3.47              36          3.58
+    #>  81 2025-09-29 22:56:39 2025-12-09           3.41              71          3.47
+    #>  82 2025-09-29 22:56:39 2026-02-03           3.34             127          3.41
+    #>  83 2025-09-29 22:56:39 2026-03-17           3.36             169          3.34
+    #>  84 2025-09-29 22:56:39 2026-05-05           2.93             218          3.36
+    #>  85 2025-09-29 22:56:39 2026-06-16           3.12             260          2.93
+    #>  86 2025-09-29 22:56:39 2026-08-11           3.31             316          3.12
+    #>  87 2025-09-29 22:56:39 2026-09-29           3.26             365          3.31
+    #>  88 2025-09-29 22:56:39 2026-11-03           3.27             400          3.26
+    #>  89 2025-09-29 22:56:39 2026-12-08           3.28             435          3.27
+    #>  90 2025-09-29 23:20:31 2025-09-30           3.58               1          3.6 
+    #>  91 2025-09-29 23:20:31 2025-11-04           3.47              36          3.58
+    #>  92 2025-09-29 23:20:31 2025-12-09           3.41              71          3.47
+    #>  93 2025-09-29 23:20:31 2026-02-03           3.34             127          3.41
+    #>  94 2025-09-29 23:20:31 2026-03-17           3.36             169          3.34
+    #>  95 2025-09-29 23:20:31 2026-05-05           2.93             218          3.36
+    #>  96 2025-09-29 23:20:31 2026-06-16           3.12             260          2.93
+    #>  97 2025-09-29 23:20:31 2026-08-11           3.31             316          3.12
+    #>  98 2025-09-29 23:20:31 2026-09-29           3.26             365          3.31
+    #>  99 2025-09-29 23:20:31 2026-11-03           3.27             400          3.26
+    #> 100 2025-09-29 23:20:31 2026-12-08           3.28             435          3.27
     #>      stdev
     #>      <dbl>
     #>   1 1.23  
@@ -189,15 +189,15 @@ are shown below:
     #>  44 1.11  
     #>  45 1.23  
     #>  46 0.0639
-    #>  47 0.129 
-    #>  48 0.340 
+    #>  47 0.126 
+    #>  48 0.339 
     #>  49 0.448 
     #>  50 0.678 
     #>  51 0.846 
-    #>  52 0.943 
+    #>  52 0.941 
     #>  53 1.06  
     #>  54 1.06  
-    #>  55 1.11  
+    #>  55 1.10  
     #>  56 1.23  
     #>  57 0.0639
     #>  58 0.126 
@@ -248,26 +248,26 @@ are shown below:
     #> # A tibble: 20 × 11
     #>    scrape_time         meeting_date implied_mean stdev days_to_meeting bucket
     #>    <dttm>              <date>              <dbl> <dbl>           <int>  <dbl>
-    #>  1 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   1.35
-    #>  2 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   1.6 
-    #>  3 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   1.85
-    #>  4 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   2.1 
-    #>  5 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   2.35
-    #>  6 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   2.6 
-    #>  7 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   2.85
-    #>  8 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   3.1 
-    #>  9 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   3.35
-    #> 10 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   3.6 
-    #> 11 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   3.85
-    #> 12 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   4.1 
-    #> 13 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   4.35
-    #> 14 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   4.6 
-    #> 15 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   4.85
-    #> 16 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   5.1 
-    #> 17 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   5.35
-    #> 18 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   5.6 
-    #> 19 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   5.85
-    #> 20 2025-09-29 22:56:39 2026-12-08           3.28  1.23             435   6.1 
+    #>  1 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   1.35
+    #>  2 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   1.6 
+    #>  3 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   1.85
+    #>  4 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   2.1 
+    #>  5 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   2.35
+    #>  6 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   2.6 
+    #>  7 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   2.85
+    #>  8 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   3.1 
+    #>  9 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   3.35
+    #> 10 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   3.6 
+    #> 11 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   3.85
+    #> 12 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   4.1 
+    #> 13 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   4.35
+    #> 14 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   4.6 
+    #> 15 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   4.85
+    #> 16 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   5.1 
+    #> 17 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   5.35
+    #> 18 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   5.6 
+    #> 19 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   5.85
+    #> 20 2025-09-29 23:20:31 2026-12-08           3.28  1.23             435   6.1 
     #>    probability_linear probability_prob probability   diff diff_s
     #>                 <dbl>            <dbl>       <dbl>  <dbl>  <dbl>
     #>  1              0               0.0247      0.0247 -2.25  -1.22 
@@ -293,31 +293,31 @@ are shown below:
     #> [1] "2025-09-30"
     #> Warning: Removed 66 rows containing missing values or values outside the scale range
     #> (`geom_vline()`).
-    #> Creating extended buckets for 7244 estimate rows
+    #> Creating extended buckets for 7255 estimate rows
     #> Bucket range: 0.1 to 6.1 
-    #> Extended buckets created: 181100 rows
+    #> Extended buckets created: 181375 rows
     #> Unique moves: 23 
     #> ✓ all_estimates_buckets_ext created successfully
     #> Future meetings found: 11 
     #> Meetings: 2025-09-30, 2025-11-04, 2025-12-09, 2026-02-03, 2026-03-17, 2026-05-05, 2026-06-16, 2026-08-11, 2026-09-29, 2026-11-03, 2026-12-08 
     #> 
     #> === Processing meeting: 2025-09-30 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2025-09-30 17:00:00 
     #> Time span (days): 0.0005704924 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     #>  0.0000  0.0000  0.0000  0.0400  0.0000  0.9779 
@@ -344,22 +344,22 @@ are shown below:
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2025-11-04 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2025-11-04 17:00:00 
     #> Time span (days): 0.0009751027 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     #>  0.0000  0.0000  0.0000  0.0400  0.0000  0.5575 
@@ -386,22 +386,22 @@ are shown below:
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2025-12-09 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2025-12-09 17:00:00 
     #> Time span (days): 0.001380195 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     #> 0.00000 0.00000 0.00000 0.04000 0.03612 0.28638 
@@ -428,25 +428,25 @@ are shown below:
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2026-02-03 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2026-02-03 17:00:00 
     #> Time span (days): 0.002028343 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    #> 0.00000 0.00000 0.00000 0.04000 0.07077 0.22254 
+    #> 0.00000 0.00000 0.00000 0.04000 0.07076 0.22254 
     #> Probability sums by time (should be around 1.0):
     #>   Min: 1 
     #>   Max: 1 
@@ -464,7 +464,7 @@ are shown below:
     #> Adding another scale for fill, which will replace the existing scale.
     #> Adding theme...
     #> Saving plot...
-    #> Warning: Removed 2147 rows containing missing values or values outside the scale range
+    #> Warning: Removed 2177 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> DETAILED ERROR INFORMATION:
     #> Error class: rlang_error error condition 
@@ -479,34 +479,34 @@ are shown below:
     #> 
     #> Factor level count: 25 
     #> Color mapping completeness: FALSE 
-    #> X-axis value range: 1754956897 1759186599 
+    #> X-axis value range: 1754956897 1759188031 
     #> X-axis contains infinite values: FALSE 
     #> Attempting minimal diagnostic plot...
-    #> Reduced to 6550 rows with 10 moves
+    #> Reduced to 6560 rows with 10 moves
     #> ✓ Saved minimal plot to: docs/meetings/minimal_2026-02-03.png 
     #> ❌ Failed to create main plot for meeting 2026-02-03 
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2026-03-17 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2026-03-17 17:00:00 
     #> Time span (days): 0.002514455 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    #> 0.00000 0.00000 0.01547 0.04000 0.07565 0.14872 
+    #> 0.00000 0.00000 0.01546 0.04000 0.07565 0.14872 
     #> Probability sums by time (should be around 1.0):
     #>   Min: 1 
     #>   Max: 1 
@@ -530,22 +530,22 @@ are shown below:
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2026-05-05 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2026-05-05 17:00:00 
     #> Time span (days): 0.003082066 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     #> 0.00000 0.00000 0.02279 0.04000 0.07262 0.12027 
@@ -566,7 +566,7 @@ are shown below:
     #> Adding another scale for fill, which will replace the existing scale.
     #> Adding theme...
     #> Saving plot...
-    #> Warning: Removed 2368 rows containing missing values or values outside the scale range
+    #> Warning: Removed 2395 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> DETAILED ERROR INFORMATION:
     #> Error class: rlang_error error condition 
@@ -581,31 +581,31 @@ are shown below:
     #> 
     #> Factor level count: 25 
     #> Color mapping completeness: FALSE 
-    #> X-axis value range: 1754956897 1759186599 
+    #> X-axis value range: 1754956897 1759188031 
     #> X-axis contains infinite values: FALSE 
     #> Attempting minimal diagnostic plot...
-    #> Reduced to 6550 rows with 10 moves
+    #> Reduced to 6560 rows with 10 moves
     #> ✓ Saved minimal plot to: docs/meetings/minimal_2026-05-05.png 
     #> ❌ Failed to create main plot for meeting 2026-05-05 
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2026-06-16 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2026-06-16 17:00:00 
     #> Time span (days): 0.003568178 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     #> 0.00000 0.00000 0.03410 0.04000 0.07509 0.10826 
@@ -632,22 +632,22 @@ are shown below:
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2026-08-11 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2026-08-11 17:00:00 
     #> Time span (days): 0.004216326 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     #> 0.00000 0.00000 0.03322 0.04000 0.07451 0.09710 
@@ -668,7 +668,7 @@ are shown below:
     #> Adding another scale for fill, which will replace the existing scale.
     #> Adding theme...
     #> Saving plot...
-    #> Warning: Removed 1872 rows containing missing values or values outside the scale range
+    #> Warning: Removed 1890 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> DETAILED ERROR INFORMATION:
     #> Error class: rlang_error error condition 
@@ -683,31 +683,31 @@ are shown below:
     #> 
     #> Factor level count: 25 
     #> Color mapping completeness: FALSE 
-    #> X-axis value range: 1754956897 1759186599 
+    #> X-axis value range: 1754956897 1759188031 
     #> X-axis contains infinite values: FALSE 
     #> Attempting minimal diagnostic plot...
-    #> Reduced to 6550 rows with 10 moves
+    #> Reduced to 6560 rows with 10 moves
     #> ✓ Saved minimal plot to: docs/meetings/minimal_2026-08-11.png 
     #> ❌ Failed to create main plot for meeting 2026-08-11 
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2026-09-29 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2026-09-29 17:00:00 
     #> Time span (days): 0.004783455 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     #> 0.00000 0.00000 0.03475 0.04000 0.07374 0.09709 
@@ -734,25 +734,25 @@ are shown below:
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2026-11-03 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2026-11-03 17:00:00 
     #> Time span (days): 0.005188066 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    #> 0.00000 0.01318 0.03768 0.04000 0.07106 0.09380 
+    #> 0.00000 0.01318 0.03768 0.04000 0.07102 0.09380 
     #> Probability sums by time (should be around 1.0):
     #>   Min: 1 
     #>   Max: 1 
@@ -770,7 +770,7 @@ are shown below:
     #> Adding another scale for fill, which will replace the existing scale.
     #> Adding theme...
     #> Saving plot...
-    #> Warning: Removed 2389 rows containing missing values or values outside the scale range
+    #> Warning: Removed 2407 rows containing missing values or values outside the scale range
     #> (`geom_area()`).
     #> DETAILED ERROR INFORMATION:
     #> Error class: rlang_error error condition 
@@ -785,31 +785,31 @@ are shown below:
     #> 
     #> Factor level count: 25 
     #> Color mapping completeness: FALSE 
-    #> X-axis value range: 1754956897 1759186599 
+    #> X-axis value range: 1754956897 1759188031 
     #> X-axis contains infinite values: FALSE 
     #> Attempting minimal diagnostic plot...
-    #> Reduced to 6550 rows with 10 moves
+    #> Reduced to 6560 rows with 10 moves
     #> ✓ Saved minimal plot to: docs/meetings/minimal_2026-11-03.png 
     #> ❌ Failed to create main plot for meeting 2026-11-03 
     #> --- End meeting processing ---
     #> 
     #> === Processing meeting: 2026-12-08 ===
-    #> Initial df_mt dimensions: 16375 x 3 
+    #> Initial df_mt dimensions: 16400 x 3 
     #> Pre-cleaning data summary:
     #>   - NA scrape_time: 0 
     #>   - NA probability: 0 
     #>   - NA move: 0 
     #>   - Negative probability: 0 
     #>   - Infinite probability: 0 
-    #> After cleaning dimensions: 16375 x 3 
-    #> Unique times: 655 
+    #> After cleaning dimensions: 16400 x 3 
+    #> Unique times: 656 
     #> Unique moves: 25 
-    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 22:56:39 
+    #> Raw time range: 2025-08-12 00:01:37 2025-09-29 23:20:31 
     #> Plot time limits: 2025-08-12 10:01:37 to 2026-12-08 17:00:00 
     #> Time span (days): 0.005593158 
     #> Available moves ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
     #> Valid move levels ( 25 ): 300 bp cut, 275 bp cut, 250 bp cut, 225 bp cut, 200 bp cut, 175 bp cut, 150 bp cut, 125 bp cut, 100 bp cut, 75 bp cut 
-    #> Final data dimensions: 16375 x 3 
+    #> Final data dimensions: 16400 x 3 
     #> Probability statistics:
     #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     #> 0.00000 0.01528 0.03882 0.04000 0.06817 0.08472 
