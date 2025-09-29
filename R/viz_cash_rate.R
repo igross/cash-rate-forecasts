@@ -802,7 +802,7 @@ if (!dir.exists("docs/meetings/csv")) {
 # ROBUST PLOTTING FIX - Handles ggplot conversion errors
 # Add this enhanced version to replace your current plotting loop
 
-# Enhanced plotting loop with better error handling and data validation
+# Enhanced plotting loop with detailed error diagnostics
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
@@ -815,26 +815,31 @@ for (mt in future_meetings_all) {
 
   cat("Initial df_mt dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
   
-  # Check for empty or invalid data
   if (nrow(df_mt) == 0) {
     cat("Skipping - no data for meeting\n")
     next 
   }
   
-  # ENHANCED DATA CLEANING
+  # ENHANCED DATA CLEANING WITH DETAILED LOGGING
+  cat("Pre-cleaning data summary:\n")
+  cat("  - NA scrape_time:", sum(is.na(df_mt$scrape_time)), "\n")
+  cat("  - NA probability:", sum(is.na(df_mt$probability)), "\n")
+  cat("  - NA move:", sum(is.na(df_mt$move)), "\n")
+  cat("  - Negative probability:", sum(df_mt$probability < 0, na.rm = TRUE), "\n")
+  cat("  - Infinite probability:", sum(!is.finite(df_mt$probability)), "\n")
+  
   df_mt <- df_mt %>%
     dplyr::filter(
       !is.na(scrape_time),
       is.finite(as.numeric(scrape_time)),
       !is.na(probability),
       is.finite(probability),
-      probability >= 0,  # Remove negative probabilities
-      !is.na(move)       # Remove NA moves
+      probability >= 0,
+      !is.na(move)
     ) %>%
-    # Fix any extreme values that might cause plotting issues
     dplyr::mutate(
-      probability = pmin(probability, 1.0),  # Cap at 100%
-      probability = pmax(probability, 0.0)   # Floor at 0%
+      probability = pmin(probability, 1.0),
+      probability = pmax(probability, 0.0)
     )
   
   cat("After cleaning dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
@@ -844,105 +849,119 @@ for (mt in future_meetings_all) {
     next
   }
   
-  # Check for sufficient time variation
+  # DETAILED DATA VALIDATION
   unique_times <- length(unique(df_mt$scrape_time))
+  unique_moves <- length(unique(df_mt$move))
+  cat("Unique times:", unique_times, "\n")
+  cat("Unique moves:", unique_moves, "\n")
+  
   if (unique_times < 2) {
-    cat("Skipping - insufficient time points (", unique_times, ")\n")
+    cat("Skipping - insufficient time points\n")
     next
   }
   
-  # ROBUST DATE/TIME HANDLING
+  # TIME RANGE ANALYSIS
   meeting_date_proper <- as.Date(mt)
+  time_range <- range(df_mt$scrape_time, na.rm = TRUE)
+  cat("Raw time range:", as.character(time_range), "\n")
+  
   start_xlim_mt <- min(df_mt$scrape_time, na.rm = TRUE) + lubridate::hours(10)
   end_xlim_mt   <- lubridate::as_datetime(meeting_date_proper, tz = "Australia/Melbourne") + lubridate::hours(17)
   
-  # Validate time limits
-  if (!is.finite(as.numeric(start_xlim_mt)) || !is.finite(as.numeric(end_xlim_mt)) || 
-      start_xlim_mt >= end_xlim_mt) {
-    cat("Skipping - invalid time limits\n")
-    cat("Start:", as.character(start_xlim_mt), "End:", as.character(end_xlim_mt), "\n")
-    next
-  }
+  cat("Plot time limits:", as.character(start_xlim_mt), "to", as.character(end_xlim_mt), "\n")
+  cat("Time span (days):", as.numeric(end_xlim_mt - start_xlim_mt) / (24 * 3600), "\n")
   
-  # PROPER FACTOR ORDERING WITH VALIDATION
-  # Only include moves that actually exist in the data
+  # FACTOR LEVEL ANALYSIS
   available_moves <- unique(df_mt$move[!is.na(df_mt$move)])
+  cat("Available moves (", length(available_moves), "):", paste(head(available_moves, 10), collapse = ", "), "\n")
   
-  # Filter move_levels_lbl to only include moves present in the data
   valid_move_levels <- move_levels_lbl[move_levels_lbl %in% available_moves]
+  cat("Valid move levels (", length(valid_move_levels), "):", paste(head(valid_move_levels, 10), collapse = ", "), "\n")
   
   df_mt <- df_mt %>%
     dplyr::filter(move %in% valid_move_levels) %>%
     dplyr::mutate(
-      move = factor(move, levels = rev(valid_move_levels))  # Reverse for proper stacking
+      move = factor(move, levels = rev(valid_move_levels))
     ) %>%
-    dplyr::filter(!is.na(move))  # Remove any moves not in our factor levels
+    dplyr::filter(!is.na(move))
   
   cat("Final data dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
-  cat("Unique moves:", length(unique(df_mt$move)), "\n")
-  cat("Time range:", as.character(range(df_mt$scrape_time)), "\n")
   
   if (nrow(df_mt) == 0) {
     cat("Skipping - no data after factor processing\n")
     next
   }
   
-  # VALIDATE DATA INTEGRITY BEFORE PLOTTING
-  # Check for any infinite or extreme values
-  prob_range <- range(df_mt$probability, na.rm = TRUE)
-  cat("Probability range:", prob_range, "\n")
+  # PROBABILITY VALIDATION
+  prob_stats <- summary(df_mt$probability)
+  cat("Probability statistics:\n")
+  print(prob_stats)
   
-  # Check time consistency
-  time_range <- range(as.numeric(df_mt$scrape_time), na.rm = TRUE)
-  if (!all(is.finite(time_range))) {
-    cat("Skipping - invalid time range\n")
-    next
-  }
+  # Check for stacking issues
+  prob_sums_by_time <- df_mt %>%
+    dplyr::group_by(scrape_time) %>%
+    dplyr::summarise(total_prob = sum(probability, na.rm = TRUE), .groups = "drop")
   
-  # ROBUST PLOTTING WITH MULTIPLE FALLBACK STRATEGIES
+  cat("Probability sums by time (should be around 1.0):\n")
+  cat("  Min:", min(prob_sums_by_time$total_prob, na.rm = TRUE), "\n")
+  cat("  Max:", max(prob_sums_by_time$total_prob, na.rm = TRUE), "\n")
+  cat("  Mean:", mean(prob_sums_by_time$total_prob, na.rm = TRUE), "\n")
+  
+  # COLOR MAPPING VALIDATION
+  fill_map_subset <- fill_map[names(fill_map) %in% available_moves]
+  cat("Fill map subset length:", length(fill_map_subset), "\n")
+  cat("Missing colors for moves:", setdiff(available_moves, names(fill_map_subset)), "\n")
+  
+  # PLOTTING WITH ENHANCED ERROR HANDLING
   filename <- paste0("docs/meetings/area_all_moves_", fmt_file(meeting_date_proper), ".png")
   cat("Attempting to create plot and save to:", filename, "\n")
   
   plot_success <- FALSE
   
-  # Strategy 1: Try the full plot
+  # Strategy 1: Try the full plot with detailed error capture
   tryCatch({
-    # Create a more conservative break sequence
-    time_span <- as.numeric(end_xlim_mt - start_xlim_mt)
-    n_breaks <- min(30, max(5, floor(time_span / (24 * 3600))))  # Max 30 breaks, min 5
-    breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_breaks)
-    
-    # Filter fill_map to only include moves present in data
-    fill_map_subset <- fill_map[names(fill_map) %in% available_moves]
+    cat("Creating ggplot object...\n")
     
     area_mt <- ggplot2::ggplot(
       df_mt,
       ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
-    ) +
-      ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
-      ggplot2::scale_fill_manual(
-        values = fill_map_subset,
-        drop = FALSE,
-        name = ""
-      ) +
-      ggplot2::scale_x_datetime(
-        limits = c(start_xlim_mt, end_xlim_mt),
-        breaks = breaks_vec,
-        labels = function(x) format(x, "%d %b"),
-        expand = c(0, 0)
-      ) +
-      ggplot2::scale_y_continuous(
-        limits = c(0, 1),
-        labels = scales::percent_format(accuracy = 1),
-        expand = c(0, 0)
-      ) +
-      ggplot2::labs(
-        title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
-        subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
-        x = "Forecast date", 
-        y = "Probability"
-      ) +
-      ggplot2::theme_bw() +
+    )
+    
+    cat("Adding geom_area...\n")
+    area_mt <- area_mt + ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA)
+    
+    cat("Adding fill scale...\n")
+    area_mt <- area_mt + ggplot2::scale_fill_manual(
+      values = fill_map_subset,
+      drop = FALSE,
+      name = ""
+    )
+    
+    cat("Adding x-axis scale...\n")
+    area_mt <- area_mt + ggplot2::scale_x_datetime(
+      limits = c(start_xlim_mt, end_xlim_mt),
+      date_breaks = "2 days",
+      date_labels = "%d %b",
+      expand = c(0, 0)
+    )
+    
+    cat("Adding y-axis scale...\n")
+    area_mt <- area_mt + ggplot2::scale_y_continuous(
+      limits = c(0, 1),
+      labels = scales::percent_format(accuracy = 1),
+      expand = c(0, 0)
+    )
+    
+    cat("Adding labels...\n")
+    area_mt <- area_mt + ggplot2::labs(
+      title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
+      subtitle = "Move bands shown from -300 bp to +300 bp (25 bp steps)",
+      x = "Forecast date", 
+      y = "Probability"
+    )
+    
+    cat("Adding theme...\n")
+    area_mt <- area_mt + ggplot2::theme_bw() +
       ggplot2::theme(
         axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
         axis.text.y = ggplot2::element_text(size = 12),
@@ -952,7 +971,7 @@ for (mt in future_meetings_all) {
         legend.title = ggplot2::element_blank()
       )
     
-    # Save with error handling
+    cat("Saving plot...\n")
     ggplot2::ggsave(
       filename = filename,
       plot = area_mt,
@@ -966,42 +985,78 @@ for (mt in future_meetings_all) {
     cat("✓ Successfully saved plot for", as.character(meeting_date_proper), "\n")
     
   }, error = function(e) {
-    cat("Strategy 1 failed:", e$message, "\n")
+    cat("DETAILED ERROR INFORMATION:\n")
+    cat("Error class:", class(e), "\n")
+    cat("Error message:", e$message, "\n")
+    cat("Error call:", deparse(e$call), "\n")
     
-    # Strategy 2: Try simplified plot without legends/breaks
-    tryCatch({
-      cat("Attempting simplified plot...\n")
+    # Try to identify the specific issue
+    if (grepl("geom.*grob", e$message, ignore.case = TRUE)) {
+      cat("DIAGNOSIS: geom_area rendering issue detected\n")
+      cat("Possible causes:\n")
+      cat("  1. Too many factor levels causing memory issues\n")
+      cat("  2. Invalid datetime values in x-axis\n")
+      cat("  3. Extreme probability values causing rendering problems\n")
+      cat("  4. Color mapping issues\n")
       
-      area_simple <- ggplot2::ggplot(df_mt, ggplot2::aes(x = scrape_time, y = probability, fill = move)) +
+      # Additional diagnostics for geom issues
+      cat("\nFactor level count:", nlevels(df_mt$move), "\n")
+      cat("Color mapping completeness:", length(fill_map_subset) == length(available_moves), "\n")
+      
+      # Check for extreme x-axis values
+      x_vals <- df_mt$scrape_time + lubridate::hours(10)
+      cat("X-axis value range:", range(as.numeric(x_vals), na.rm = TRUE), "\n")
+      cat("X-axis contains infinite values:", any(!is.finite(as.numeric(x_vals))), "\n")
+    }
+    
+    # Strategy 2: Try minimal plot
+    tryCatch({
+      cat("Attempting minimal diagnostic plot...\n")
+      
+      # Reduce factor levels to top 10 only
+      top_moves <- df_mt %>%
+        dplyr::group_by(move) %>%
+        dplyr::summarise(total_prob = sum(probability, na.rm = TRUE), .groups = "drop") %>%
+        dplyr::slice_max(total_prob, n = 10) %>%
+        dplyr::pull(move)
+      
+      df_minimal <- df_mt %>%
+        dplyr::filter(move %in% top_moves) %>%
+        dplyr::mutate(move = droplevels(move))
+      
+      cat("Reduced to", nrow(df_minimal), "rows with", nlevels(df_minimal$move), "moves\n")
+      
+      area_minimal <- ggplot2::ggplot(df_minimal, 
+                                    ggplot2::aes(x = scrape_time, y = probability, fill = move)) +
         ggplot2::geom_area(position = "stack") +
-        ggplot2::scale_fill_manual(values = fill_map_subset) +
-        ggplot2::labs(title = paste("Meeting", fmt_date(meeting_date_proper))) +
+        ggplot2::labs(title = paste("Minimal Plot -", fmt_date(meeting_date_proper))) +
         ggplot2::theme_minimal()
       
-      ggplot2::ggsave(filename, area_simple, width = 10, height = 4, dpi = 200)
-      plot_success <- TRUE
-      cat("✓ Saved simplified plot for", as.character(meeting_date_proper), "\n")
+      minimal_filename <- paste0("docs/meetings/minimal_", fmt_file(meeting_date_proper), ".png")
+      ggplot2::ggsave(minimal_filename, area_minimal, width = 10, height = 4, dpi = 150)
+      
+      cat("✓ Saved minimal plot to:", minimal_filename, "\n")
       
     }, error = function(e2) {
-      cat("Strategy 2 also failed:", e2$message, "\n")
+      cat("Minimal plot also failed:", e2$message, "\n")
       
-      # Strategy 3: Export data for manual inspection
+      # Export data for external analysis
       debug_file <- paste0("docs/meetings/debug_data_", fmt_file(meeting_date_proper), ".csv")
       tryCatch({
         write.csv(df_mt, debug_file, row.names = FALSE)
         cat("✓ Exported debug data to:", debug_file, "\n")
       }, error = function(e3) {
-        cat("Could not even export debug data:", e3$message, "\n")
+        cat("Could not export debug data:", e3$message, "\n")
       })
     })
   })
   
   if (!plot_success) {
-    cat("❌ Failed to create plot for meeting", as.character(meeting_date_proper), "\n")
+    cat("❌ Failed to create main plot for meeting", as.character(meeting_date_proper), "\n")
   }
+  
+  cat("--- End meeting processing ---\n")
 }
-
-cat("\n=== Plotting loop completed ===\n")
 
 # 5. FIXED CSV Export section
 for (mt in future_meetings_all) {
