@@ -12,17 +12,18 @@ intro_paragraph <- '
 
 # ====== Analytics snippet ======
 # Replace with your own ID or domain
-ga_id <- "G-XXXXXXXX"   # <-- put your GA4 Measurement ID here
+ga_id <- "G-5J5TP6ZN7H"   # <-- put your GA4 Measurement ID here
 plausible_domain <- "isaacgross.net"  # <-- set to your actual domain (if using Plausible)
 
 analytics_snippet <- sprintf('
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=%s"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5J5TP6ZN7H"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag("js", new Date());
-  gtag("config", "%s");
+  gtag('js', new Date());
+
+  gtag('config', 'G-5J5TP6ZN7H');
 </script>
 
 <!-- Plausible Analytics -->
