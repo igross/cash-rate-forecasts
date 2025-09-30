@@ -43,9 +43,6 @@ jobs:
       - name: Get data
         run: Rscript -e 'source(here::here("R", "scrape_cash_rate.R"), echo = TRUE)'
 
-      - name: Make line
-        run: Rscript -e 'source(here::here("R", "viz_cash_rate.R"), echo = TRUE)'  
-
       - name: Make areas
         run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'  
 
