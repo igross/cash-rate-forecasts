@@ -813,22 +813,33 @@ for (mt in future_meetings_all) {
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, move)
 
-  cat("Initial df_mt dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
+  top_moves_for_plot <- df_mt %>%
+    dplyr::group_by(move) %>%
+    dplyr::summarise(total_prob = sum(probability, na.rm = TRUE), .groups = "drop") %>%
+    dplyr::slice_max(total_prob, n = 15) %>%  # Limit to 15 moves max
+    dplyr::pull(move)
   
-  if (nrow(df_mt) == 0) {
+  # Filter data to only these moves
+  df_mt_plot <- df_mt %>%
+    dplyr::filter(move %in% top_moves_for_plot) %>%
+    dplyr::mutate(move = droplevels(move))
+  
+  cat("Initial df_mt dimensions:", nrow(df_mt_plot), "x", ncol(df_mt_plot), "\n")
+  
+  if (nrow(df_mt_plot) == 0) {
     cat("Skipping - no data for meeting\n")
     next 
   }
   
   # ENHANCED DATA CLEANING WITH DETAILED LOGGING
   cat("Pre-cleaning data summary:\n")
-  cat("  - NA scrape_time:", sum(is.na(df_mt$scrape_time)), "\n")
-  cat("  - NA probability:", sum(is.na(df_mt$probability)), "\n")
-  cat("  - NA move:", sum(is.na(df_mt$move)), "\n")
-  cat("  - Negative probability:", sum(df_mt$probability < 0, na.rm = TRUE), "\n")
-  cat("  - Infinite probability:", sum(!is.finite(df_mt$probability)), "\n")
+  cat("  - NA scrape_time:", sum(is.na(df_mt_plot$scrape_time)), "\n")
+  cat("  - NA probability:", sum(is.na(df_mt_plot$probability)), "\n")
+  cat("  - NA move:", sum(is.na(df_mt_plot$move)), "\n")
+  cat("  - Negative probability:", sum(df_mt_plot$probability < 0, na.rm = TRUE), "\n")
+  cat("  - Infinite probability:", sum(!is.finite(df_mt_plot$probability)), "\n")
   
-  df_mt <- df_mt %>%
+  df_mt <- df_mt_plot %>%
     dplyr::filter(
       !is.na(scrape_time),
       is.finite(as.numeric(scrape_time)),
