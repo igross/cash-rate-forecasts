@@ -579,15 +579,6 @@ for (mt in future_meetings_all) {
   tryCatch({
     cat("Building complete ggplot object with complexity reduction...\n")
     
-    # CRITICAL FIX: Reduce to top 15 moves to prevent geom_area overflow
-    top_moves_for_plot <- df_mt 
-    
-    df_mt <- df_mt %>%
-      dplyr::filter(move %in% top_moves_for_plot) %>%
-      dplyr::mutate(move = droplevels(move))
-    
-    cat("Reduced to", nrow(df_mt), "rows with", nlevels(df_mt$move), "moves for plotting\n")
-    
     available_moves_plot <- levels(df_mt$move)
     fill_map_subset_plot <- fill_map_subset[names(fill_map_subset) %in% available_moves_plot]
     
