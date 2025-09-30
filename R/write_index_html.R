@@ -13,14 +13,18 @@ intro_paragraph <- '
 # Ensure target directory exists
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-# Find meeting PNGs (basenames), then build relative paths from docs/index.html
-png_basenames <- list.files("docs/meetings", pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$", full.names = FALSE)
+# Find meeting PNGs
+png_basenames <- list.files(
+  "docs/meetings",
+  pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$",
+  full.names = FALSE
+)
 
-# Sort by the yyyymmdd in filename (earliest first)
+# Sort by the date in filename (earliest first)
 if (length(png_basenames) > 0) {
-  dates_chr <- str_match(png_basenames, "area_all_moves_(\\d{8})\\.png")[, 2]
-  dates_ord <- as.Date(dates_chr, format = "%Y%m%d")
-  ord <- order(dates_ord, decreasing = FALSE, na.last = TRUE)  # earliest -> latest
+  dates_chr <- str_match(png_basenames, "area_all_moves_(\\d{4}-\\d{2}-\\d{2})\\.png")[, 2]
+  dates_ord <- as.Date(dates_chr, format = "%Y-%m-%d")
+  ord <- order(dates_ord, decreasing = FALSE, na.last = TRUE)
   png_basenames <- png_basenames[ord]
 }
 
@@ -84,13 +88,14 @@ if (file.exists("docs/area.png")) {
   </div>'
 }
 
-# Meeting grid section (now ordered earliest -> latest)
+# Meeting grid section
 meeting_section <- if (length(cards) > 0) {
   paste('<div class="grid">', paste(cards, collapse = "\n"), '</div>')
 } else {
   '<p style="text-align:center;">No upcoming RBA meeting charts available.</p>'
 }
 
+# Assemble HTML
 html <- sprintf('
 <!DOCTYPE html>
 <html lang="en">
@@ -113,25 +118,23 @@ html <- sprintf('
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); /* larger tiles */
+      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
       gap: 30px;
       padding: 10px;
-      max-width: 2200px; /* allow a wider grid on big screens */
+      max-width: 2200px;
       margin: 0 auto;
     }
     .chart-card {
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      padding: 18px; /* slightly larger padding to match bigger tiles */
+      padding: 18px;
       text-align: center;
     }
     .chart-card img {
       width: 100%%;
       border-radius: 6px;
     }
-
-    /* Optional: on smaller screens, ensure readability */
     @media (max-width: 1024px) {
       .grid {
         grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -150,17 +153,17 @@ html <- sprintf('
 
   %s
 
-
-  
-  <h1>Cash Rate Target Probabilities By RBA Meeting</h1>
+  %s
 
   %s
+
+  <h1>Cash Rate Target Probabilities By RBA Meeting</h1>
 
   %s
 
 </body>
 </html>
-', interactive_line_section, meeting_section, intro_paragraph)
+', intro_paragraph, interactive_line_section, area_chart_section, meeting_section)
 
 # Write output
 writeLines(html, "docs/index.html")
