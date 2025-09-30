@@ -635,7 +635,7 @@ all_list_area <- map(all_times, function(scr) {
   bind_rows(out)
 })
 
-print(all_list_area)
+
 
 all_estimates_area <- all_list_area %>%
   compact() %>%
