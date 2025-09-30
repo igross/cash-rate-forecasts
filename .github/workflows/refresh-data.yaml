@@ -43,7 +43,10 @@ jobs:
       - name: Get data
         run: Rscript -e 'source(here::here("R", "scrape_cash_rate.R"), echo = TRUE)'
 
-      - name: Make areas
+      - name: Make line graph
+        run: Rscript -e 'source(here::here("R", "line_chart.R"), echo = TRUE)'          
+
+      - name: Make area graphs
         run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'  
 
       - name: Generate index.html from charts
