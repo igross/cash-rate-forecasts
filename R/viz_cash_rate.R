@@ -813,11 +813,7 @@ for (mt in future_meetings_all) {
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, move)
 
-  top_moves_for_plot <- df_mt %>%
-    dplyr::group_by(move) %>%
-    dplyr::summarise(total_prob = sum(probability, na.rm = TRUE), .groups = "drop") %>%
-    dplyr::slice_max(total_prob, n = 15) %>%  # Limit to 15 moves max
-    dplyr::pull(move)
+  top_moves_for_plot <- df_mt
   
   # Filter data to only these moves
   df_mt_plot <- df_mt %>%
@@ -934,11 +930,7 @@ tryCatch({
   cat("Building complete ggplot object with complexity reduction...\n")
   
   # CRITICAL FIX: Reduce to top 15 moves to prevent geom_area overflow
-  top_moves_for_plot <- df_mt %>%
-    dplyr::group_by(move) %>%
-    dplyr::summarise(total_prob = sum(probability, na.rm = TRUE), .groups = "drop") %>%
-    dplyr::slice_max(total_prob, n = 15) %>%
-    dplyr::pull(move)
+  top_moves_for_plot <- df_mt 
   
   df_mt_plot <- df_mt %>%
     dplyr::filter(move %in% top_moves_for_plot) %>%
