@@ -187,7 +187,6 @@ print(cutoff_time)
 
 scrapes <- all_times[all_times >= cutoff_date | all_times > last_meeting]
 
-print(scrapes, n= Inf)
 
 # =============================================
 # 5) Build implied‐mean panel for each scrape × meeting
