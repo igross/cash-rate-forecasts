@@ -453,6 +453,8 @@ if (!dir.exists("docs/meetings/csv")) {
   dir.create("docs/meetings/csv", recursive = TRUE)
 }
 
+
+
 # Enhanced plotting loop with detailed error diagnostics
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
@@ -464,29 +466,24 @@ for (mt in future_meetings_all) {
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, move)
 
-  top_moves_for_plot <- df_mt
+  print(df_mt,n=5)
   
-  # Filter data to only these moves
-  df_mt_plot <- df_mt %>%
-    dplyr::filter(move %in% top_moves_for_plot) %>%
-    dplyr::mutate(move = droplevels(move))
+  cat("Initial df_mt dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
   
-  cat("Initial df_mt dimensions:", nrow(df_mt_plot), "x", ncol(df_mt_plot), "\n")
-  
-  if (nrow(df_mt_plot) == 0) {
+  if (nrow(df_mt) == 0) {
     cat("Skipping - no data for meeting\n")
     next 
   }
   
   # ENHANCED DATA CLEANING WITH DETAILED LOGGING
   cat("Pre-cleaning data summary:\n")
-  cat("  - NA scrape_time:", sum(is.na(df_mt_plot$scrape_time)), "\n")
-  cat("  - NA probability:", sum(is.na(df_mt_plot$probability)), "\n")
-  cat("  - NA move:", sum(is.na(df_mt_plot$move)), "\n")
-  cat("  - Negative probability:", sum(df_mt_plot$probability < 0, na.rm = TRUE), "\n")
-  cat("  - Infinite probability:", sum(!is.finite(df_mt_plot$probability)), "\n")
+  cat("  - NA scrape_time:", sum(is.na(df_mt$scrape_time)), "\n")
+  cat("  - NA probability:", sum(is.na(df_mt$probability)), "\n")
+  cat("  - NA move:", sum(is.na(df_mt$move)), "\n")
+  cat("  - Negative probability:", sum(df_mt$probability < 0, na.rm = TRUE), "\n")
+  cat("  - Infinite probability:", sum(!is.finite(df_mt$probability)), "\n")
   
-  df_mt <- df_mt_plot %>%
+  df_mt <- df_mt %>%
     dplyr::filter(
       !is.na(scrape_time),
       is.finite(as.numeric(scrape_time)),
@@ -549,6 +546,8 @@ for (mt in future_meetings_all) {
     cat("Skipping - no data after factor processing\n")
     next
   }
+
+
   
   # PROBABILITY VALIDATION
   prob_stats <- summary(df_mt$probability)
@@ -583,13 +582,13 @@ for (mt in future_meetings_all) {
     # CRITICAL FIX: Reduce to top 15 moves to prevent geom_area overflow
     top_moves_for_plot <- df_mt 
     
-    df_mt_plot <- df_mt %>%
+    df_mt <- df_mt %>%
       dplyr::filter(move %in% top_moves_for_plot) %>%
       dplyr::mutate(move = droplevels(move))
     
-    cat("Reduced to", nrow(df_mt_plot), "rows with", nlevels(df_mt_plot$move), "moves for plotting\n")
+    cat("Reduced to", nrow(df_mt), "rows with", nlevels(df_mt$move), "moves for plotting\n")
     
-    available_moves_plot <- levels(df_mt_plot$move)
+    available_moves_plot <- levels(df_mt$move)
     fill_map_subset_plot <- fill_map_subset[names(fill_map_subset) %in% available_moves_plot]
     
     legend_moves <- c("100 bp cut", "75 bp cut", "50 bp cut", "25 bp cut", 
@@ -597,7 +596,7 @@ for (mt in future_meetings_all) {
     legend_breaks <- legend_moves[legend_moves %in% available_moves_plot]
     
     area_mt <- ggplot2::ggplot(
-      df_mt_plot,
+      df_mt,
       ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
     ) +
       ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
