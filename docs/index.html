@@ -20,25 +20,23 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); /* larger tiles */
+      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
       gap: 30px;
       padding: 10px;
-      max-width: 2200px; /* allow a wider grid on big screens */
+      max-width: 2200px;
       margin: 0 auto;
     }
     .chart-card {
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      padding: 18px; /* slightly larger padding to match bigger tiles */
+      padding: 18px;
       text-align: center;
     }
     .chart-card img {
       width: 100%;
       border-radius: 6px;
     }
-
-    /* Optional: on smaller screens, ensure readability */
     @media (max-width: 1024px) {
       .grid {
         grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -54,6 +52,12 @@
   </style>
 </head>
 <body>
+
+  
+  <p style="max-width: 900px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
+    This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia's cash rate,
+    based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
+  </p>
 
   
   <h1 style="margin-top:60px; text-align:center;">
@@ -76,8 +80,8 @@
     />
   </div>
 
-
   
+
   <h1>Cash Rate Target Probabilities By RBA Meeting</h1>
 
   <div class="grid"> <div class="chart-card">
@@ -113,12 +117,6 @@
 <div class="chart-card">
       <img src="meetings/area_all_moves_2026-12-08.png" alt="meetings/area_all_moves_2026-12-08.png" loading="lazy" />
     </div> </div>
-
-  
-  <p style="max-width: 900px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
-    This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia's cash rate,
-    based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
-  </p>
 
 </body>
 </html>
