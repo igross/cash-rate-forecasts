@@ -10,6 +10,26 @@ intro_paragraph <- '
     based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
   </p>'
 
+# ====== Analytics snippet ======
+# Replace with your own ID or domain
+ga_id <- "G-XXXXXXXX"   # <-- put your GA4 Measurement ID here
+plausible_domain <- "yourdomain.com"  # <-- set to your actual domain (if using Plausible)
+
+analytics_snippet <- sprintf('
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=%s"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag("js", new Date());
+  gtag("config", "%s");
+</script>
+
+<!-- Plausible Analytics -->
+<script defer data-domain="%s" src="https://plausible.io/js/script.js"></script>
+', ga_id, ga_id, plausible_domain)
+# ==============================
+
 # Ensure target directory exists
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
@@ -102,6 +122,7 @@ html <- sprintf('
 <head>
   <meta charset="UTF-8" />
   <title>Rate Outcome Probabilities by RBA Meeting</title>
+  %s
   <style>
     body {
       font-family: "Segoe UI", Roboto, sans-serif;
@@ -163,7 +184,7 @@ html <- sprintf('
 
 </body>
 </html>
-', intro_paragraph, interactive_line_section, area_chart_section, meeting_section)
+', analytics_snippet, intro_paragraph, interactive_line_section, area_chart_section, meeting_section)
 
 # Write output
 writeLines(html, "docs/index.html")
