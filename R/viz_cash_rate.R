@@ -799,9 +799,6 @@ if (!dir.exists("docs/meetings/csv")) {
   dir.create("docs/meetings/csv", recursive = TRUE)
 }
 
-# ROBUST PLOTTING FIX - Handles ggplot conversion errors
-# Add this enhanced version to replace your current plotting loop
-
 # Enhanced plotting loop with detailed error diagnostics
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
@@ -925,94 +922,99 @@ for (mt in future_meetings_all) {
   
   plot_success <- FALSE
   
-# Strategy 1: Try the full plot with reduced complexity
-tryCatch({
-  cat("Building complete ggplot object with complexity reduction...\n")
-  
-  # CRITICAL FIX: Reduce to top 15 moves to prevent geom_area overflow
-  top_moves_for_plot <- df_mt 
-  
-  df_mt_plot <- df_mt %>%
-    dplyr::filter(move %in% top_moves_for_plot) %>%
-    dplyr::mutate(move = droplevels(move))
-  
-  cat("Reduced to", nrow(df_mt_plot), "rows with", nlevels(df_mt_plot$move), "moves for plotting\n")
-  
-  available_moves_plot <- levels(df_mt_plot$move)
-  fill_map_subset_plot <- fill_map_subset[names(fill_map_subset) %in% available_moves_plot]
-  
-  legend_moves <- c("100 bp cut", "75 bp cut", "50 bp cut", "25 bp cut", 
-                   "No change", "+25 bp hike", "+50 bp hike", "+75 bp hike", "+100 bp hike")
-  legend_breaks <- legend_moves[legend_moves %in% available_moves_plot]
-  
-  area_mt <- ggplot2::ggplot(
-    df_mt_plot,
-    ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
-  ) +
-    ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
-    ggplot2::scale_fill_manual(
-      values = fill_map_subset_plot,
-      breaks = legend_breaks,
-      drop = FALSE,
-      name = "",
-      guide = ggplot2::guide_legend(override.aes = list(alpha = 1))
+  # Strategy 1: Try the full plot with reduced complexity
+  tryCatch({
+    cat("Building complete ggplot object with complexity reduction...\n")
+    
+    # CRITICAL FIX: Reduce to top 15 moves to prevent geom_area overflow
+    top_moves_for_plot <- df_mt 
+    
+    df_mt_plot <- df_mt %>%
+      dplyr::filter(move %in% top_moves_for_plot) %>%
+      dplyr::mutate(move = droplevels(move))
+    
+    cat("Reduced to", nrow(df_mt_plot), "rows with", nlevels(df_mt_plot$move), "moves for plotting\n")
+    
+    available_moves_plot <- levels(df_mt_plot$move)
+    fill_map_subset_plot <- fill_map_subset[names(fill_map_subset) %in% available_moves_plot]
+    
+    legend_moves <- c("100 bp cut", "75 bp cut", "50 bp cut", "25 bp cut", 
+                     "No change", "+25 bp hike", "+50 bp hike", "+75 bp hike", "+100 bp hike")
+    legend_breaks <- legend_moves[legend_moves %in% available_moves_plot]
+    
+    area_mt <- ggplot2::ggplot(
+      df_mt_plot,
+      ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
     ) +
-    ggplot2::scale_x_datetime(
-      limits = c(start_xlim_mt, end_xlim_mt),
-      date_breaks = "3 days",
-      date_labels = "%d %b",
-      expand = c(0, 0)
-    ) +
-    ggplot2::scale_y_continuous(
-      limits = c(0, 1),
-      labels = scales::percent_format(accuracy = 1),
-      expand = c(0, 0)
-    ) +
-    ggplot2::labs(
-      title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
-      subtitle = "Top 15 most probable moves shown (25 bp steps)",
-      x = "Forecast date", 
-      y = "Probability"
-    ) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
-      axis.text.y = ggplot2::element_text(size = 12),
-      axis.title.x = ggplot2::element_text(size = 14),
-      axis.title.y = ggplot2::element_text(size = 14),
-      legend.position = "right",
-      legend.title = ggplot2::element_blank()
+      ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
+      ggplot2::scale_fill_manual(
+        values = fill_map_subset_plot,
+        breaks = legend_breaks,
+        drop = FALSE,
+        name = "",
+        guide = ggplot2::guide_legend(override.aes = list(alpha = 1))
+      ) +
+      ggplot2::scale_x_datetime(
+        limits = c(start_xlim_mt, end_xlim_mt),
+        date_breaks = "3 days",
+        date_labels = "%d %b",
+        expand = c(0, 0)
+      ) +
+      ggplot2::scale_y_continuous(
+        limits = c(0, 1),
+        labels = scales::percent_format(accuracy = 1),
+        expand = c(0, 0)
+      ) +
+      ggplot2::labs(
+        title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
+        subtitle = "Top 15 most probable moves shown (25 bp steps)",
+        x = "Forecast date", 
+        y = "Probability"
+      ) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = ggplot2::element_text(size = 12),
+        axis.title.x = ggplot2::element_text(size = 14),
+        axis.title.y = ggplot2::element_text(size = 14),
+        legend.position = "right",
+        legend.title = ggplot2::element_blank()
+      )
+    
+    cat("Saving plot to temporary file...\n")
+    # Save to temporary file first
+    temp_filename <- paste0(filename, ".tmp")
+    
+    ggplot2::ggsave(
+      filename = temp_filename,
+      plot = area_mt,
+      width = 12,
+      height = 5,
+      dpi = 300,
+      device = "png"
     )
+    
+    # Only move temp file to final location if save was successful
+    if (file.exists(temp_filename)) {
+      file.rename(temp_filename, filename)
+      plot_success <- TRUE
+      cat("✓ Successfully saved plot for", as.character(meeting_date_proper), "\n")
+    } else {
+      cat("✗ Temp file was not created\n")
+    }
+    
+  }, error = function(e) {
+    cat("DETAILED ERROR INFORMATION:\n")
+    cat("Error class:", class(e), "\n")
+    cat("Error message:", e$message, "\n")
+  })  # <-- THIS WAS MISSING - closes the tryCatch
   
-  cat("Saving plot to temporary file...\n")
-  # Save to temporary file first
-  temp_filename <- paste0(filename, ".tmp")
-  
-  ggplot2::ggsave(
-    filename = temp_filename,
-    plot = area_mt,
-    width = 12,
-    height = 5,
-    dpi = 300,
-    device = "png"
-  )
-  
-  # Only move temp file to final location if save was successful
-  if (file.exists(temp_filename)) {
-    file.rename(temp_filename, filename)
-    plot_success <- TRUE
-    cat("✓ Successfully saved plot for", as.character(meeting_date_proper), "\n")
-  } else {
-    cat("✗ Temp file was not created\n")
+  if (!plot_success) {
+    cat("✗ Failed to create plot for meeting", as.character(meeting_date_proper), "\n")
   }
-  
-}, error = function(e) {
-  cat("DETAILED ERROR INFORMATION:\n")
-  cat("Error class:", class(e), "\n")
-  cat("Error message:", e$message, "\n")
-  }
-  
- )
+}  # <-- closes the for loop
+
+cat("\nPlotting loop completed.\n")
 
 # 5. FIXED CSV Export section
 for (mt in future_meetings_all) {
