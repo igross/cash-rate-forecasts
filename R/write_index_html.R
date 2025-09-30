@@ -24,9 +24,7 @@ analytics_snippet <- sprintf('
   gtag("js", new Date());
 
   gtag("config", "G-5J5TP6ZN7H");
-</script>
-
-)
+</script>')
 # ==============================
 
 # Ensure target directory exists
@@ -54,12 +52,11 @@ cards <- character(0)
 if (length(png_files_rel) > 0) {
 cards <- vapply(
   png_files_rel,
-  function(file) sprintf(
-    '<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" />\n</div>',
-    file, file
-  ),
+  function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" />\n</div>', 
+                         file, file),
   character(1)
 )
+
 }
 
 # Optional sections for next-meeting charts
