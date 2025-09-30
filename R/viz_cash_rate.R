@@ -151,7 +151,7 @@ abs_releases <- tribble(
 # 4) Identify last meeting, collect scrapes
 # =============================================
 last_meeting   <- max(meeting_schedule$meeting_date[
-                        meeting_schedule$meeting_date <= Sys.Date()])
+                        meeting_schedule$meeting_date < Sys.Date()])
 
 print(last_meeting)
 
