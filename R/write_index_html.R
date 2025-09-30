@@ -119,7 +119,7 @@ html <- sprintf('
 <head>
   <meta charset="UTF-8" />
   <title>Rate Outcome Probabilities by RBA Meeting</title>
-  %s
+ 
   <style>
     body {
       font-family: "Segoe UI", Roboto, sans-serif;
@@ -176,12 +176,12 @@ html <- sprintf('
   %s
 
   <h1>Cash Rate Target Probabilities By RBA Meeting</h1>
-
+  %s
   %s
 
 </body>
 </html>
-', analytics_snippet, intro_paragraph, interactive_line_section, area_chart_section, meeting_section)
+', analytics_snippet, interactive_line_section, area_chart_section, meeting_section, intro_paragraph)
 
 # Write output
 writeLines(html, "docs/index.html")
