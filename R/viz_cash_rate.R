@@ -191,7 +191,7 @@ scrapes <- all_times[all_times >= cutoff_date | all_times > last_meeting]
 # =============================================
 # 5) Build implied‐mean panel for each scrape × meeting
 # =============================================
-all_list <- map(scrapes, function(scr) {
+all_list_line <- map(scrapes, function(scr) {
 
   scr_date <- as.Date(scr)
 
@@ -248,7 +248,7 @@ df_rates <- cash_rate %>%
   bind_rows(out)
 })
 
-all_estimates <- all_list %>%
+all_estimates <- all_list_line %>%
   compact() %>%                    # drop the NULLs
   bind_rows() %>%
   filter(days_to_meeting >= 0) %>% # only future meetings
@@ -554,12 +554,84 @@ htmlwidgets::saveWidget(
 
 
 
+# MAKE AREA DATA
+all_list_area <- map(all_times, function(scr) {
+
+  scr_date <- as.Date(scr)
+
+  # 1) grab the last‐known price for each expiry up to this scrape
+df_rates <- cash_rate %>% 
+  filter(scrape_time == scr) %>%          # keep rows from *this* scrape only
+  select(
+    expiry        = date,                 # contract month
+    forecast_rate = cash_rate,            # implied rate
+    scrape_time                         # (all identical → scr)
+  )
+
+
+  # 2) join onto your schedule
+  df <- meeting_schedule %>%
+    distinct(expiry, meeting_date) %>%
+    mutate(scrape_time = scr) %>%
+    left_join(df_rates, by = "expiry") %>%
+    arrange(expiry)
+
+  # 3) lose exactly those expiries with no price yet
+  df <- df %>% filter(!is.na(forecast_rate))
+  if (nrow(df) == 0) return(NULL)
+
+
+
+  prev_implied <- NA_real_          # will store r_tp1 from prior row
+  out <- vector("list", nrow(df))
+
+  for (i in seq_len(nrow(df))) {
+    row   <- df[i, ]
+
+    rt_in <- if (is.na(prev_implied)) initial_rt else prev_implied
+
+    r_tp1 <- if (row$meeting_date < row$expiry) {
+                row$forecast_rate
+             } else {
+                nb <- (day(row$meeting_date)-1) / days_in_month(row$expiry)
+                na <- 1 - nb
+                (row$forecast_rate - rt_in * nb) / na
+             }
+
+    out[[i]] <- tibble(
+      scrape_time     = scr,
+      meeting_date    = row$meeting_date,
+      implied_mean    = r_tp1,
+      days_to_meeting = as.integer(row$meeting_date - scr_date),
+      previous_rate   = rt_in           # = rate actually used
+    )
+
+    prev_implied <- r_tp1               # roll forward
+  }
+
+  bind_rows(out)
+})
+
+all_estimates_area <- all_list_area %>%
+  compact() %>%
+  bind_rows() %>%
+  filter(days_to_meeting >= 0) %>%
+  left_join(rmse_days, by = "days_to_meeting") %>%
+  rename(stdev = finalrmse)
+
+# Fix bad stdev values
+bad_sd <- !is.finite(all_estimates_area$stdev) | is.na(all_estimates_area$stdev) | all_estimates_area$stdev <= 0
+n_bad  <- sum(bad_sd, na.rm = TRUE)
+if (n_bad > 0) {
+  all_estimates_area$stdev[bad_sd] <- max_rmse
+}
+
 # Extended range bucketing (±300 bp range in 25 bp steps)
 bp_span <- 300L
 step_bp <- 25L
 
 # Fallback SD if any invalid values remain
-sd_fallback <- suppressWarnings(stats::median(all_estimates$stdev[is.finite(all_estimates$stdev)], na.rm = TRUE))
+sd_fallback <- suppressWarnings(stats::median(all_estimates_area$stdev[is.finite(all_estimates_area$stdev)], na.rm = TRUE))
 if (!is.finite(sd_fallback) || sd_fallback <= 0) sd_fallback <- 0.01
 
 # Re-anchor the "no change" centre to nearest 25bp
@@ -572,19 +644,19 @@ bucket_centers_ext <- seq(bucket_min, bucket_max, by = 0.25)
 half_width_ext <- 0.125   # 25 bp-wide buckets
 
 # Check if all_estimates exists and has data
-if (!exists("all_estimates") || nrow(all_estimates) == 0) {
+if (!exists("all_estimates_area") || nrow(all_estimates_area) == 0) {
   stop("all_estimates object not found or empty. Make sure the earlier bucketing code ran successfully.")
 }
 
-cat("Creating extended buckets for", nrow(all_estimates), "estimate rows\n")
+cat("Creating extended buckets for", nrow(all_estimates_area), "estimate rows\n")
 cat("Bucket range:", min(bucket_centers_ext), "to", max(bucket_centers_ext), "\n")
 
 # Compute bucketed probabilities across the extended support
-bucket_list_ext <- vector("list", nrow(all_estimates))
-for (i in seq_len(nrow(all_estimates))) {
-  mu_i    <- all_estimates$implied_mean[i]
-  sigma_i <- all_estimates$stdev[i]
-  d_i     <- all_estimates$days_to_meeting[i]
+bucket_list_ext <- vector("list", nrow(all_estimates_area))
+for (i in seq_len(nrow(all_estimates_area))) {
+  mu_i    <- all_estimates_area$implied_mean[i]
+  sigma_i <- all_estimates_area$stdev[i]
+  d_i     <- all_estimates_area$days_to_meeting[i]
 
   if (!is.finite(mu_i)) next
   if (!is.finite(sigma_i) || sigma_i <= 0) sigma_i <- sd_fallback
@@ -622,8 +694,8 @@ for (i in seq_len(nrow(all_estimates))) {
   v <- blend * l_vec + (1 - blend) * p_vec
 
   bucket_list_ext[[i]] <- tibble::tibble(
-    scrape_time     = all_estimates$scrape_time[i],
-    meeting_date    = all_estimates$meeting_date[i],
+    scrape_time     = all_estimates_area$scrape_time[i],
+    meeting_date    = all_estimates_area$meeting_date[i],
     implied_mean    = mu_i,
     stdev           = sigma_i,
     days_to_meeting = d_i,
