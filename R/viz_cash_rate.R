@@ -556,61 +556,81 @@ htmlwidgets::saveWidget(
 
 # MAKE AREA DATA
 all_list_area <- map(all_times, function(scr) {
-
+  
   scr_date <- as.Date(scr)
-
-  # 1) grab the last‐known price for each expiry up to this scrape
-df_rates <- cash_rate %>% 
-  filter(scrape_time == scr) %>%          # keep rows from *this* scrape only
-  select(
-    expiry        = date,                 # contract month
-    forecast_rate = cash_rate,            # implied rate
-    scrape_time                         # (all identical → scr)
-  )
-
-
-  # 2) join onto your schedule
+  
+  # Determine the initial rate AT THIS SCRAPE TIME
+  # Find the last meeting before this scrape
+  last_meeting_at_scrape <- max(meeting_schedule$meeting_date[
+    meeting_schedule$meeting_date < scr_date
+  ])
+  
+  # If this scrape is within 1 day of that meeting, check for override
+  use_override_at_scrape <- !is.null(override) &&
+                            scr_date - last_meeting_at_scrape <= 1
+  
+  # Get the rate that was current at this scrape time
+  if (use_override_at_scrape) {
+    initial_rt_at_scrape <- override
+  } else {
+    # Get the actual published rate at or before this scrape
+    historical_rate <- read_rba(series_id = "FIRMMCRTD") %>%
+      filter(date <= scr_date) %>%
+      slice_max(date, n = 1, with_ties = FALSE) %>%
+      pull(value)
+    
+    initial_rt_at_scrape <- if(length(historical_rate) > 0) historical_rate else latest_rt
+  }
+  
+  # Rest of your code...
+  df_rates <- cash_rate %>% 
+    filter(scrape_time == scr) %>%
+    select(
+      expiry        = date,
+      forecast_rate = cash_rate,
+      scrape_time
+    )
+  
   df <- meeting_schedule %>%
     distinct(expiry, meeting_date) %>%
     mutate(scrape_time = scr) %>%
     left_join(df_rates, by = "expiry") %>%
     arrange(expiry)
-
-  # 3) lose exactly those expiries with no price yet
+  
   df <- df %>% filter(!is.na(forecast_rate))
   if (nrow(df) == 0) return(NULL)
-
-
-
-  prev_implied <- NA_real_          # will store r_tp1 from prior row
+  
+  prev_implied <- NA_real_
   out <- vector("list", nrow(df))
-
+  
   for (i in seq_len(nrow(df))) {
-    row   <- df[i, ]
-
-    rt_in <- if (is.na(prev_implied)) initial_rt else prev_implied
-
+    row <- df[i, ]
+    
+    rt_in <- if (is.na(prev_implied)) initial_rt_at_scrape else prev_implied
+    
     r_tp1 <- if (row$meeting_date < row$expiry) {
-                row$forecast_rate
-             } else {
-                nb <- (day(row$meeting_date)-1) / days_in_month(row$expiry)
-                na <- 1 - nb
-                (row$forecast_rate - rt_in * nb) / na
-             }
-
+      row$forecast_rate
+    } else {
+      nb <- (day(row$meeting_date)-1) / days_in_month(row$expiry)
+      na <- 1 - nb
+      (row$forecast_rate - rt_in * nb) / na
+    }
+    
     out[[i]] <- tibble(
       scrape_time     = scr,
       meeting_date    = row$meeting_date,
       implied_mean    = r_tp1,
       days_to_meeting = as.integer(row$meeting_date - scr_date),
-      previous_rate   = rt_in           # = rate actually used
+      previous_rate   = rt_in
     )
-
-    prev_implied <- r_tp1               # roll forward
+    
+    prev_implied <- r_tp1
   }
-
+  
   bind_rows(out)
 })
+
+print(all_list_area)
 
 all_estimates_area <- all_list_area %>%
   compact() %>%
