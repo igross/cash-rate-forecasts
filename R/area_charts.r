@@ -594,6 +594,10 @@ for (mt in future_meetings_all) {
     legend_moves <- c("100 bp cut", "75 bp cut", "50 bp cut", "25 bp cut", 
                      "No change", "+25 bp hike", "+50 bp hike", "+75 bp hike", "+100 bp hike")
     legend_breaks <- legend_moves[legend_moves %in% available_moves_plot]
+
+      n_ticks    <- 30L
+  breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+
     
     area_mt <- ggplot2::ggplot(
       df_mt,
@@ -609,8 +613,8 @@ for (mt in future_meetings_all) {
       ) +
       ggplot2::scale_x_datetime(
         limits = c(start_xlim_mt, end_xlim_mt),
-        date_breaks = "3 days",
-        date_labels = "%d %b",
+        breaks = breaks_vec,
+        labels = function(x) strftime(x, "%d %b"),
         expand = c(0, 0)
       ) +
       ggplot2::scale_y_continuous(
