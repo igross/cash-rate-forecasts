@@ -555,6 +555,11 @@ htmlwidgets::saveWidget(
 
 
 # MAKE AREA DATA
+# MAKE AREA DATA - with historical initial rates
+# Read RBA data ONCE before the loop
+rba_historical <- read_rba(series_id = "FIRMMCRTD") %>%
+  arrange(date)
+
 all_list_area <- map(all_times, function(scr) {
   
   scr_date <- as.Date(scr)
@@ -573,8 +578,8 @@ all_list_area <- map(all_times, function(scr) {
   if (use_override_at_scrape) {
     initial_rt_at_scrape <- override
   } else {
-    # Get the actual published rate at or before this scrape
-    historical_rate <- read_rba(series_id = "FIRMMCRTD") %>%
+    # Look up the rate from the pre-loaded data
+    historical_rate <- rba_historical %>%
       filter(date <= scr_date) %>%
       slice_max(date, n = 1, with_ties = FALSE) %>%
       pull(value)
@@ -582,7 +587,7 @@ all_list_area <- map(all_times, function(scr) {
     initial_rt_at_scrape <- if(length(historical_rate) > 0) historical_rate else latest_rt
   }
   
-  # Rest of your code...
+  # Rest of your existing code...
   df_rates <- cash_rate %>% 
     filter(scrape_time == scr) %>%
     select(
