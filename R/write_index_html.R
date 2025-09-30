@@ -13,7 +13,7 @@ intro_paragraph <- '
 # ====== Analytics snippet ======
 # Replace with your own ID or domain
 ga_id <- "G-XXXXXXXX"   # <-- put your GA4 Measurement ID here
-plausible_domain <- "yourdomain.com"  # <-- set to your actual domain (if using Plausible)
+plausible_domain <- "isaacgross.net"  # <-- set to your actual domain (if using Plausible)
 
 analytics_snippet <- sprintf('
 <!-- Google Analytics -->
