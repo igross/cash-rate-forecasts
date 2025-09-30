@@ -21,14 +21,12 @@ analytics_snippet <- sprintf('
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  gtag(''js'', new Date());
 
-  gtag('config', 'G-5J5TP6ZN7H');
+  gtag(''config'', ''G-5J5TP6ZN7H'');
 </script>
 
-<!-- Plausible Analytics -->
-<script defer data-domain="%s" src="https://plausible.io/js/script.js"></script>
-', ga_id, ga_id, plausible_domain)
+)
 # ==============================
 
 # Ensure target directory exists
