@@ -1012,19 +1012,7 @@ tryCatch({
   cat("Error message:", e$message, "\n")
   }
   
-  # Check if temp file exists and clean it up
-  temp_filename <- paste0(filename, ".tmp")
-  if (file.exists(temp_filename)) {
-    file.remove(temp_filename)
-    cat("Cleaned up failed temp file\n")
-  }
-  
-  # Check if original file exists
-  if (file.exists(filename)) {
-    cat("✓ Keeping existing plot file unchanged\n")
-  } else {
-    cat("✗ No existing plot file to preserve\n")
- } 
+ )
 
 # 5. FIXED CSV Export section
 for (mt in future_meetings_all) {
