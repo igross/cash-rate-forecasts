@@ -157,6 +157,10 @@ use_override   <- !is.null(override) &&
 
 print(use_override)
 
+current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
+  filter(date == max(date)) %>%
+  pull(value)
+
 initial_rt     <- if (use_override) override else latest_rt
 
 all_times <- sort(unique(cash_rate$scrape_time))
