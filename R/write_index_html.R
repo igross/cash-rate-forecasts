@@ -215,7 +215,7 @@ html <- sprintf('
 
 </body>
 </html>
-', analytics_snippet, interactive_line_section, area_chart_section, future_meeting_section, intro_paragraph, past_meeting_section)
+', analytics_snippet, interactive_line_section, area_chart_section, future_meeting_section, past_meeting_section, intro_paragraph)
 
 # Write output
 writeLines(html, "docs/index.html")
