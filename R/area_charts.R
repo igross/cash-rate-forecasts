@@ -586,48 +586,71 @@ for (mt in future_meetings_all) {
                      "No change", "+25 bp hike", "+50 bp hike", "+75 bp hike", "+100 bp hike")
     legend_breaks <- legend_moves[legend_moves %in% available_moves_plot]
 
-      n_ticks    <- 30L
-  breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+      # Replace the x-axis scale section in your plotting loop with this:
 
-    
-    area_mt <- ggplot2::ggplot(
-      df_mt,
-      ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
-    ) +
-      ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
-      ggplot2::scale_fill_manual(
-        values = fill_map_subset_plot,
-        breaks = legend_breaks,
-        drop = FALSE,
-        name = "",
-        guide = ggplot2::guide_legend(override.aes = list(alpha = 1))
-      ) +
-      ggplot2::scale_x_datetime(
-        limits = c(start_xlim_mt, end_xlim_mt),
-        breaks = breaks_vec,
-        labels = function(x) strftime(x, "%d %b"),
-        expand = c(0, 0)
-      ) +
-      ggplot2::scale_y_continuous(
-        limits = c(0, 1),
-        labels = scales::percent_format(accuracy = 1),
-        expand = c(0, 0)
-      ) +
-      ggplot2::labs(
-        title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
-        subtitle = "Top 15 most probable moves shown (25 bp steps)",
-        x = "Forecast date", 
-        y = "Probability"
-      ) +
-      ggplot2::theme_bw() +
-      ggplot2::theme(
-        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
-        axis.text.y = ggplot2::element_text(size = 12),
-        axis.title.x = ggplot2::element_text(size = 14),
-        axis.title.y = ggplot2::element_text(size = 14),
-        legend.position = "right",
-        legend.title = ggplot2::element_blank()
-      )
+# Determine if meeting is in 2026 or later
+meeting_year <- lubridate::year(meeting_date_proper)
+
+if (meeting_year >= 2026) {
+  # For 2026+ meetings: monthly ticks on the 1st of each month
+  start_month <- lubridate::floor_date(start_xlim_mt, "month")
+  end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
+  
+  breaks_vec <- seq.Date(
+    from = as.Date(start_month),
+    to = as.Date(end_month),
+    by = "month"
+  )
+  breaks_vec <- lubridate::as_datetime(breaks_vec, tz = "Australia/Melbourne")
+  
+  date_labels <- function(x) strftime(x, "%b-%Y")
+  
+} else {
+  # For 2025 meetings: keep current 30-tick format
+  n_ticks <- 30L
+  breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+  date_labels <- function(x) strftime(x, "%d %b")
+}
+
+# Then use in your ggplot:
+area_mt <- ggplot2::ggplot(
+  df_mt,
+  ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
+) +
+  ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
+  ggplot2::scale_fill_manual(
+    values = fill_map_subset_plot,
+    breaks = legend_breaks,
+    drop = FALSE,
+    name = "",
+    guide = ggplot2::guide_legend(override.aes = list(alpha = 1))
+  ) +
+  ggplot2::scale_x_datetime(
+    limits = c(start_xlim_mt, end_xlim_mt),
+    breaks = breaks_vec,
+    labels = date_labels,
+    expand = c(0, 0)
+  ) +
+  ggplot2::scale_y_continuous(
+    limits = c(0, 1),
+    labels = scales::percent_format(accuracy = 1),
+    expand = c(0, 0)
+  ) +
+  ggplot2::labs(
+    title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
+    subtitle = "Top 15 most probable moves shown (25 bp steps)",
+    x = "Forecast date", 
+    y = "Probability"
+  ) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+    axis.text.y = ggplot2::element_text(size = 12),
+    axis.title.x = ggplot2::element_text(size = 14),
+    axis.title.y = ggplot2::element_text(size = 14),
+    legend.position = "right",
+    legend.title = ggplot2::element_blank()
+  )
     
     cat("Saving plot to temporary file...\n")
     # Save to temporary file first
