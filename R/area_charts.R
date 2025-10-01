@@ -410,24 +410,52 @@ all_moves <- unique(all_estimates_buckets_ext$move)
 all_moves <- all_moves[!is.na(all_moves)]
 
 # Initialize with default grey
+# Get all unique rates
 all_rates <- sort(unique(all_estimates_buckets_ext$bucket))
 
-# Create color palette - blue for low rates, grey for middle, red for high rates
-# Using the current rate as the reference point
-color_palette <- colorRampPalette(c("#000080", "#5FA4D4", "#BFBFBF", "#E07C7C", "#800000"))
-n_colors <- length(all_rates)
-rate_colors <- color_palette(n_colors)
+# Create fill_map with blue (below current), grey (current), red (above current)
+fill_map <- setNames(character(length(all_rates)), sprintf("%.2f%%", all_rates))
 
-# Create fill_map with rate labels
-fill_map <- setNames(rate_colors, sprintf("%.2f%%", all_rates))
-
-
-# 3. Create the CSV directory if it doesn't exist
-if (!dir.exists("docs/meetings/csv")) {
-  dir.create("docs/meetings/csv", recursive = TRUE)
+for (i in seq_along(all_rates)) {
+  rate <- all_rates[i]
+  diff_from_current <- rate - current_rate
+  
+  if (abs(diff_from_current) < 0.01) {
+    # Current rate - grey
+    fill_map[i] <- "#BFBFBF"
+  } else if (diff_from_current < 0) {
+    # Below current rate - shades of blue (darker for bigger cuts)
+    bp_below <- abs(diff_from_current) * 100
+    if (bp_below >= 200) {
+      fill_map[i] <- "#000080"  # very dark blue for large cuts
+    } else if (bp_below >= 100) {
+      fill_map[i] <- "#0033A0"  # dark blue
+    } else if (bp_below >= 75) {
+      fill_map[i] <- "#004B8E"  # medium-dark blue
+    } else if (bp_below >= 50) {
+      fill_map[i] <- "#1A5CB0"  # medium blue
+    } else {
+      fill_map[i] <- "#5FA4D4"  # light blue (25bp)
+    }
+  } else {
+    # Above current rate - shades of red (darker for bigger hikes)
+    bp_above <- diff_from_current * 100
+    if (bp_above >= 200) {
+      fill_map[i] <- "#800000"  # very dark red for large hikes
+    } else if (bp_above >= 100) {
+      fill_map[i] <- "#A00000"  # dark red
+    } else if (bp_above >= 75) {
+      fill_map[i] <- "#B50000"  # medium-dark red
+    } else if (bp_above >= 50) {
+      fill_map[i] <- "#C71010"  # medium red
+    } else {
+      fill_map[i] <- "#E07C7C"  # light red (25bp)
+    }
+  }
 }
 
-
+cat("Fill map created with", length(fill_map), "colors\n")
+cat("Sample rates:", paste(head(names(fill_map), 10), collapse = ", "), "\n")
 
 # Enhanced plotting loop with detailed error diagnostics
 for (mt in future_meetings_all) {
@@ -440,7 +468,7 @@ for (mt in future_meetings_all) {
     tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_time, move)
 
-  print(df_mt,n=5)
+  print(df_mt, n = 5)
   
   cat("Initial df_mt dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
   
@@ -505,7 +533,7 @@ for (mt in future_meetings_all) {
   cat("Available moves (", length(available_moves), "):", paste(head(available_moves, 10), collapse = ", "), "\n")
   
   valid_move_levels <- rate_labels[rate_labels %in% available_moves]
-
+  
   cat("Valid move levels (", length(valid_move_levels), "):", paste(head(valid_move_levels, 10), collapse = ", "), "\n")
   
   df_mt <- df_mt %>%
@@ -521,8 +549,6 @@ for (mt in future_meetings_all) {
     cat("Skipping - no data after factor processing\n")
     next
   }
-
-
   
   # PROBABILITY VALIDATION
   prob_stats <- summary(df_mt$probability)
@@ -539,51 +565,19 @@ for (mt in future_meetings_all) {
   cat("  Max:", max(prob_sums_by_time$total_prob, na.rm = TRUE), "\n")
   cat("  Mean:", mean(prob_sums_by_time$total_prob, na.rm = TRUE), "\n")
   
-  # Get all unique rates
-all_rates <- sort(unique(all_estimates_buckets_ext$bucket))
-
-# Create fill_map with blue (below current), grey (current), red (above current)
-fill_map <- setNames(character(length(all_rates)), sprintf("%.2f%%", all_rates))
-
-for (i in seq_along(all_rates)) {
-  rate <- all_rates[i]
-  diff_from_current <- rate - current_rate
+  # Create legend breaks - subset of rates around current rate
+  legend_min <- current_rate - 1.00
+  legend_max <- current_rate + 1.00
   
-  if (abs(diff_from_current) < 0.01) {
-    # Current rate - grey
-    fill_map[i] <- "#BFBFBF"
-  } else if (diff_from_current < 0) {
-    # Below current rate - shades of blue (darker for bigger cuts)
-    bp_below <- abs(diff_from_current) * 100
-    if (bp_below >= 200) {
-      fill_map[i] <- "#000080"  # very dark blue for large cuts
-    } else if (bp_below >= 100) {
-      fill_map[i] <- "#0033A0"  # dark blue
-    } else if (bp_below >= 75) {
-      fill_map[i] <- "#004B8E"  # medium-dark blue
-    } else if (bp_below >= 50) {
-      fill_map[i] <- "#1A5CB0"  # medium blue
-    } else {
-      fill_map[i] <- "#5FA4D4"  # light blue (25bp)
-    }
-  } else {
-    # Above current rate - shades of red (darker for bigger hikes)
-    bp_above <- diff_from_current * 100
-    if (bp_above >= 200) {
-      fill_map[i] <- "#800000"  # very dark red for large hikes
-    } else if (bp_above >= 100) {
-      fill_map[i] <- "#A00000"  # dark red
-    } else if (bp_above >= 75) {
-      fill_map[i] <- "#B50000"  # medium-dark red
-    } else if (bp_above >= 50) {
-      fill_map[i] <- "#C71010"  # medium red
-    } else {
-      fill_map[i] <- "#E07C7C"  # light red (25bp)
-    }
+  # Get rates within this range
+  legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
+  
+  # Ensure we include current rate if it's a bucket center
+  if (current_rate %in% all_rates && !(current_rate %in% legend_rates)) {
+    legend_rates <- sort(c(legend_rates, current_rate))
   }
-}
-  cat("Fill map subset length:", length(fill_map_subset), "\n")
-  cat("Missing colors for moves:", setdiff(available_moves, names(fill_map_subset)), "\n")
+  
+  legend_breaks <- sprintf("%.2f%%", legend_rates)
   
   # PLOTTING WITH ENHANCED ERROR HANDLING
   filename <- paste0("docs/meetings/area_all_moves_", fmt_file(meeting_date_proper), ".png")
@@ -591,91 +585,73 @@ for (i in seq_along(all_rates)) {
   
   plot_success <- FALSE
   
-  # Strategy 1: Try the full plot with reduced complexity
   tryCatch({
     cat("Building complete ggplot object with complexity reduction...\n")
     
-   legend_min <- current_rate - 1.00
-legend_max <- current_rate + 1.00
-
-# Get rates within this range
-legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
-
-# Ensure we include current rate if it's a bucket center
-if (current_rate %in% all_rates && !(current_rate %in% legend_rates)) {
-  legend_rates <- sort(c(legend_rates, current_rate))
-}
-
-legend_breaks <- sprintf("%.2f%%", legend_rates)
+    # Determine if meeting is in 2026 or later
+    meeting_year <- lubridate::year(meeting_date_proper)
     
-      # Replace the x-axis scale section in your plotting loop with this:
-
-# Determine if meeting is in 2026 or later
-meeting_year <- lubridate::year(meeting_date_proper)
-
-if (meeting_year >= 2026) {
-  # For 2026+ meetings: monthly ticks on the 1st of each month
-  start_month <- lubridate::floor_date(start_xlim_mt, "month")
-  end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
-  
-  breaks_vec <- seq.Date(
-    from = as.Date(start_month),
-    to = as.Date(end_month),
-    by = "month"
-  )
-  breaks_vec <- lubridate::as_datetime(breaks_vec, tz = "Australia/Melbourne")
-  
-  date_labels <- function(x) strftime(x, "%b-%Y")
-  
-} else {
-  # For 2025 meetings: keep current 30-tick format
-  n_ticks <- 30L
-  breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
-  date_labels <- function(x) strftime(x, "%d %b")
-}
-
-# Then use in your ggplot:
-area_mt <- ggplot2::ggplot(
-  df_mt,
-  ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
-) +
-  ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
-  ggplot2::scale_fill_manual(
-    values = fill_map,
-    breaks = legend_breaks,  # Show subset of rates in legend
-    drop = FALSE,
-    name = "Cash Rate",
-    guide = ggplot2::guide_legend(override.aes = list(alpha = 1))
-  ) +
-  ggplot2::scale_x_datetime(
-    limits = c(start_xlim_mt, end_xlim_mt),
-    breaks = breaks_vec,
-    labels = date_labels,
-    expand = c(0, 0)
-  ) +
-  ggplot2::scale_y_continuous(
-    limits = c(0, 1),
-    labels = scales::percent_format(accuracy = 1),
-    expand = c(0, 0)
-  ) +
-  ggplot2::labs(
-    title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
-    subtitle = "Probability distribution across cash rate levels (25 bp steps)",
-    x = "Forecast date", 
-    y = "Probability"
-  ) +
-  ggplot2::theme_bw() +
-  ggplot2::theme(
-    axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
-    axis.text.y = ggplot2::element_text(size = 12),
-    axis.title.x = ggplot2::element_text(size = 14),
-    axis.title.y = ggplot2::element_text(size = 14),
-    legend.position = "right",
-    legend.title = ggplot2::element_blank()
-  )
+    if (meeting_year >= 2026) {
+      # For 2026+ meetings: monthly ticks on the 1st of each month
+      start_month <- lubridate::floor_date(start_xlim_mt, "month")
+      end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
+      
+      breaks_vec <- seq.Date(
+        from = as.Date(start_month),
+        to = as.Date(end_month),
+        by = "month"
+      )
+      breaks_vec <- lubridate::as_datetime(breaks_vec, tz = "Australia/Melbourne")
+      
+      date_labels <- function(x) strftime(x, "%b-%Y")
+      
+    } else {
+      # For 2025 meetings: keep current 30-tick format
+      n_ticks <- 30L
+      breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
+      date_labels <- function(x) strftime(x, "%d %b")
+    }
+    
+    area_mt <- ggplot2::ggplot(
+      df_mt,
+      ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
+    ) +
+      ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
+      ggplot2::scale_fill_manual(
+        values = fill_map,
+        breaks = legend_breaks,
+        drop = FALSE,
+        name = "Cash Rate",
+        guide = ggplot2::guide_legend(override.aes = list(alpha = 1))
+      ) +
+      ggplot2::scale_x_datetime(
+        limits = c(start_xlim_mt, end_xlim_mt),
+        breaks = breaks_vec,
+        labels = date_labels,
+        expand = c(0, 0)
+      ) +
+      ggplot2::scale_y_continuous(
+        limits = c(0, 1),
+        labels = scales::percent_format(accuracy = 1),
+        expand = c(0, 0)
+      ) +
+      ggplot2::labs(
+        title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
+        subtitle = "Probability distribution across cash rate levels (25 bp steps)",
+        x = "Forecast date", 
+        y = "Probability"
+      ) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = ggplot2::element_text(size = 12),
+        axis.title.x = ggplot2::element_text(size = 14),
+        axis.title.y = ggplot2::element_text(size = 14),
+        legend.position = "right",
+        legend.title = ggplot2::element_blank()
+      )
     
     cat("Saving plot to temporary file...\n")
-    # Save to temporary file first
     temp_filename <- paste0(filename, ".tmp")
     
     ggplot2::ggsave(
@@ -687,7 +663,6 @@ area_mt <- ggplot2::ggplot(
       device = "png"
     )
     
-    # Only move temp file to final location if save was successful
     if (file.exists(temp_filename)) {
       file.rename(temp_filename, filename)
       plot_success <- TRUE
@@ -700,12 +675,12 @@ area_mt <- ggplot2::ggplot(
     cat("DETAILED ERROR INFORMATION:\n")
     cat("Error class:", class(e), "\n")
     cat("Error message:", e$message, "\n")
-  })  # <-- THIS WAS MISSING - closes the tryCatch
+  })
   
   if (!plot_success) {
     cat("✗ Failed to create plot for meeting", as.character(meeting_date_proper), "\n")
   }
-}  # <-- closes the for loop
+}
 
 cat("\nPlotting loop completed.\n")
 
