@@ -539,8 +539,49 @@ for (mt in future_meetings_all) {
   cat("  Max:", max(prob_sums_by_time$total_prob, na.rm = TRUE), "\n")
   cat("  Mean:", mean(prob_sums_by_time$total_prob, na.rm = TRUE), "\n")
   
-  # COLOR MAPPING VALIDATION
-  fill_map_subset <- fill_map[names(fill_map) %in% available_moves]
+  # Get all unique rates
+all_rates <- sort(unique(all_estimates_buckets_ext$bucket))
+
+# Create fill_map with blue (below current), grey (current), red (above current)
+fill_map <- setNames(character(length(all_rates)), sprintf("%.2f%%", all_rates))
+
+for (i in seq_along(all_rates)) {
+  rate <- all_rates[i]
+  diff_from_current <- rate - current_rate
+  
+  if (abs(diff_from_current) < 0.01) {
+    # Current rate - grey
+    fill_map[i] <- "#BFBFBF"
+  } else if (diff_from_current < 0) {
+    # Below current rate - shades of blue (darker for bigger cuts)
+    bp_below <- abs(diff_from_current) * 100
+    if (bp_below >= 200) {
+      fill_map[i] <- "#000080"  # very dark blue for large cuts
+    } else if (bp_below >= 100) {
+      fill_map[i] <- "#0033A0"  # dark blue
+    } else if (bp_below >= 75) {
+      fill_map[i] <- "#004B8E"  # medium-dark blue
+    } else if (bp_below >= 50) {
+      fill_map[i] <- "#1A5CB0"  # medium blue
+    } else {
+      fill_map[i] <- "#5FA4D4"  # light blue (25bp)
+    }
+  } else {
+    # Above current rate - shades of red (darker for bigger hikes)
+    bp_above <- diff_from_current * 100
+    if (bp_above >= 200) {
+      fill_map[i] <- "#800000"  # very dark red for large hikes
+    } else if (bp_above >= 100) {
+      fill_map[i] <- "#A00000"  # dark red
+    } else if (bp_above >= 75) {
+      fill_map[i] <- "#B50000"  # medium-dark red
+    } else if (bp_above >= 50) {
+      fill_map[i] <- "#C71010"  # medium red
+    } else {
+      fill_map[i] <- "#E07C7C"  # light red (25bp)
+    }
+  }
+}
   cat("Fill map subset length:", length(fill_map_subset), "\n")
   cat("Missing colors for moves:", setdiff(available_moves, names(fill_map_subset)), "\n")
   
