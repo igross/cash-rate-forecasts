@@ -504,7 +504,8 @@ for (mt in future_meetings_all) {
   available_moves <- unique(df_mt$move[!is.na(df_mt$move)])
   cat("Available moves (", length(available_moves), "):", paste(head(available_moves, 10), collapse = ", "), "\n")
   
-  valid_move_levels <- move_levels_lbl[move_levels_lbl %in% available_moves]
+  valid_move_levels <- rate_labels[rate_labels %in% available_moves]
+
   cat("Valid move levels (", length(valid_move_levels), "):", paste(head(valid_move_levels, 10), collapse = ", "), "\n")
   
   df_mt <- df_mt %>%
@@ -618,7 +619,7 @@ area_mt <- ggplot2::ggplot(
   ) +
   ggplot2::labs(
     title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
-    subtitle = "Top 15 most probable moves shown (25 bp steps)",
+    subtitle = "Probability distribution across cash rate levels (25 bp steps)",
     x = "Forecast date", 
     y = "Probability"
   ) +
