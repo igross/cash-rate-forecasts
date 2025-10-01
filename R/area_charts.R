@@ -372,24 +372,21 @@ all_estimates_buckets_ext <- dplyr::bind_rows(bucket_list_ext) %>%
     diff_bps = pmax(pmin(diff_bps, bp_span), -bp_span)
   )
 
-# Move levels ordered from biggest CUT to biggest HIKE (for proper stacking)
-move_levels_bps <- seq(-bp_span, bp_span, by = step_bp)  # -300, -275, -250, ..., 275, 300
-label_move <- function(x) if (x < 0) paste0(abs(x), " bp cut") else if (x == 0) "No change" else paste0("+", x, " bp hike")
-move_levels_lbl <- vapply(move_levels_bps, label_move, character(1))
-
-# Legend breaks (for the -100 to +100 range, ordered cut→hike for consistency)
-legend_bps    <- seq(-100, 100, by = 25)  # -100, -75, -50, -25, 0, 25, 50, 75, 100
-legend_breaks <- vapply(legend_bps, label_move, character(1))
-
-# Add move labels
 all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
   dplyr::mutate(
-    move = dplyr::case_when(
-      diff_bps == 0L ~ "No change",
-      diff_bps <  0L ~ paste0(abs(diff_bps), " bp cut"),
-      TRUE           ~ paste0("+", diff_bps, " bp hike")
-    ),
-    move = factor(move, levels = move_levels_lbl)  # Now properly ordered cut→hike
+    # Use actual bucket rate as the label
+    move = sprintf("%.2f%%", bucket),
+    # Keep diff_bps for reference
+    diff_bps = as.integer(round((bucket - current_center_ext) * 100L))
+  )
+
+# Create ordered factor levels based on bucket rates (ascending order)
+rate_levels <- sort(unique(all_estimates_buckets_ext$bucket))
+rate_labels <- sprintf("%.2f%%", rate_levels)
+
+all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
+  dplyr::mutate(
+    move = factor(move, levels = rate_labels)
   )
 
 
@@ -413,40 +410,17 @@ all_moves <- unique(all_estimates_buckets_ext$move)
 all_moves <- all_moves[!is.na(all_moves)]
 
 # Initialize with default grey
-fill_map <- setNames(rep("#BFBFBF", length(all_moves)), all_moves)
+all_rates <- sort(unique(all_estimates_buckets_ext$bucket))
 
-# Apply colors based on move type - gradual from dark blue (big cuts) to dark red (big hikes)
-for (mv in all_moves) {
-  if (grepl("cut", mv, ignore.case = TRUE)) {
-    # Cuts: shades of blue (darker = bigger cut)
-    if (grepl("300|275|250|225|200", mv)) {
-      fill_map[mv] <- "#000080"  # very dark blue for large cuts
-    } else if (grepl("175|150|125|100", mv)) {
-      fill_map[mv] <- "#0033A0"  # dark blue
-    } else if (grepl("75", mv)) {
-      fill_map[mv] <- "#004B8E"  # medium-dark blue
-    } else if (grepl("50", mv)) {
-      fill_map[mv] <- "#1A5CB0"  # medium blue
-    } else if (grepl("25", mv)) {
-      fill_map[mv] <- "#5FA4D4"  # light blue
-    }
-  } else if (grepl("hike", mv, ignore.case = TRUE)) {
-    # Hikes: shades of red (darker = bigger hike)
-    if (grepl("300|275|250|225|200", mv)) {
-      fill_map[mv] <- "#800000"  # very dark red for large hikes
-    } else if (grepl("175|150|125|100", mv)) {
-      fill_map[mv] <- "#A00000"  # dark red
-    } else if (grepl("75", mv)) {
-      fill_map[mv] <- "#B50000"  # medium-dark red
-    } else if (grepl("50", mv)) {
-      fill_map[mv] <- "#C71010"  # medium red
-    } else if (grepl("25", mv)) {
-      fill_map[mv] <- "#E07C7C"  # light red
-    }
-  } else if (grepl("No change", mv, ignore.case = TRUE)) {
-    fill_map[mv] <- "#BFBFBF"  # grey for no change
-  }
-}
+# Create color palette - blue for low rates, grey for middle, red for high rates
+# Using the current rate as the reference point
+color_palette <- colorRampPalette(c("#000080", "#5FA4D4", "#BFBFBF", "#E07C7C", "#800000"))
+n_colors <- length(all_rates)
+rate_colors <- color_palette(n_colors)
+
+# Create fill_map with rate labels
+fill_map <- setNames(rate_colors, sprintf("%.2f%%", all_rates))
+
 
 # 3. Create the CSV directory if it doesn't exist
 if (!dir.exists("docs/meetings/csv")) {
@@ -579,13 +553,19 @@ for (mt in future_meetings_all) {
   tryCatch({
     cat("Building complete ggplot object with complexity reduction...\n")
     
-    available_moves_plot <- levels(df_mt$move)
-    fill_map_subset_plot <- fill_map_subset[names(fill_map_subset) %in% available_moves_plot]
-    
-    legend_moves <- c("100 bp cut", "75 bp cut", "50 bp cut", "25 bp cut", 
-                     "No change", "+25 bp hike", "+50 bp hike", "+75 bp hike", "+100 bp hike")
-    legend_breaks <- legend_moves[legend_moves %in% available_moves_plot]
+   legend_min <- current_rate - 1.00
+legend_max <- current_rate + 1.00
 
+# Get rates within this range
+legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
+
+# Ensure we include current rate if it's a bucket center
+if (current_rate %in% all_rates && !(current_rate %in% legend_rates)) {
+  legend_rates <- sort(c(legend_rates, current_rate))
+}
+
+legend_breaks <- sprintf("%.2f%%", legend_rates)
+    
       # Replace the x-axis scale section in your plotting loop with this:
 
 # Determine if meeting is in 2026 or later
@@ -619,10 +599,10 @@ area_mt <- ggplot2::ggplot(
 ) +
   ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
   ggplot2::scale_fill_manual(
-    values = fill_map_subset_plot,
-    breaks = legend_breaks,
+    values = fill_map,
+    breaks = legend_breaks,  # Show subset of rates in legend
     drop = FALSE,
-    name = "",
+    name = "Cash Rate",
     guide = ggplot2::guide_legend(override.aes = list(alpha = 1))
   ) +
   ggplot2::scale_x_datetime(
