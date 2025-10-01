@@ -11,9 +11,8 @@ intro_paragraph <- '
   </p>'
 
 # ====== Analytics snippet ======
-# Replace with your own ID or domain
-ga_id <- "G-5J5TP6ZN7H"   # <-- put your GA4 Measurement ID here
-plausible_domain <- "isaacgross.net"  # <-- set to your actual domain (if using Plausible)
+ga_id <- "G-5J5TP6ZN7H"
+plausible_domain <- "isaacgross.net"
 
 analytics_snippet <- sprintf('
 <!-- Google tag (gtag.js) -->
@@ -37,26 +36,50 @@ png_basenames <- list.files(
   full.names = FALSE
 )
 
-# Sort by the date in filename (earliest first)
+# Get current date
+current_date <- Sys.Date()
+
+# Sort and separate into future and past meetings
+future_cards <- character(0)
+past_cards <- character(0)
+
 if (length(png_basenames) > 0) {
   dates_chr <- str_match(png_basenames, "area_all_moves_(\\d{4}-\\d{2}-\\d{2})\\.png")[, 2]
-  dates_ord <- as.Date(dates_chr, format = "%Y-%m-%d")
-  ord <- order(dates_ord, decreasing = FALSE, na.last = TRUE)
-  png_basenames <- png_basenames[ord]
-}
-
-png_files_rel <- file.path("meetings", png_basenames)
-
-# Build image cards
-cards <- character(0)
-if (length(png_files_rel) > 0) {
-cards <- vapply(
-  png_files_rel,
-  function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" />\n</div>', 
-                         file, file),
-  character(1)
-)
-
+  dates_obj <- as.Date(dates_chr, format = "%Y-%m-%d")
+  
+  # Separate future and past
+  future_idx <- dates_obj >= current_date
+  past_idx <- dates_obj < current_date
+  
+  # Sort future meetings (earliest first)
+  if (any(future_idx)) {
+    future_files <- png_basenames[future_idx]
+    future_dates <- dates_obj[future_idx]
+    future_ord <- order(future_dates, decreasing = FALSE, na.last = TRUE)
+    future_files <- future_files[future_ord]
+    
+    future_cards <- vapply(
+      file.path("meetings", future_files),
+      function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" />\n</div>', 
+                             file, file),
+      character(1)
+    )
+  }
+  
+  # Sort past meetings (most recent first)
+  if (any(past_idx)) {
+    past_files <- png_basenames[past_idx]
+    past_dates <- dates_obj[past_idx]
+    past_ord <- order(past_dates, decreasing = TRUE, na.last = TRUE)
+    past_files <- past_files[past_ord]
+    
+    past_cards <- vapply(
+      file.path("meetings", past_files),
+      function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" />\n</div>', 
+                             file, file),
+      character(1)
+    )
+  }
 }
 
 # Optional sections for next-meeting charts
@@ -105,11 +128,20 @@ if (file.exists("docs/area.png")) {
   </div>'
 }
 
-# Meeting grid section
-meeting_section <- if (length(cards) > 0) {
-  paste('<div class="grid">', paste(cards, collapse = "\n"), '</div>')
+# Future meetings section
+future_meeting_section <- if (length(future_cards) > 0) {
+  paste('<h1>Cash Rate Target Probabilities By RBA Meeting</h1>\n<div class="grid">', 
+        paste(future_cards, collapse = "\n"), '</div>')
 } else {
-  '<p style="text-align:center;">No upcoming RBA meeting charts available.</p>'
+  '<h1>Cash Rate Target Probabilities By RBA Meeting</h1>\n<p style="text-align:center;">No upcoming RBA meeting charts available.</p>'
+}
+
+# Past meetings section
+past_meeting_section <- if (length(past_cards) > 0) {
+  paste('<h1 style="margin-top:60px; text-align:center;">Previous Meetings</h1>\n<div class="grid">', 
+        paste(past_cards, collapse = "\n"), '</div>')
+} else {
+  ""
 }
 
 # Assemble HTML
@@ -175,14 +207,16 @@ html <- sprintf('
 
   %s
 
-  <h1>Cash Rate Target Probabilities By RBA Meeting</h1>
   %s
+  
+  %s
+
   %s
 
 </body>
 </html>
-', analytics_snippet, interactive_line_section, area_chart_section, meeting_section, intro_paragraph)
+', analytics_snippet, interactive_line_section, area_chart_section, future_meeting_section, intro_paragraph, past_meeting_section)
 
 # Write output
 writeLines(html, "docs/index.html")
-message("✅ index.html written with ", length(png_files_rel), " meeting charts (earliest first).")
+message("✅ index.html written with ", length(future_cards), " upcoming meeting charts and ", length(past_cards), " past meeting charts.")
