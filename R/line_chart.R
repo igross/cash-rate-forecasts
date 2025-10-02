@@ -530,6 +530,14 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
 # Save the static plot
 ggsave("docs/line.png", line, width = 10, height = 5, dpi = 300)
 
+ggsave(
+  glue("docs/line_{format(next_meeting, '%d %b %Y')}.png"), 
+  line, 
+  width = 10, 
+  height = 5, 
+  dpi = 300
+)
+
 # NOW create line_int for interactive plot
 line_int <- line +
   aes(text = paste0(
