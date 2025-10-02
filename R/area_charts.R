@@ -42,7 +42,8 @@ cash_rate$cash_rate <- cash_rate$cash_rate+spread
 meeting_schedule <- tibble(
   meeting_date = as.Date(c(
     # 2025 meetings
-    "2025-02-18","2025-04-01","2025-05-20","2025-07-08",
+    # "2025-02-18","2025-04-01","2025-05-20",
+    "2025-07-08",
     "2025-08-12","2025-09-30","2025-11-04","2025-12-09",
     # 2026 meetings (second day of each two-day meeting)
     "2026-02-03","2026-03-17","2026-05-05","2026-06-16",
@@ -393,7 +394,7 @@ all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
 
 future_meetings_all <- meeting_schedule %>%
   dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
-  dplyr::filter(meeting_date > Sys.Date()) %>%
+#  dplyr::filter(meeting_date > Sys.Date()) %>%
   dplyr::pull(meeting_date)
 
 # Debug output to verify
@@ -426,7 +427,7 @@ for (i in seq_along(all_rates)) {
   } else if (diff_from_current < 0) {
     # Below current rate - shades of blue (darker for bigger cuts)
     bp_below <- abs(diff_from_current) * 100
-    if (bp_below >= 200) {
+    if (bp_below >= 125) {
       fill_map[i] <- "#000080"  # very dark blue for large cuts
     } else if (bp_below >= 100) {
       fill_map[i] <- "#0033A0"  # dark blue
@@ -440,7 +441,7 @@ for (i in seq_along(all_rates)) {
   } else {
     # Above current rate - shades of red (darker for bigger hikes)
     bp_above <- diff_from_current * 100
-    if (bp_above >= 200) {
+    if (bp_above >= 125) {
       fill_map[i] <- "#800000"  # very dark red for large hikes
     } else if (bp_above >= 100) {
       fill_map[i] <- "#A00000"  # dark red
@@ -684,7 +685,7 @@ for (mt in future_meetings_all) {
       plot = area_mt,
       width = 12,
       height = 5,
-      dpi = 300,
+      dpi = 600,
       device = "png"
     )
     
