@@ -42,7 +42,8 @@ cash_rate$cash_rate <- cash_rate$cash_rate+spread
 meeting_schedule <- tibble(
   meeting_date = as.Date(c(
     # 2025 meetings
-    "2025-02-18","2025-04-01","2025-05-20","2025-07-08",
+    # "2025-02-18","2025-04-01","2025-05-20",
+    "2025-07-08",
     "2025-08-12","2025-09-30","2025-11-04","2025-12-09",
     # 2026 meetings (second day of each two-day meeting)
     "2026-02-03","2026-03-17","2026-05-05","2026-06-16",
@@ -393,7 +394,7 @@ all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
 
 future_meetings_all <- meeting_schedule %>%
   dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
-  dplyr::filter(meeting_date > Sys.Date()) %>%
+#  dplyr::filter(meeting_date > Sys.Date()) %>%
   dplyr::pull(meeting_date)
 
 # Debug output to verify
