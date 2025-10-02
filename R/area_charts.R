@@ -30,6 +30,8 @@ cash_rate_archieve <- cash_rate_archieve %>%
 
 cash_rate <- bind_rows(cash_rate, cash_rate_archieve)
 
+print(cash_rate)
+
 load("combined_data/rmse_days.RData")                 # object rmse_days: days_to_meeting ↦ finalrmse
 
 blend_weight <- function(days_to_meeting) {
