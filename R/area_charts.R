@@ -457,7 +457,8 @@ for (i in seq_along(all_rates)) {
 cat("Fill map created with", length(fill_map), "colors\n")
 cat("Sample rates:", paste(head(names(fill_map), 10), collapse = ", "), "\n")
 
-# Enhanced plotting loop with detailed error diagnostics
+# Replace your existing plotting loop with this enhanced version
+
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
@@ -579,6 +580,20 @@ for (mt in future_meetings_all) {
   
   legend_breaks <- sprintf("%.2f%%", legend_rates)
   
+  # *** NEW: Prepare RBA meeting dates for vertical lines ***
+  # Get all RBA meetings that fall within the plot's time range
+  # Exclude the target meeting itself (it's the endpoint)
+  rba_meetings_in_range <- meeting_schedule %>%
+    dplyr::filter(
+      meeting_date > as.Date(start_xlim_mt),
+      meeting_date < meeting_date_proper
+    ) %>%
+    dplyr::mutate(
+      meeting_datetime = lubridate::as_datetime(meeting_date, tz = "Australia/Melbourne") + lubridate::hours(10)
+    )
+  
+  cat("RBA meetings in plot range:", nrow(rba_meetings_in_range), "\n")
+  
   # PLOTTING WITH ENHANCED ERROR HANDLING
   filename <- paste0("docs/meetings/area_all_moves_", fmt_file(meeting_date_proper), ".png")
   cat("Attempting to create plot and save to:", filename, "\n")
@@ -617,6 +632,16 @@ for (mt in future_meetings_all) {
       ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
     ) +
       ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
+      # *** NEW: Add grey dashed horizontal line at 50% ***
+      ggplot2::geom_hline(yintercept = 0.5, linetype = "dashed", 
+                         color = "grey40", linewidth = 0.6, alpha = 0.8) +
+      # *** NEW: Add vertical lines for RBA meetings ***
+      {if(nrow(rba_meetings_in_range) > 0) 
+        ggplot2::geom_vline(data = rba_meetings_in_range,
+                           aes(xintercept = as.numeric(meeting_datetime)),
+                           linetype = "solid", color = "grey30", 
+                           linewidth = 0.4, alpha = 0.6)
+      } +
       ggplot2::scale_fill_manual(
         values = fill_map,
         breaks = legend_breaks,
