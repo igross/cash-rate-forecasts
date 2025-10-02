@@ -831,4 +831,9 @@ if (nrow(combined_csv) > 0) {
   cat("Decimal endings (should be 10, 35, 60, 85):", paste(unique_decimals, collapse = ", "), "\n")
 }
 
+file.remove(list.files("docs", pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$", full.names = TRUE)[
+  sapply(list.files("docs", pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$", full.names = TRUE), 
+         function(f) as.Date(sub(".*_(\\d{4}-\\d{2}-\\d{2})\\.png$", "\\1", f)) < as.Date("2025-07-14"))
+])
+
 cat("Analysis completed successfully!\n")
