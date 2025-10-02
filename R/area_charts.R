@@ -446,7 +446,7 @@ for (i in seq_along(all_rates)) {
       fill_map[i] <- "#A00000"  # dark red
     } else if (bp_above >= 75) {
       fill_map[i] <- "#B50000"  # medium-dark red
-    } else if (bp_above >= 50) {
+    } else if (bp_above >= 49) {
       fill_map[i] <- "#C71010"  # medium red
     } else {
       fill_map[i] <- "#E07C7C"  # light red (25bp)
@@ -634,13 +634,13 @@ for (mt in future_meetings_all) {
       ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
       # *** NEW: Add grey dashed horizontal line at 50% ***
       ggplot2::geom_hline(yintercept = 0.5, linetype = "dashed", 
-                         color = "grey40", linewidth = 0.6, alpha = 0.8) +
+                         color = "grey40", linewidth = 0.7, alpha = 0.8) +
       # *** NEW: Add vertical lines for RBA meetings ***
       {if(nrow(rba_meetings_in_range) > 0) 
         ggplot2::geom_vline(data = rba_meetings_in_range,
                            aes(xintercept = as.numeric(meeting_datetime)),
-                           linetype = "solid", color = "grey30", 
-                           linewidth = 0.4, alpha = 0.6)
+                           linetype = "solid", color = "white", 
+                           linewidth = 0.6, alpha = 0.6)
       } +
       ggplot2::scale_fill_manual(
         values = fill_map,
