@@ -17,21 +17,6 @@ suppressPackageStartupMessages({
 # 2) Load data & RMSE lookup
 # =============================================
 cash_rate <- readRDS("combined_data/all_data.Rds")    # columns: date, cash_rate, scrape_time
-cash_rate_archieve <- readRDS("combined_data/archieve.Rds")    # columns: date, cash_rate, scrape_time
-
-cash_rate_archieve <- cash_rate_archieve %>%
-  mutate(
-    scrape_time = with_tz(
-      ymd_hms(paste(scrape_date, "12:00:00")),
-      tzone = "Australia/Sydney"  # AEST/AEDT
-    )
-  ) %>%
-  filter(scrape_date < as.Date("2025-07-14"))
-
-cash_rate_2 <- bind_rows(cash_rate, cash_rate_archieve)
-
-print(cash_rate_2)
-
 load("combined_data/rmse_days.RData")                 # object rmse_days: days_to_meeting ↦ finalrmse
 
 blend_weight <- function(days_to_meeting) {
@@ -56,46 +41,22 @@ cash_rate$cash_rate <- cash_rate$cash_rate+spread
 # =============================================
 meeting_schedule <- tibble(
   meeting_date = as.Date(c(
-    # 2022 meetings (11 meetings - first Tuesday of month except January)
-    "2022-02-01", "2022-03-01", "2022-04-05", "2022-05-03", "2022-06-07",
-    "2022-07-05", "2022-08-02", "2022-09-06", "2022-10-04", "2022-11-01",
-    "2022-12-06",
-    
-    # 2023 meetings (11 meetings - first Tuesday of month except January)
-    "2023-02-07", "2023-03-07", "2023-04-04", "2023-05-02", "2023-06-06",
-    "2023-07-04", "2023-08-01", "2023-09-05", "2023-10-03", "2023-11-07",
-    "2023-12-05",
-    
-    # 2024 meetings (8 meetings - NEW PATTERN, second day of two-day meeting)
-    "2024-02-06", "2024-03-19", "2024-05-07", "2024-06-18",
-    "2024-08-06", "2024-09-24", "2024-11-05", "2024-12-10",
-    
-    # 2025 meetings (8 meetings, second day of two-day meeting)
-    "2025-02-18", "2025-04-01", "2025-05-20", "2025-07-08",
-    "2025-08-12", "2025-09-30", "2025-11-04", "2025-12-09",
-    
-    # 2026 meetings (8 meetings, second day of two-day meeting)
-    "2026-02-03", "2026-03-17", "2026-05-05", "2026-06-16",
-    "2026-08-11", "2026-09-29", "2026-11-03", "2026-12-08",
-    
-    # 2027 meetings (8 meetings - predicted, second day of two-day meeting)
-    "2027-02-02", "2027-03-16", "2027-05-04", "2027-06-15",
-    "2027-08-10", "2027-09-29", "2027-11-02", "2027-12-07"
+    # 2025 meetings
+    "2025-02-18","2025-04-01","2025-05-20","2025-07-08",
+    "2025-08-12","2025-09-30","2025-11-04","2025-12-09",
+    # 2026 meetings (second day of each two-day meeting)
+    "2026-02-03","2026-03-17","2026-05-05","2026-06-16",
+    "2026-08-11" ,"2026-09-29","2026-11-03","2026-12-08"
   ))
-) %>%
+) %>% 
   mutate(
     expiry = if_else(
-      day(meeting_date) >= days_in_month(meeting_date) - 1,
-      ceiling_date(meeting_date, "month"),
-      floor_date(meeting_date, "month")
-    ),
-    # Add metadata about meeting pattern
-    meeting_pattern = case_when(
-      year(meeting_date) <= 2023 ~ "Monthly (11/year)",
-      TRUE ~ "Six-weekly (8/year)"
+      day(meeting_date) >= days_in_month(meeting_date) - 1,   # last 1‑2 days
+      ceiling_date(meeting_date, "month"),                    # → next month
+      floor_date(meeting_date,  "month")                      # otherwise same
     )
-  ) %>%
-  select(meeting_date, expiry, meeting_pattern)
+  ) %>% 
+  select(expiry, meeting_date)
 
 abs_releases <- tribble(
   ~dataset,           ~datetime,
@@ -432,7 +393,7 @@ all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
 
 future_meetings_all <- meeting_schedule %>%
   dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
-#  dplyr::filter(meeting_date > Sys.Date()) %>%
+  dplyr::filter(meeting_date > Sys.Date()) %>%
   dplyr::pull(meeting_date)
 
 # Debug output to verify
@@ -465,7 +426,7 @@ for (i in seq_along(all_rates)) {
   } else if (diff_from_current < 0) {
     # Below current rate - shades of blue (darker for bigger cuts)
     bp_below <- abs(diff_from_current) * 100
-    if (bp_below >= 125) {
+    if (bp_below >= 200) {
       fill_map[i] <- "#000080"  # very dark blue for large cuts
     } else if (bp_below >= 100) {
       fill_map[i] <- "#0033A0"  # dark blue
@@ -479,7 +440,7 @@ for (i in seq_along(all_rates)) {
   } else {
     # Above current rate - shades of red (darker for bigger hikes)
     bp_above <- diff_from_current * 100
-    if (bp_above >= 125) {
+    if (bp_above >= 200) {
       fill_map[i] <- "#800000"  # very dark red for large hikes
     } else if (bp_above >= 100) {
       fill_map[i] <- "#A00000"  # dark red
@@ -723,7 +684,7 @@ for (mt in future_meetings_all) {
       plot = area_mt,
       width = 12,
       height = 5,
-      dpi = 600,
+      dpi = 300,
       device = "png"
     )
     
@@ -830,10 +791,5 @@ if (nrow(combined_csv) > 0) {
   unique_decimals <- unique(decimals)
   cat("Decimal endings (should be 10, 35, 60, 85):", paste(unique_decimals, collapse = ", "), "\n")
 }
-
-file.remove(list.files("docs", pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$", full.names = TRUE)[
-  sapply(list.files("docs", pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$", full.names = TRUE), 
-         function(f) as.Date(sub(".*_(\\d{4}-\\d{2}-\\d{2})\\.png$", "\\1", f)) < as.Date("2025-07-14"))
-])
 
 cat("Analysis completed successfully!\n")
