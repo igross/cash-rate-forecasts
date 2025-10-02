@@ -426,7 +426,7 @@ for (i in seq_along(all_rates)) {
   } else if (diff_from_current < 0) {
     # Below current rate - shades of blue (darker for bigger cuts)
     bp_below <- abs(diff_from_current) * 100
-    if (bp_below >= 200) {
+    if (bp_below >= 125) {
       fill_map[i] <- "#000080"  # very dark blue for large cuts
     } else if (bp_below >= 100) {
       fill_map[i] <- "#0033A0"  # dark blue
@@ -440,7 +440,7 @@ for (i in seq_along(all_rates)) {
   } else {
     # Above current rate - shades of red (darker for bigger hikes)
     bp_above <- diff_from_current * 100
-    if (bp_above >= 200) {
+    if (bp_above >= 125) {
       fill_map[i] <- "#800000"  # very dark red for large hikes
     } else if (bp_above >= 100) {
       fill_map[i] <- "#A00000"  # dark red
@@ -684,7 +684,7 @@ for (mt in future_meetings_all) {
       plot = area_mt,
       width = 12,
       height = 5,
-      dpi = 300,
+      dpi = 600,
       device = "png"
     )
     
