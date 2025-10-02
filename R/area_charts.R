@@ -28,9 +28,9 @@ cash_rate_archieve <- cash_rate_archieve %>%
   ) %>%
   filter(scrape_date < as.Date("2025-07-14"))
 
-cash_rate <- bind_rows(cash_rate, cash_rate_archieve)
+cash_rate_2 <- bind_rows(cash_rate, cash_rate_archieve)
 
-print(cash_rate)
+print(cash_rate_2)
 
 load("combined_data/rmse_days.RData")                 # object rmse_days: days_to_meeting ↦ finalrmse
 
