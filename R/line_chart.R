@@ -354,9 +354,7 @@ for (i in seq_len(nrow(all_estimates))) {
 
 all_estimates_buckets <- bind_rows(bucket_list)
 
-all_estimates_buckets %>% 
-  tail(20) %>% 
-  print(n = Inf, width = Inf)
+
 
 # =============================================
 # 7 Bar charts for every future meeting (latest scrape)
@@ -368,6 +366,8 @@ future_meetings <- future_meetings[future_meetings > Sys.Date()]
 
 # 2) Grab the most recent scrape_time
 latest_scrape <- max(all_estimates_buckets$scrape_time)+hours(10)
+
+print(latest_scrape)
 
 # 3) Loop through each meeting, filter & plot
 for (mt in future_meetings) {
