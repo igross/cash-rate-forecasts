@@ -533,7 +533,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10), y = probability,
   ) +
   labs(
     title    = glue::glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue::glue("as of {format(as.Date(latest_scrape), '%d %b %Y')}"),
+    subtitle = glue::glue("as of {format(as.Date(latest_scrape+hours(10)), '%d %b %Y')}"),
     x = "Forecast date", y = "Probability"
   ) +
   geom_vline(data = abs_releases,
