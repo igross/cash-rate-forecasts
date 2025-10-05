@@ -712,8 +712,8 @@ for (mt in future_meetings_all) {
       ggplot2::labs(
         title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
         subtitle = if(!is.null(actual_outcome)) {
-          paste("Probability distribution across cash rate levels (25 bp steps) | Actual outcome:", 
-                sprintf("%.2f%%", actual_outcome))
+          paste0("Probability distribution across cash rate levels (25 bp steps) | Actual outcome: <span style='color:gold;'>**", 
+      sprintf("%.2f%%", actual_outcome), "**</span>")
         } else {
           "Probability distribution across cash rate levels (25 bp steps)"
         },
@@ -721,14 +721,15 @@ for (mt in future_meetings_all) {
         y = "Probability"
       ) +
       ggplot2::theme_bw() +
-      ggplot2::theme(
-        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
-        axis.text.y = ggplot2::element_text(size = 12),
-        axis.title.x = ggplot2::element_text(size = 14),
-        axis.title.y = ggplot2::element_text(size = 14),
-        legend.position = "right",
-        legend.title = ggplot2::element_blank()
-      )
+ggplot2::theme(
+  axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+  axis.text.y = ggplot2::element_text(size = 12),
+  axis.title.x = ggplot2::element_text(size = 14),
+  axis.title.y = ggplot2::element_text(size = 14),
+  plot.subtitle = ggtext::element_markdown(),  # <-- NEW LINE
+  legend.position = "right",
+  legend.title = ggplot2::element_blank()
+)
     
     cat("Saving plot to temporary file...\n")
     temp_filename <- paste0(filename, ".tmp")
