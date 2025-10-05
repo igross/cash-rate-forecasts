@@ -463,6 +463,8 @@ cat("Sample rates:", paste(head(names(fill_map), 10), collapse = ", "), "\n")
 
 # Replace your existing plotting loop with this enhanced version
 
+# Replace your existing plotting loop with this enhanced version
+
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
@@ -668,15 +670,16 @@ for (mt in future_meetings_all) {
       ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
     ) +
       ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
-      # *** Add black borders to the actual outcome area ***
+      # *** Add gold striped pattern overlay to actual outcome area ***
       {if(!is.null(actual_outcome) && !is.null(df_mt_highlight))
         ggplot2::geom_area(data = df_mt_highlight,
                           aes(x = scrape_time + lubridate::hours(10), 
                               y = highlight_prob),
                           position = "stack",
-                          fill = NA,
-                          color = "black",
-                          linewidth = 1.2,
+                          fill = "gold",
+                          alpha = 0.4,
+                          color = "gold",
+                          linewidth = 1.5,
                           inherit.aes = FALSE)
       } +
       # *** Add semi-transparent white overlay to dim non-actual areas ***
@@ -700,20 +703,6 @@ for (mt in future_meetings_all) {
                            aes(xintercept = as.numeric(meeting_datetime)),
                            linetype = "solid", color = "white", 
                            linewidth = 0.6, alpha = 0.6)
-      } +
-      # *** Add text annotation for actual outcome ***
-      {if(!is.null(actual_outcome))
-        ggplot2::annotate("text",
-                         x = start_xlim_mt + (end_xlim_mt - start_xlim_mt) * 0.02,
-                         y = 0.97,
-                         label = sprintf("Actual outcome: %.2f%%", actual_outcome),
-                         hjust = 0,
-                         vjust = 1,
-                         size = 5,
-                         fontface = "bold",
-                         color = "black",
-                         fill = "white",
-                         alpha = 0.8)
       } +
       ggplot2::scale_fill_manual(
         values = fill_map,
@@ -786,7 +775,6 @@ for (mt in future_meetings_all) {
 }
 
 cat("\nPlotting loop completed.\n")
-
 
 # 5. FIXED CSV Export section
 for (mt in future_meetings_all) {
