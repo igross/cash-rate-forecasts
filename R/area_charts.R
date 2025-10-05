@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
   library(readrba)   # for read_rba()
   library(scales)
   library(ggpattern)
+  library(ggtext)
 })
 
 # =============================================
