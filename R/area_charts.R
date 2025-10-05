@@ -654,7 +654,7 @@ if (!is.null(actual_outcome)) {
     # Create a version of df_mt with highlighted area for the actual outcome
     # Calculate cumulative position for proper overlay placement
     df_mt_highlight <- df_mt %>%
-      dplyr::arrange(scrape_time, move) %>%
+      dplyr::arrange(scrape_time, desc(move)) %>%
       dplyr::group_by(scrape_time) %>%
       dplyr::mutate(
         cumulative_prob = cumsum(probability),
@@ -689,7 +689,7 @@ if (!is.null(actual_outcome)) {
           pattern = "stripe",
           pattern_fill = "gold",
           pattern_color = "gold",
-          pattern_density = 0.3,
+          pattern_density = 0.2,
           pattern_spacing = 0.02,
           pattern_angle = 45,
           fill = "gold",
