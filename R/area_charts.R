@@ -656,34 +656,29 @@ for (mt in future_meetings_all) {
       cat("Highlighting outcome:", actual_outcome_label, "\n")
     }
     
- # Build base plot
+# Build base plot
     area_mt <- ggplot2::ggplot(
       df_mt,
       ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
     ) +
       ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
       # *** Add patterned gold overlay to actual outcome ***
-      {if(!is.null(actual_outcome) && !is.null(df_mt_highlight)) {
-        highlight_data <- df_mt_highlight %>% 
-          dplyr::filter(is_actual, highlight_prob > 0)
-        if(nrow(highlight_data) > 0) {
-          ggpattern::geom_area_pattern(
-            data = highlight_data,
-            aes(x = scrape_time + lubridate::hours(10), 
-                y = highlight_prob,
-                group = move),
-            position = "stack",
-            pattern = "stripe",
-            pattern_fill = "gold",
-            pattern_color = "gold",
-            pattern_density = 0.3,
-            pattern_spacing = 0.02,
-            pattern_angle = 45,
-            fill = "gold",
-            alpha = 0.3,
-            color = NA,
-            inherit.aes = FALSE)
-        }
+      {if(!is.null(actual_outcome) && !is.null(df_mt_highlight) && nrow(df_mt_highlight) > 0) {
+        ggpattern::geom_ribbon_pattern(
+          data = df_mt_highlight,
+          aes(x = scrape_time + lubridate::hours(10), 
+              ymin = lower_bound,
+              ymax = cumulative_prob),
+          pattern = "stripe",
+          pattern_fill = "gold",
+          pattern_color = "gold",
+          pattern_density = 0.3,
+          pattern_spacing = 0.02,
+          pattern_angle = 45,
+          fill = "gold",
+          alpha = 0.3,
+          color = NA,
+          inherit.aes = FALSE)
       }} +
       # Grey dashed horizontal line at 50%
       ggplot2::geom_hline(yintercept = 0.5, linetype = "dashed", 
