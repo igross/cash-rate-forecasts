@@ -287,9 +287,6 @@ if (n_bad > 0) {
   all_estimates_area$stdev[bad_sd] <- max_rmse
 }
 
-
-
-
 # Extended range bucketing (±300 bp range in 25 bp steps)
 bp_span <- 300L
 step_bp <- 25L
@@ -459,16 +456,6 @@ for (i in seq_along(all_rates)) {
 
 cat("Fill map created with", length(fill_map), "colors\n")
 cat("Sample rates:", paste(head(names(fill_map), 10), collapse = ", "), "\n")
-
-# Replace your existing plotting loop with this enhanced version
-
-# Replace your existing plotting loop with this enhanced version
-
-# Replace your existing plotting loop with this enhanced version
-
-# Replace your existing plotting loop with this enhanced version
-
-# Replace your existing plotting loop with this enhanced version
 
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
@@ -687,14 +674,21 @@ for (mt in future_meetings_all) {
                           color = NA,
                           inherit.aes = FALSE)
       } +
-      # *** Add gold area overlay to actual outcome ***
+      # *** Add patterned gold overlay to actual outcome ***
       {if(!is.null(actual_outcome) && !is.null(df_mt_highlight))
-        ggplot2::geom_area(data = df_mt_highlight,
+        ggpattern::geom_area_pattern(
+                          data = df_mt_highlight,
                           aes(x = scrape_time + lubridate::hours(10), 
                               y = highlight_prob),
                           position = "stack",
+                          pattern = "stripe",
+                          pattern_fill = "gold",
+                          pattern_color = "gold",
+                          pattern_density = 0.3,
+                          pattern_spacing = 0.02,
+                          pattern_angle = 45,
                           fill = "gold",
-                          alpha = 0.35,
+                          alpha = 0.2,
                           color = NA,
                           inherit.aes = FALSE)
       } +
