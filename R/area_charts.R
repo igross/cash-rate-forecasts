@@ -755,7 +755,7 @@ ggplot2::theme(
       plot = area_mt,
       width = 12,
       height = 5,
-      dpi = 600,
+      dpi = 300,
       device = "png"
     )
     
