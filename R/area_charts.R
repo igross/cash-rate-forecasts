@@ -586,7 +586,7 @@ for (mt in future_meetings_all) {
     # Get the cash rate that was set at this meeting
     # Look for the rate effective after this meeting date
     actual_outcome_data <- rba_historical %>%
-      dplyr::filter(date >= meeting_date_proper) %>%
+      dplyr::filter(date > meeting_date_proper) %>%
       dplyr::slice_min(date, n = 1, with_ties = FALSE)
     
     if (nrow(actual_outcome_data) > 0) {
