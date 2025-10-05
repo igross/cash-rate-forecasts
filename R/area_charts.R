@@ -468,6 +468,8 @@ cat("Sample rates:", paste(head(names(fill_map), 10), collapse = ", "), "\n")
 
 # Replace your existing plotting loop with this enhanced version
 
+# Replace your existing plotting loop with this enhanced version
+
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
