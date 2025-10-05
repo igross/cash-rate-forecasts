@@ -656,6 +656,7 @@ for (mt in future_meetings_all) {
       
       cat("Highlighting outcome:", actual_outcome_label, "\n")
     }
+
     
 # Build base plot
     area_mt <- ggplot2::ggplot(
