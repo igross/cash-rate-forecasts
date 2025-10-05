@@ -15,23 +15,6 @@ suppressPackageStartupMessages({
 })
 
 
-# Get all matching files
-files <- list.files("docs/meetings", pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$", full.names = TRUE)
-
-# Extract dates from filenames and filter
-files_to_delete <- files[sapply(files, function(f) {
-  date_str <- sub(".*area_all_moves_(\\d{4}-\\d{2}-\\d{2})\\.png$", "\\1", basename(f))
-  file_date <- as.Date(date_str)
-  file_date < as.Date("2025-07-14")
-})]
-
-# Delete the files
-if (length(files_to_delete) > 0) {
-  file.remove(files_to_delete)
-  cat("Deleted", length(files_to_delete), "files\n")
-} else {
-  cat("No files to delete\n")
-}
 
 # =============================================
 # 2) Load data & RMSE lookup
