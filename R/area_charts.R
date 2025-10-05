@@ -642,20 +642,35 @@ for (mt in future_meetings_all) {
     }
     
     # *** Prepare data for highlighting actual outcome ***
-    df_mt_highlight <- NULL
-    if (!is.null(actual_outcome)) {
-      # Find which bucket contains the actual outcome
-      actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
-      
-      # Create a version of df_mt with highlighted area for the actual outcome
-      df_mt_highlight <- df_mt %>%
-        dplyr::mutate(
-          is_actual = (move == actual_outcome_label),
-          highlight_prob = ifelse(is_actual, probability, 0)
-        )
-      
-      cat("Highlighting outcome:", actual_outcome_label, "\n")
-    }
+df_mt_highlight <- NULL
+if (!is.null(actual_outcome)) {
+  # Find which bucket contains the actual outcome
+  actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
+  
+  # Check if this outcome exists in the data
+  outcome_exists <- actual_outcome_label %in% df_mt$move
+  
+  if (outcome_exists) {
+    # Create a version of df_mt with highlighted area for the actual outcome
+    # Calculate cumulative position for proper overlay placement
+    df_mt_highlight <- df_mt %>%
+      dplyr::arrange(scrape_time, move) %>%
+      dplyr::group_by(scrape_time) %>%
+      dplyr::mutate(
+        cumulative_prob = cumsum(probability),
+        lower_bound = cumulative_prob - probability,
+        is_actual = (move == actual_outcome_label)
+      ) %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(is_actual, probability > 0)
+    
+    cat("Highlighting outcome:", actual_outcome_label, "\n")
+    cat("Highlight data rows:", nrow(df_mt_highlight), "\n")
+  } else {
+    cat("Warning: Actual outcome", actual_outcome_label, "not found in available moves\n")
+    cat("Available moves range:", min(df_mt$move), "to", max(df_mt$move), "\n")
+  }
+}
 
     
 # Build base plot
