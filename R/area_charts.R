@@ -461,6 +461,8 @@ cat("Sample rates:", paste(head(names(fill_map), 10), collapse = ", "), "\n")
 
 # Replace your existing plotting loop with this enhanced version
 
+# Replace your existing plotting loop with this enhanced version
+
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
@@ -582,9 +584,24 @@ for (mt in future_meetings_all) {
   
   legend_breaks <- sprintf("%.2f%%", legend_rates)
   
-  # *** NEW: Prepare RBA meeting dates for vertical lines ***
-  # Get all RBA meetings that fall within the plot's time range
-  # Exclude the target meeting itself (it's the endpoint)
+  # *** CHECK FOR ACTUAL OUTCOME (for past meetings) ***
+  actual_outcome <- NULL
+  is_past_meeting <- meeting_date_proper < Sys.Date()
+  
+  if (is_past_meeting) {
+    # Get the cash rate that was set at this meeting
+    # Look for the rate effective after this meeting date
+    actual_outcome_data <- rba_historical %>%
+      dplyr::filter(date >= meeting_date_proper) %>%
+      dplyr::slice_min(date, n = 1, with_ties = FALSE)
+    
+    if (nrow(actual_outcome_data) > 0) {
+      actual_outcome <- actual_outcome_data$value
+      cat("Actual outcome for meeting on", as.character(meeting_date_proper), ":", actual_outcome, "%\n")
+    }
+  }
+  
+  # *** Prepare RBA meeting dates for vertical lines ***
   rba_meetings_in_range <- meeting_schedule %>%
     dplyr::filter(
       meeting_date > as.Date(start_xlim_mt),
@@ -629,20 +646,74 @@ for (mt in future_meetings_all) {
       date_labels <- function(x) strftime(x, "%d %b")
     }
     
+    # *** Prepare data for highlighting actual outcome ***
+    df_mt_highlight <- NULL
+    if (!is.null(actual_outcome)) {
+      # Find which bucket contains the actual outcome
+      actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
+      
+      # Create a version of df_mt with highlighted area for the actual outcome
+      df_mt_highlight <- df_mt %>%
+        dplyr::mutate(
+          is_actual = (move == actual_outcome_label),
+          highlight_prob = ifelse(is_actual, probability, 0)
+        )
+      
+      cat("Highlighting outcome:", actual_outcome_label, "\n")
+    }
+    
+    # Build base plot
     area_mt <- ggplot2::ggplot(
       df_mt,
       ggplot2::aes(x = scrape_time + lubridate::hours(10), y = probability, fill = move)
     ) +
       ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
-      # *** NEW: Add grey dashed horizontal line at 50% ***
+      # *** Add black borders to the actual outcome area ***
+      {if(!is.null(actual_outcome) && !is.null(df_mt_highlight))
+        ggplot2::geom_area(data = df_mt_highlight,
+                          aes(x = scrape_time + lubridate::hours(10), 
+                              y = highlight_prob),
+                          position = "stack",
+                          fill = NA,
+                          color = "black",
+                          linewidth = 1.2,
+                          inherit.aes = FALSE)
+      } +
+      # *** Add semi-transparent white overlay to dim non-actual areas ***
+      {if(!is.null(actual_outcome) && !is.null(df_mt_highlight))
+        ggplot2::geom_area(data = df_mt_highlight %>% 
+                            mutate(dim_prob = ifelse(!is_actual, probability, 0)),
+                          aes(x = scrape_time + lubridate::hours(10), 
+                              y = dim_prob),
+                          position = "stack",
+                          fill = "white",
+                          alpha = 0.5,
+                          color = NA,
+                          inherit.aes = FALSE)
+      } +
+      # Grey dashed horizontal line at 50%
       ggplot2::geom_hline(yintercept = 0.5, linetype = "dashed", 
                          color = "grey40", linewidth = 0.7, alpha = 0.8) +
-      # *** NEW: Add vertical lines for RBA meetings ***
+      # Vertical lines for RBA meetings in range
       {if(nrow(rba_meetings_in_range) > 0) 
         ggplot2::geom_vline(data = rba_meetings_in_range,
                            aes(xintercept = as.numeric(meeting_datetime)),
                            linetype = "solid", color = "white", 
                            linewidth = 0.6, alpha = 0.6)
+      } +
+      # *** Add text annotation for actual outcome ***
+      {if(!is.null(actual_outcome))
+        ggplot2::annotate("text",
+                         x = start_xlim_mt + (end_xlim_mt - start_xlim_mt) * 0.02,
+                         y = 0.97,
+                         label = sprintf("Actual outcome: %.2f%%", actual_outcome),
+                         hjust = 0,
+                         vjust = 1,
+                         size = 5,
+                         fontface = "bold",
+                         color = "black",
+                         fill = "white",
+                         alpha = 0.8)
       } +
       ggplot2::scale_fill_manual(
         values = fill_map,
@@ -664,7 +735,12 @@ for (mt in future_meetings_all) {
       ) +
       ggplot2::labs(
         title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
-        subtitle = "Probability distribution across cash rate levels (25 bp steps)",
+        subtitle = if(!is.null(actual_outcome)) {
+          paste("Probability distribution across cash rate levels (25 bp steps) | Actual outcome:", 
+                sprintf("%.2f%%", actual_outcome))
+        } else {
+          "Probability distribution across cash rate levels (25 bp steps)"
+        },
         x = "Forecast date", 
         y = "Probability"
       ) +
@@ -710,6 +786,7 @@ for (mt in future_meetings_all) {
 }
 
 cat("\nPlotting loop completed.\n")
+
 
 # 5. FIXED CSV Export section
 for (mt in future_meetings_all) {
