@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
   library(plotly)
   library(readrba)   # for read_rba()
   library(scales)
+  library(ggpattern)
 })
 
 # =============================================
