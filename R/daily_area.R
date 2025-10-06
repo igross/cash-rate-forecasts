@@ -89,16 +89,11 @@ last_meeting   <- max(meeting_schedule$meeting_date[
 
 print(last_meeting)
 
-use_override   <- !is.null(override) &&
-                  Sys.Date() - last_meeting <= 1
-
-print(use_override)
-
 current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
   filter(date == max(date)) %>%
   pull(value)
 
-initial_rt     <- if (use_override) override else latest_rt
+initial_rt <- latest_rt
 
 # *** CHANGED: Use daily dates instead of times ***
 all_dates <- sort(unique(cash_rate_daily$scrape_date))
