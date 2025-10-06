@@ -82,6 +82,93 @@ meeting_schedule <- tibble(
   select(expiry, meeting_date)
 
 # =============================================
+# 3b) Define ABS data release schedule
+# =============================================
+abs_releases <- tribble(
+  ~dataset, ~datetime,
+  
+  # CPI (quarterly releases at 11:30 AM AEST)
+  "CPI", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2026-01-28 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
+  
+  # CPI Indicator (monthly releases)
+  "CPI Indicator", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-02-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-03-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-05-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-06-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-08-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-09-24 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-11-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-12-31 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-02-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-03-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-05-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-06-24 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-08-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-09-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-11-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-12-30 11:30", tz = "Australia/Melbourne"),
+  
+  # WPI (quarterly releases)
+  "WPI", ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2025-05-14 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2025-08-13 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2025-11-12 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-02-18 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-05-13 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-08-12 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-11-11 11:30", tz = "Australia/Melbourne"),
+  
+  # National Accounts (quarterly releases)
+  "National Accounts", ymd_hm("2025-03-05 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-06-04 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-09-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-12-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-03-04 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-06-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-09-02 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-12-02 11:30", tz = "Australia/Melbourne"),
+  
+  # Labour Force (monthly releases)
+  "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-02-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-03-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-04-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-05-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-06-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-07-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-08-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-10-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-11-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-12-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-01-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-02-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-03-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-04-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-05-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-06-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-07-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-08-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-09-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-10-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-11-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne")
+)
+
+# =============================================
 # 4) Identify last meeting, collect scrapes
 # =============================================
 last_meeting   <- max(meeting_schedule$meeting_date[
@@ -393,6 +480,14 @@ for (mt in future_meetings_all) {
     dplyr::filter(
       meeting_date > start_xlim_mt,
       meeting_date < meeting_date_proper
+    )
+  
+  # ABS data releases in range
+  abs_releases_in_range <- abs_releases %>%
+    dplyr::mutate(release_date = as.Date(datetime)) %>%
+    dplyr::filter(
+      release_date > start_xlim_mt,
+      release_date < meeting_date_proper
     )
   
   # Prepare highlight data
