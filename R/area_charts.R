@@ -746,8 +746,7 @@ df_mt <- all_estimates_buckets_ext %>%
     # Determine if meeting is in 2026 or later
     meeting_year <- lubridate::year(meeting_date_proper)
     
-    if (meeting_year >= 2026) {
-      # For 2026+ meetings: monthly ticks on the 1st of each month
+   
       start_month <- lubridate::floor_date(start_xlim_mt, "month")
       end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
       
@@ -759,13 +758,7 @@ df_mt <- all_estimates_buckets_ext %>%
       breaks_vec <- lubridate::as_datetime(breaks_vec, tz = "Australia/Melbourne")
       
       date_labels <- function(x) strftime(x, "%b-%Y")
-      
-    } else {
-      # For 2025 meetings: keep current 30-tick format
-      n_ticks <- 30L
-      breaks_vec <- seq(from = start_xlim_mt, to = end_xlim_mt, length.out = n_ticks)
-      date_labels <- function(x) strftime(x, "%d %b")
-    }
+
     
     # *** Prepare data for highlighting actual outcome ***
 df_mt_highlight <- NULL
