@@ -482,7 +482,7 @@ interpolate_for_plotting <- function(df_mt, meeting_date) {
     scrape_gaps <- diff(all_scrapes)
     median_gap <- median(scrape_gaps)
     
-    # If median gap > 6 hours, we're in daily territory
+    # If median gap > 4 hours, we're in daily territory
     has_daily_data <- median_gap > as.difftime(4, units = "hours")
   } else {
     has_daily_data <- FALSE
@@ -509,24 +509,58 @@ interpolate_for_plotting <- function(df_mt, meeting_date) {
       arrange(scrape_time)
     
     if (nrow(move_data) < 2) {
-      # Not enough points to interpolate
       return(move_data)
     }
     
-    # Perform interpolation
-    interpolated <- approx(
-      x = as.numeric(move_data$scrape_time),
-      y = move_data$probability,
-      xout = as.numeric(hourly_grid),
-      method = "linear",
-      rule = 2  # Extend to boundaries
-    )
+    # For each point in the hourly grid, determine the value
+    result <- sapply(hourly_grid, function(target_time) {
+      
+      # Check if target_time is on a weekend (Saturday or Sunday)
+      is_weekend <- lubridate::wday(target_time, week_start = 1) %in% c(6, 7)
+      
+      if (is_weekend) {
+        # For weekends, use the last Friday's value
+        # Find the most recent data point before this weekend
+        prior_data <- move_data %>%
+          filter(scrape_time <= target_time)
+        
+        if (nrow(prior_data) > 0) {
+          return(tail(prior_data$probability, 1))
+        } else {
+          return(NA_real_)
+        }
+      } else {
+        # For weekdays, use linear interpolation
+        # Find surrounding data points
+        before <- move_data %>% filter(scrape_time <= target_time)
+        after <- move_data %>% filter(scrape_time > target_time)
+        
+        if (nrow(before) == 0) {
+          # Before start, use first value
+          return(move_data$probability[1])
+        } else if (nrow(after) == 0) {
+          # After end, use last value
+          return(tail(move_data$probability, 1))
+        } else {
+          # Interpolate between surrounding points
+          t1 <- tail(before$scrape_time, 1)
+          t2 <- head(after$scrape_time, 1)
+          p1 <- tail(before$probability, 1)
+          p2 <- head(after$probability, 1)
+          
+          # Linear interpolation
+          weight <- as.numeric(difftime(target_time, t1, units = "secs")) / 
+                   as.numeric(difftime(t2, t1, units = "secs"))
+          
+          return(p1 + weight * (p2 - p1))
+        }
+      }
+    })
     
-    # Create tibble with interpolated values
     tibble(
       scrape_time = hourly_grid,
       move = m,
-      probability = interpolated$y
+      probability = result
     )
   })
   
