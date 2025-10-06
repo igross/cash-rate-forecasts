@@ -10,31 +10,22 @@ library(lubridate)
 library(lubridate)
 library(dplyr)
 
-# Define the cutoff date
 cutoff_date <- as.Date("2025-05-01")
-
 # Path to your scrape data (adjust as needed)
 scrape_data_path <- "daily_data/"
 
-# Get all .Rds files in the directory
-rds_files <- list.files(scrape_data_path, pattern = "\\.csv$", full.names = TRUE)
+# Get all files ending in 1200.csv
+csv_files <- list.files(scrape_data_path, pattern = "1200\\.csv$", full.names = TRUE)
 
-# If your scrape files have dates in filenames, you can parse them
-# For example, if files are named like "scrape_2024-12-15.Rds"
-for (file in rds_files) {
-  # Extract date from filename (adjust pattern to match your naming convention)
-  # This regex looks for dates in format YYYY-MM-DD
-  date_match <- stringr::str_extract(basename(file), "\\d{4}-\\d{2}-\\d{2}")
-  
-  if (!is.na(date_match)) {
-    file_date <- as.Date(date_match)
-    
-    if (file_date < cutoff_date) {
-      cat("Deleting:", file, "(Date:", file_date, ")\n")
-      file.remove(file)
-    }
-  }
+cat("Found", length(csv_files), "files ending in 1200.csv\n")
+
+# Delete each file
+for (file in csv_files) {
+  cat("Deleting:", file, "\n")
+  file.remove(file)
 }
+
+cat("Deletion complete!\n")
 
 json_url <- "https://asx.api.markitdigital.com/asx-research/1.0/derivatives/interest-rate/IB/futures?days=1&height=179&width=179"
 json_file <- tempfile()
