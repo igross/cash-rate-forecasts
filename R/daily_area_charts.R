@@ -419,24 +419,20 @@ for (mt in future_meetings_all) {
   filename <- paste0("docs/meetings/daily_area_", fmt_file(meeting_date_proper), ".png")
   
   tryCatch({
-    # *** CHANGED: Date breaks instead of datetime ***
-    meeting_year <- lubridate::year(meeting_date_proper)
+    # *** CHANGED: Monthly ticks on the 1st of each month ***
+    # Get first day of month for start and end dates
+    start_month <- lubridate::floor_date(start_xlim_mt, "month")
+    end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
     
-    if (meeting_year >= 2026) {
-      breaks_vec <- seq.Date(
-        from = lubridate::floor_date(start_xlim_mt, "month"),
-        to = lubridate::ceiling_date(end_xlim_mt, "month"),
-        by = "month"
-      )
-      date_labels <- function(x) strftime(x, "%b-%Y")
-    } else {
-      breaks_vec <- seq.Date(
-        from = start_xlim_mt,
-        to = end_xlim_mt,
-        length.out = 30
-      )
-      date_labels <- function(x) strftime(x, "%d %b")
-    }
+    # Create breaks on the 1st of each month
+    breaks_vec <- seq.Date(
+      from = start_month,
+      to = end_month,
+      by = "month"
+    )
+    
+    # Format as MMM-YYYY (e.g., Jan-2025)
+    date_labels <- function(x) format(x, "%b-%Y")
     
     area_mt <- ggplot2::ggplot(
       df_mt,
