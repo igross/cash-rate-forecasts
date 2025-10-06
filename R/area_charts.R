@@ -726,12 +726,12 @@ if (!is.null(actual_outcome)) {
         expand = c(0, 0)
       ) +
       ggplot2::labs(
-        title = paste("Cash Rate Scenarios up to the Meeting on", fmt_date(meeting_date_proper)),
+        title = paste("Cash Rate Scenarios for the Meeting on", fmt_date(meeting_date_proper)),
         subtitle = if(!is.null(actual_outcome)) {
-          paste0("Probability distribution across cash rate levels (25 bp steps) | Actual outcome: <span style='color:gold;'>**", 
+          paste0("Probability distribution across cash rate levels | Actual outcome: <span style='color:gold;'>**", 
       sprintf("%.2f%%", actual_outcome), "**</span>")
         } else {
-          "Probability distribution across cash rate levels (25 bp steps)"
+          "Probability distribution across cash rate levels"
         },
         x = "Forecast date", 
         y = "Probability"
