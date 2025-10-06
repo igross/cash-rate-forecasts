@@ -134,3 +134,55 @@ tail(all_data,20)
 saveRDS(all_data, file = "combined_data/all_data.Rds")
 write_csv(all_data,  file = "combined_data/cash_rate.csv")
 
+
+# =============================================
+# Convert archive.Rds to daily_data format
+# =============================================
+
+library(dplyr)
+library(lubridate)
+library(readr)
+
+# Read the archive file
+archive_data <- readRDS("combined_data/archive.Rds")
+
+# Filter to only dates prior to 2025-05-26
+cutoff_date <- as.Date("2025-05-26")
+
+archive_data %>%
+  filter(scrape_date < cutoff_date) %>%
+  group_by(scrape_date) %>%
+  group_split() %>%
+  walk(function(scrape_group) {
+    
+    # Get the scrape date
+    scrape_date <- unique(scrape_group$scrape_date)
+    
+    # Create scrape_time: assume noon (12:00:00) in UTC
+    scrape_time <- ymd_hms(paste0(scrape_date, " 12:00:00"), tz = "UTC")
+    
+    # Format the scrape_time as ISO 8601 with Z suffix
+    scrape_time_str <- format(scrape_time, "%Y-%m-%dT%H:%M:%SZ")
+    
+    # Add scrape_time column to the data
+    output_data <- scrape_group %>%
+      mutate(scrape_time = scrape_time_str) %>%
+      select(date, cash_rate, scrape_date, scrape_time)
+    
+    # Create filename: scraped_cash_rate_YYYY-MM-DD_HHMM.csv
+    # Extract time components for filename (in UTC, so 1200 for noon)
+    filename <- sprintf("cash-rate-forecasts/daily_data/scraped_cash_rate_%s_%s.csv",
+                       format(scrape_date, "%Y-%m-%d"),
+                       format(scrape_time, "%H%M"))
+    
+    # Ensure directory exists
+    dir.create("cash-rate-forecasts/daily_data", showWarnings = FALSE, recursive = TRUE)
+    
+    # Write to CSV
+    write_csv(output_data, filename)
+    
+    cat("Created:", filename, "\n")
+  })
+
+cat("\nConversion complete!\n")
+
