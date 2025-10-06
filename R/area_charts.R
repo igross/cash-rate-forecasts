@@ -13,6 +13,7 @@ suppressPackageStartupMessages({
   library(scales)
   library(ggpattern)
   library(ggtext)
+  library(zoo)
 })
 
 # =============================================
@@ -472,12 +473,21 @@ cat("Sample rates:", paste(head(names(fill_map), 10), collapse = ", "), "\n")
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
-  df_mt <- all_estimates_buckets_ext %>%
-    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
-    dplyr::group_by(scrape_time, move) %>%
-    dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
-    tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
-    dplyr::arrange(scrape_time, move)
+df_mt <- all_estimates_buckets_ext %>%
+  dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+  dplyr::group_by(scrape_time, move) %>%
+  dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
+  # Complete for ALL combinations of scrape_time and move
+  tidyr::complete(
+    scrape_time = seq(min(scrape_time), max(scrape_time), by = "6 hours"),
+    move,
+    fill = list(probability = 0)
+  ) %>%
+  # Normalize at each time point
+  group_by(scrape_time) %>%
+  mutate(probability = probability / sum(probability)) %>%
+  ungroup() %>%
+  replace_na(list(probability = 0))
 
   print(df_mt, n = 5)
   
