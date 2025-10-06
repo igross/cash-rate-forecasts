@@ -433,7 +433,7 @@ for (mt in future_meetings_all) {
   
   if (nrow(df_mt) == 0) next
   
-  meeting_date_proper <- as.Date(mt)
+  meeting_date_proper <- as.Date(mt) - days(1)
   
   # *** CHANGED: Date-based limits ***
   start_xlim_mt <- min(df_mt$scrape_date, na.rm = TRUE)
