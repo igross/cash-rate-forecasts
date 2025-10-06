@@ -20,6 +20,10 @@ suppressPackageStartupMessages({
 # 2) Load data & RMSE lookup
 # =============================================
 cash_rate <- readRDS("combined_data/all_data.Rds")    # columns: date, cash_rate, scrape_time
+
+cash_rate <- cash_rate %>%
+  filter(as.Date(scrape_time) >= as.Date("2025-05-01"))
+
 load("combined_data/rmse_days.RData")                 # object rmse_days: days_to_meeting ↦ finalrmse
 
 blend_weight <- function(days_to_meeting) {
