@@ -184,6 +184,8 @@ if (now_melb < cutoff_time) {
 
 scrapes <- all_times[all_times >= cutoff_date | all_times > last_meeting]
 
+print(scrapes)
+
 # MAKE AREA DATA
 
 rba_historical <- read_rba(series_id = "FIRMMCRTD") %>%
