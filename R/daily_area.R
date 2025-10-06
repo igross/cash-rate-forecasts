@@ -110,24 +110,13 @@ rba_historical <- read_rba(series_id = "FIRMMCRTD") %>%
 
 all_list_area <- map(all_dates, function(scr_date) {
   
-  # Determine the initial rate AT THIS SCRAPE DATE
-  last_meeting_at_scrape <- max(meeting_schedule$meeting_date[
-    meeting_schedule$meeting_date < scr_date
-  ])
+  # Get the rate that was current at this scrape date
+  historical_rate <- rba_historical %>%
+    filter(date <= scr_date) %>%
+    slice_max(date, n = 1, with_ties = FALSE) %>%
+    pull(value)
   
-  use_override_at_scrape <- !is.null(override) &&
-                            scr_date - last_meeting_at_scrape <= 1
-  
-  if (use_override_at_scrape) {
-    initial_rt_at_scrape <- override
-  } else {
-    historical_rate <- rba_historical %>%
-      filter(date <= scr_date) %>%
-      slice_max(date, n = 1, with_ties = FALSE) %>%
-      pull(value)
-    
-    initial_rt_at_scrape <- if(length(historical_rate) > 0) historical_rate else latest_rt
-  }
+  initial_rt_at_scrape <- if(length(historical_rate) > 0) historical_rate else latest_rt
   
   # Get rates for this date
   df_rates <- cash_rate_daily %>% 
