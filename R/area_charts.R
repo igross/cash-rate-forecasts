@@ -493,7 +493,7 @@ interpolate_for_plotting <- function(df_mt, meeting_date) {
   # Create hourly grid for interpolation
   start_time <- min(df_mt$scrape_time)
   end_time <- max(df_mt$scrape_time)
-  hourly_grid <- seq(from = start_time, to = end_time, by = "15 min")
+  hourly_grid <- seq(from = start_time, to = end_time, by = "60 min")
   
   # Interpolate each move separately
   all_moves <- unique(df_mt$move)
