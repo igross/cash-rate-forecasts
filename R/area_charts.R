@@ -407,7 +407,7 @@ all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
 
 future_meetings_all <- meeting_schedule %>%
   dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
-  dplyr::filter(meeting_date >= as.Date("2025-06-01")) %>%
+  dplyr::filter(meeting_date >= as.Date("2025-07-07")) %>%
   dplyr::pull(meeting_date)
 
 # Debug output to verify
