@@ -694,8 +694,8 @@ df_mt <- all_estimates_buckets_ext %>%
   cat("  Mean:", mean(prob_sums_by_time$total_prob, na.rm = TRUE), "\n")
   
   # Create legend breaks - subset of rates around current rate
-  legend_min <- current_rate - 1.00
-  legend_max <- current_rate + 1.00
+  legend_min <- current_rate - 1.50
+  legend_max <- current_rate + 1.50
   
   # Get rates within this range
   legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
@@ -901,6 +901,7 @@ ggplot2::theme(
   
   if (!plot_success) {
     cat("✗ Failed to create plot for meeting", as.character(meeting_date_proper), "\n")
+    print(df_mt)
   }
 }
 
