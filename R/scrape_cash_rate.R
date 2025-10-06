@@ -5,28 +5,6 @@ library(jsonlite)
 library(lubridate)
 
 
-
-# Delete scrape data files before May 2025
-library(lubridate)
-library(dplyr)
-
-cutoff_date <- as.Date("2025-05-01")
-# Path to your scrape data (adjust as needed)
-scrape_data_path <- "daily_data/"
-
-# Get all files ending in 1200.csv
-csv_files <- list.files(scrape_data_path, pattern = "1200\\.csv$", full.names = TRUE)
-
-cat("Found", length(csv_files), "files ending in 1200.csv\n")
-
-# Delete each file
-for (file in csv_files) {
-  cat("Deleting:", file, "\n")
-  file.remove(file)
-}
-
-cat("Deletion complete!\n")
-
 json_url <- "https://asx.api.markitdigital.com/asx-research/1.0/derivatives/interest-rate/IB/futures?days=1&height=179&width=179"
 json_file <- tempfile()
 
