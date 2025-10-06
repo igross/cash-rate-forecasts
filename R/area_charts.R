@@ -477,26 +477,115 @@ for (i in seq_along(all_rates)) {
 
 cat("Fill map created with", length(fill_map), "colors\n")
 cat("Sample rates:", paste(head(names(fill_map), 10), collapse = ", "), "\n")
+# FIX: Make daily data smooth by interpolating to hourly points
 
+interpolate_for_plotting <- function(df_mt, meeting_date) {
+  
+  # Get all unique scrape times
+  all_scrapes <- sort(unique(df_mt$scrape_time))
+  
+  # Calculate gaps between scrapes
+  if (length(all_scrapes) > 1) {
+    scrape_gaps <- diff(all_scrapes)
+    median_gap <- median(scrape_gaps)
+    
+    # If median gap > 6 hours, we're in daily territory
+    has_daily_data <- median_gap > as.difftime(6, units = "hours")
+  } else {
+    has_daily_data <- FALSE
+  }
+  
+  if (!has_daily_data) {
+    # Data is already frequent enough, return as-is
+    return(df_mt)
+  }
+  
+  # Create hourly grid for interpolation
+  start_time <- min(df_mt$scrape_time)
+  end_time <- max(df_mt$scrape_time)
+  hourly_grid <- seq(from = start_time, to = end_time, by = "1 hour")
+  
+  # Interpolate each move separately
+  all_moves <- unique(df_mt$move)
+  
+  interpolated_list <- lapply(all_moves, function(m) {
+    
+    # Get data for this move
+    move_data <- df_mt %>%
+      filter(move == m) %>%
+      arrange(scrape_time)
+    
+    if (nrow(move_data) < 2) {
+      # Not enough points to interpolate
+      return(move_data)
+    }
+    
+    # Perform interpolation
+    interpolated <- approx(
+      x = as.numeric(move_data$scrape_time),
+      y = move_data$probability,
+      xout = as.numeric(hourly_grid),
+      method = "linear",
+      rule = 2  # Extend to boundaries
+    )
+    
+    # Create tibble with interpolated values
+    tibble(
+      scrape_time = hourly_grid,
+      move = m,
+      probability = interpolated$y
+    )
+  })
+  
+  # Combine all moves
+  result <- bind_rows(interpolated_list)
+  
+  # Ensure probabilities are valid
+  result <- result %>%
+    mutate(probability = pmax(0, pmin(1, probability)))
+  
+  return(result)
+}
+
+# USE IN YOUR PLOTTING LOOP:
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
-df_mt <- all_estimates_buckets_ext %>%
-  dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
-  dplyr::group_by(scrape_time, move) %>%
-  dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
-  # Complete for ALL combinations of scrape_time and move
-  tidyr::complete(
-    scrape_time = seq(min(scrape_time), max(scrape_time), by = "6 hours"),
-    move,
-    fill = list(probability = 0)
-  ) %>%
-  # Normalize at each time point
-  group_by(scrape_time) %>%
-  mutate(probability = probability / sum(probability)) %>%
-  ungroup() %>%
-  replace_na(list(probability = 0))
-
+  # Initial data filtering
+  df_mt <- all_estimates_buckets_ext %>%
+    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+    dplyr::group_by(scrape_time, move) %>%
+    dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop")
+  
+  if (nrow(df_mt) == 0) {
+    cat("Skipping - no data for meeting\n")
+    next 
+  }
+  
+  meeting_date_proper <- as.Date(mt)
+  
+  # **KEY FIX**: Interpolate daily data to hourly for smooth plotting
+  df_mt <- interpolate_for_plotting(df_mt, meeting_date_proper)
+  
+  # Normalize to ensure probabilities sum to 1 at each time
+  df_mt <- df_mt %>%
+    group_by(scrape_time) %>%
+    mutate(
+      total = sum(probability, na.rm = TRUE),
+      probability = if_else(total > 0, probability / total, 0)
+    ) %>%
+    ungroup() %>%
+    select(-total) %>%
+    # Final cleanup
+    filter(!is.na(move), is.finite(probability), probability >= 0)
+  
+  # Ensure move is a factor with proper levels
+  available_moves <- unique(df_mt$move[!is.na(df_mt$move)])
+  valid_move_levels <- rate_labels[rate_labels %in% available_moves]
+  
+  df_mt <- df_mt %>%
+    filter(move %in% valid_move_levels) %>%
+    mutate(move = factor(move, levels = rev(valid_move_levels)))
   print(df_mt, n = 5)
   
   cat("Initial df_mt dimensions:", nrow(df_mt), "x", ncol(df_mt), "\n")
