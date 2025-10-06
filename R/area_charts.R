@@ -329,6 +329,15 @@ for (i in seq_len(nrow(all_estimates_area))) {
   p_vec <- sapply(bucket_centers_ext, function(b) {
     lower <- b - half_width_ext
     upper <- b + half_width_ext
+    
+  if (b == min(bucket_centers_ext)) {
+      lower <- -Inf
+    }
+
+      if (b == max(bucket_centers_ext)) {
+      upper <- Inf
+    }
+    
     pnorm(upper, mean = mu_i, sd = sigma_i) - pnorm(lower, mean = mu_i, sd = sigma_i)
   })
 
