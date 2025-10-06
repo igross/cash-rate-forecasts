@@ -537,6 +537,8 @@ interpolate_for_plotting <- function(df_mt, meeting_date) {
   return(result)
 }
 
+processed_data_by_meeting <- list()
+
 # USE IN YOUR PLOTTING LOOP:
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
@@ -877,6 +879,11 @@ ggplot2::theme(
       dpi = 300,
       device = "png"
     )
+
+ meeting_date_proper <- as.Date(mt)
+  processed_data_by_meeting[[as.character(meeting_date_proper)]] <- df_mt
+ 
+    
     
     if (file.exists(temp_filename)) {
       file.rename(temp_filename, filename)
@@ -899,20 +906,33 @@ ggplot2::theme(
 
 cat("\nPlotting loop completed.\n")
 
-# 5. FIXED CSV Export section
+# 5. CSV Export using processed data from plots
 for (mt in future_meetings_all) {
-  df_mt_csv <- all_estimates_buckets_ext %>%
-    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
-    dplyr::group_by(scrape_time, move, diff_bps, bucket) %>%
-    dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
-    tidyr::complete(scrape_time, move, fill = list(probability = 0)) %>%
-    dplyr::arrange(scrape_time, diff_bps) %>%
-    dplyr::mutate(
-      scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
-      meeting_date = as.Date(mt),
-      bucket_rate = bucket
+  meeting_date_proper <- as.Date(mt)
+  meeting_key <- as.character(meeting_date_proper)
+  
+  # Check if we have processed data for this meeting
+  if (!meeting_key %in% names(processed_data_by_meeting)) {
+    cat("Skipping CSV export - no processed data for meeting", meeting_key, "\n")
+    next
+  }
+  
+  # Get the processed data (same as used in plots)
+  df_mt_processed <- processed_data_by_meeting[[meeting_key]]
+  
+  # Prepare for CSV export
+  df_mt_csv <- df_mt_processed %>%
+    # Extract bucket rate from the move factor
+    mutate(
+      bucket_rate = as.numeric(sub("%$", "", as.character(move))) / 100,
+      diff_bps = as.integer(round((bucket_rate - current_rate) * 100))
     ) %>%
-    dplyr::select(
+    arrange(scrape_time, diff_bps) %>%
+    mutate(
+      scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
+      meeting_date = meeting_date_proper
+    ) %>%
+    select(
       meeting_date,
       scrape_time,
       scrape_datetime_aest,
@@ -922,35 +942,28 @@ for (mt in future_meetings_all) {
       probability
     )
   
-  # Skip if no data
-  if (nrow(df_mt_csv) == 0) {
-    cat("Skipping CSV export - no data for meeting", as.character(mt), "\n")
-    next
-  }
-  
-  meeting_date_proper <- as.Date(mt)
   csv_filename <- paste0("docs/meetings/csv/area_data_", fmt_file(meeting_date_proper), ".csv")
   
   tryCatch({
     write.csv(df_mt_csv, csv_filename, row.names = FALSE)
-    cat("CSV exported:", csv_filename, "\n")
+    cat("CSV exported:", csv_filename, 
+        "- Rows:", nrow(df_mt_csv), 
+        "- Time points:", length(unique(df_mt_csv$scrape_time)), "\n")
   }, error = function(e) {
-    cat("Error exporting CSV for meeting", as.character(meeting_date_proper), ":", e$message, "\n")
+    cat("Error exporting CSV for meeting", meeting_key, ":", e$message, "\n")
   })
 }
 
-# 6. Combined CSV export - FIXED VERSION
-combined_csv <- all_estimates_buckets_ext %>%
-  dplyr::filter(as.Date(meeting_date) %in% future_meetings_all) %>%
-  dplyr::group_by(meeting_date, scrape_time, move, diff_bps, bucket) %>%
-  dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
-  dplyr::arrange(meeting_date, scrape_time, diff_bps) %>%
-  dplyr::mutate(
-    scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S"),
+# 6. Combined CSV export from processed data
+combined_csv <- bind_rows(processed_data_by_meeting, .id = "meeting_date") %>%
+  mutate(
     meeting_date = as.Date(meeting_date),
-    bucket_rate = bucket
+    bucket_rate = as.numeric(sub("%$", "", as.character(move))) / 100,
+    diff_bps = as.integer(round((bucket_rate - current_rate) * 100)),
+    scrape_datetime_aest = format(scrape_time + lubridate::hours(10), "%Y-%m-%d %H:%M:%S")
   ) %>%
-  dplyr::select(
+  arrange(meeting_date, scrape_time, diff_bps) %>%
+  select(
     meeting_date,
     scrape_time,
     scrape_datetime_aest,
@@ -965,21 +978,9 @@ if (nrow(combined_csv) > 0) {
   tryCatch({
     write.csv(combined_csv, "docs/meetings/csv/all_meetings_area_data.csv", row.names = FALSE)
     cat("Combined CSV exported: docs/meetings/csv/all_meetings_area_data.csv\n")
+    cat("Total rows:", nrow(combined_csv), "\n")
+    cat("Meetings included:", length(unique(combined_csv$meeting_date)), "\n")
   }, error = function(e) {
     cat("Error exporting combined CSV:", e$message, "\n")
   })
 }
-
-# 7. Verification output
-cat("\nVerification - Sample bucket_rate values:\n")
-if (nrow(combined_csv) > 0) {
-  sample_rates <- unique(combined_csv$bucket_rate)
-  sample_rates <- sort(sample_rates)[1:min(20, length(sample_rates))]
-  cat("First 20 unique bucket rates:", paste(sample_rates, collapse = ", "), "\n")
-  
-  decimals <- (sample_rates * 100) %% 100
-  unique_decimals <- unique(decimals)
-  cat("Decimal endings (should be 10, 35, 60, 85):", paste(unique_decimals, collapse = ", "), "\n")
-}
-
-cat("Analysis completed successfully!\n")
