@@ -480,7 +480,7 @@ interpolate_for_plotting <- function(df_mt, meeting_date) {
     median_gap <- median(scrape_gaps)
     
     # If median gap > 6 hours, we're in daily territory
-    has_daily_data <- median_gap > as.difftime(6, units = "hours")
+    has_daily_data <- median_gap > as.difftime(4, units = "hours")
   } else {
     has_daily_data <- FALSE
   }
@@ -493,7 +493,7 @@ interpolate_for_plotting <- function(df_mt, meeting_date) {
   # Create hourly grid for interpolation
   start_time <- min(df_mt$scrape_time)
   end_time <- max(df_mt$scrape_time)
-  hourly_grid <- seq(from = start_time, to = end_time, by = "1 hour")
+  hourly_grid <- seq(from = start_time, to = end_time, by = "15 min")
   
   # Interpolate each move separately
   all_moves <- unique(df_mt$move)
