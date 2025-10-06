@@ -17,7 +17,7 @@ cutoff_date <- as.Date("2025-05-01")
 scrape_data_path <- "daily_data/"
 
 # Get all .Rds files in the directory
-rds_files <- list.files(scrape_data_path, pattern = "\\.Rds$", full.names = TRUE)
+rds_files <- list.files(scrape_data_path, pattern = "\\.csv$", full.names = TRUE)
 
 # If your scrape files have dates in filenames, you can parse them
 # For example, if files are named like "scrape_2024-12-15.Rds"
