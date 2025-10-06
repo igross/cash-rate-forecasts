@@ -4,6 +4,55 @@ library(tidyverse)
 library(jsonlite)
 library(lubridate)
 
+
+
+# Delete scrape data files before May 2025
+library(lubridate)
+library(dplyr)
+
+# Define the cutoff date
+cutoff_date <- as.Date("2025-05-01")
+
+# Path to your scrape data (adjust as needed)
+scrape_data_path <- "combined_data/"
+
+# Get all .Rds files in the directory
+rds_files <- list.files(scrape_data_path, pattern = "\\.Rds$", full.names = TRUE)
+
+# If your scrape files have dates in filenames, you can parse them
+# For example, if files are named like "scrape_2024-12-15.Rds"
+for (file in rds_files) {
+  # Extract date from filename (adjust pattern to match your naming convention)
+  # This regex looks for dates in format YYYY-MM-DD
+  date_match <- stringr::str_extract(basename(file), "\\d{4}-\\d{2}-\\d{2}")
+  
+  if (!is.na(date_match)) {
+    file_date <- as.Date(date_match)
+    
+    if (file_date < cutoff_date) {
+      cat("Deleting:", file, "(Date:", file_date, ")\n")
+      file.remove(file)
+    }
+  }
+}
+
+# If dates are stored INSIDE the .Rds files (like your all_data.Rds)
+# Load the main data file
+cash_rate <- readRDS("combined_data/all_data.Rds")
+
+# Filter to keep only May 2025 onwards
+cash_rate_filtered <- cash_rate %>%
+  filter(as.Date(scrape_time) >= cutoff_date)
+
+# Check how much data was removed
+cat("Original rows:", nrow(cash_rate), "\n")
+cat("Filtered rows:", nrow(cash_rate_filtered), "\n")
+cat("Rows removed:", nrow(cash_rate) - nrow(cash_rate_filtered), "\n")
+
+# Save the filtered data back
+saveRDS(cash_rate_filtered, "combined_data/all_data.Rds")
+cat("Saved filtered data to combined_data/all_data.Rds\n")
+
 # list all CSVs in daily_data
 old_csvs <- list.files(
   path       = "daily_data",
