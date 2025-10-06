@@ -45,6 +45,11 @@ jobs:
                       to_install <- setdiff(pkgs, rownames(installed.packages()));
                       if (length(to_install)) install.packages(to_install)'
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudunits2-dev libgdal-dev libgeos-dev libproj-dev
+
       - name: Get data
         run: Rscript -e 'source(here::here("R", "scrape_cash_rate.R"), echo = TRUE)'
 
