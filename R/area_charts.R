@@ -402,16 +402,6 @@ all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
     move = factor(move, levels = rate_labels)
   )
 
-
-# Before any processing, check your scrape_time coverage
-df_mt_raw <- all_estimates_buckets_ext %>%
-  dplyr::filter(as.Date(meeting_date) == as.Date(mt))
-
-cat("Unique scrape times:", length(unique(df_mt_raw$scrape_time)), "\n")
-cat("Time range:", range(df_mt_raw$scrape_time), "\n")
-cat("Time gaps:\n")
-print(diff(sort(unique(df_mt_raw$scrape_time))))
-
 future_meetings_all <- meeting_schedule %>%
   dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
 #  dplyr::filter(meeting_date > Sys.Date()) %>%
