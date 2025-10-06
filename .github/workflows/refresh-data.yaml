@@ -46,17 +46,14 @@ jobs:
                       if (length(to_install)) install.packages(to_install)'
 
       - name: Get data
-        if: ${{ github.event_name != 'push' }}
         run: Rscript -e 'source(here::here("R", "scrape_cash_rate.R"), echo = TRUE)'
 
       - name: Make line graph
         run: Rscript -e 'source(here::here("R", "line_chart.R"), echo = TRUE)'
 
       - name: Make area graphs
-        if: ${{ github.event_name != 'push' }}
         run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'
 
-      # ✅ Optional: run daily or twice daily check (you can re-enable logic)
       - name: Make daily area graphs
         run: Rscript -e 'source(here::here("R", "daily_area_charts.R"), echo = TRUE)'
 
