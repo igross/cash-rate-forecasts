@@ -542,10 +542,28 @@ for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
   # Initial data filtering
-  df_mt <- all_estimates_buckets_ext %>%
-    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
-    dplyr::group_by(scrape_time, move) %>%
-    dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop")
+# Initial data filtering with dynamic date range
+df_mt <- all_estimates_buckets_ext %>%
+  dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+  {
+    # Calculate cutoff dates
+    meeting_date_proper <- as.Date(mt)
+    twelve_months_before <- meeting_date_proper - months(12)
+    one_month_before_today <- Sys.Date() - months(1)
+    
+    # First try: 12 months before meeting
+    temp_df <- filter(., scrape_time >= twelve_months_before)
+    
+    # If that returns no data, fall back to 1 month before today
+    if (nrow(temp_df) == 0) {
+      cat("No data in 12 months before meeting, using 1 month before today\n")
+      temp_df <- filter(., scrape_time >= one_month_before_today)
+    }
+    
+    temp_df
+  } %>%
+  dplyr::group_by(scrape_time, move) %>%
+  dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop")
   
   if (nrow(df_mt) == 0) {
     cat("Skipping - no data for meeting\n")
