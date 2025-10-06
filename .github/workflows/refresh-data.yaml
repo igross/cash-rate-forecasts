@@ -37,18 +37,13 @@ jobs:
           key: ${{ runner.os }}-r-${{ hashFiles('**/DESCRIPTION') }}
           restore-keys: ${{ runner.os }}-r-
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libudunits2-dev libgdal-dev libgeos-dev libproj-dev
-    
       - name: Install required packages
         run: |
           Rscript -e 'pkgs <- c("tidyverse", "here", "jsonlite", "ggrepel", "conflicted",
-                          "tidyr", "scales", "readabs", "readrba", "plotly", 
-                          "purrr", "cachem", "dplyr", "ggpattern", "ggtext", "zoo", "vctrs");
-                to_install <- setdiff(pkgs, rownames(installed.packages()));
-                if (length(to_install)) install.packages(to_install)'
+                                "tidyr", "scales", "readabs", "readrba", "plotly", 
+                                "purrr", "cachem", "dplyr", "ggpattern", "ggtext", "zoo", "vctrs");
+                      to_install <- setdiff(pkgs, rownames(installed.packages()));
+                      if (length(to_install)) install.packages(to_install)'
 
       - name: Get data
         run: Rscript -e 'source(here::here("R", "scrape_cash_rate.R"), echo = TRUE)'
@@ -56,11 +51,11 @@ jobs:
       - name: Make line graph
         run: Rscript -e 'source(here::here("R", "line_chart.R"), echo = TRUE)'
 
-#      - name: Make area graphs
-#        run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'
+      - name: Make area graphs
+        run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'
 
       - name: Make daily area graphs
-        run: Rscript -e 'source(here::here("R", "daily_area_charts.R"), echo = TRUE)'
+        run: Rscript -e 'source(here::here("R", "daily_area.R"), echo = TRUE)'
 
       - name: Generate index.html from charts
         run: Rscript R/write_index_html.R
