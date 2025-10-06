@@ -38,7 +38,7 @@ jobs:
         run: Rscript -e 'install.packages(c("vctrs"))'
 
       - name: Install packages
-        run: Rscript -e 'install.packages(c("tidyverse", "here", "jsonlite", "ggrepel", "conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext"))'
+        run: Rscript -e 'install.packages(c("tidyverse", "here", "jsonlite", "ggrepel", "conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo"))'
 
       - name: Get data
         run: Rscript -e 'source(here::here("R", "scrape_cash_rate.R"), echo = TRUE)'
