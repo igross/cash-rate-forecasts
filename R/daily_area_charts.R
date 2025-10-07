@@ -463,7 +463,7 @@ for (mt in future_meetings_all) {
   if (is_past_meeting) {
     actual_outcome_data <- rba_historical %>%
       dplyr::filter(date > meeting_date_proper+2) %>%
-      dplyr::slice_min(date, n = 2, with_ties = FALSE)
+      dplyr::slice_min(date, n = 1, with_ties = FALSE)
     
     if (nrow(actual_outcome_data) > 0) {
       actual_outcome <- actual_outcome_data$value
