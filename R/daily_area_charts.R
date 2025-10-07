@@ -402,7 +402,13 @@ for (i in seq_along(all_rates)) {
   }
 }
 
-# *** CHANGED: Plot creation loop using dates ***
+# =============================================
+# KEY MODIFICATION: Dynamic center rate based on meeting timing
+# =============================================
+
+# This section replaces the fill_map creation in the original code
+# Move it inside the loop so it can be recalculated for each meeting
+
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
   
@@ -435,7 +441,6 @@ for (mt in future_meetings_all) {
   
   meeting_date_proper <- as.Date(mt) - days(1)
   
-  # *** CHANGED: Date-based limits ***
   start_xlim_mt <- min(df_mt$scrape_date, na.rm = TRUE)
   end_xlim_mt   <- meeting_date_proper
   
@@ -450,15 +455,6 @@ for (mt in future_meetings_all) {
     dplyr::filter(!is.na(move))
   
   if (nrow(df_mt) == 0) next
-  
-  # Legend setup
-  legend_min <- current_rate - 1.50
-  legend_max <- current_rate + 1.50
-  legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
-  if (current_rate %in% all_rates && !(current_rate %in% legend_rates)) {
-    legend_rates <- sort(c(legend_rates, current_rate))
-  }
-  legend_breaks <- sprintf("%.2f%%", legend_rates)
   
   # Check for actual outcome
   actual_outcome <- NULL
@@ -475,22 +471,64 @@ for (mt in future_meetings_all) {
     }
   }
   
-  # RBA meetings in range
-  rba_meetings_in_range <- meeting_schedule %>%
-    dplyr::filter(
-      meeting_date > start_xlim_mt,
-      meeting_date < meeting_date_proper
-    )
+  # =============================================
+  # DYNAMIC CENTER RATE: Use actual outcome for past meetings, current rate for future
+  # =============================================
+  center_rate <- if (!is.null(actual_outcome)) actual_outcome else current_rate
   
-  # ABS data releases in range
-  abs_releases_in_range <- abs_releases %>%
-    dplyr::mutate(release_date = as.Date(datetime)) %>%
-    dplyr::filter(
-      release_date > start_xlim_mt,
-      release_date < meeting_date_proper
-    )
+  cat("Center rate for this meeting:", center_rate, "%\n")
   
-  # Prepare highlight data
+  # =============================================
+  # CREATE FILL MAP DYNAMICALLY FOR THIS MEETING
+  # =============================================
+  all_rates <- sort(unique(all_estimates_buckets_ext$bucket))
+  fill_map <- setNames(character(length(all_rates)), sprintf("%.2f%%", all_rates))
+  
+  for (i in seq_along(all_rates)) {
+    rate <- all_rates[i]
+    diff_from_center <- rate - center_rate
+    
+    if (abs(diff_from_center) < 0.01) {
+      fill_map[i] <- "#BFBFBF"
+    } else if (diff_from_center < 0) {
+      bp_below <- abs(diff_from_center) * 100
+      if (bp_below >= 125) {
+        fill_map[i] <- "#000080"
+      } else if (bp_below >= 100) {
+        fill_map[i] <- "#0033A0"
+      } else if (bp_below >= 75) {
+        fill_map[i] <- "#004B8E"
+      } else if (bp_below >= 50) {
+        fill_map[i] <- "#1A5CB0"
+      } else {
+        fill_map[i] <- "#5FA4D4"
+      }
+    } else {
+      bp_above <- diff_from_center * 100
+      if (bp_above >= 125) {
+        fill_map[i] <- "#800000"
+      } else if (bp_above >= 100) {
+        fill_map[i] <- "#A00000"
+      } else if (bp_above >= 75) {
+        fill_map[i] <- "#B50000"
+      } else if (bp_above >= 49) {
+        fill_map[i] <- "#C71010"
+      } else {
+        fill_map[i] <- "#E07C7C"
+      }
+    }
+  }
+  
+  # Legend setup (centered on the meeting-specific center rate)
+  legend_min <- center_rate - 1.50
+  legend_max <- center_rate + 1.50
+  legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
+  if (center_rate %in% all_rates && !(center_rate %in% legend_rates)) {
+    legend_rates <- sort(c(legend_rates, center_rate))
+  }
+  legend_breaks <- sprintf("%.2f%%", legend_rates)
+  
+  # Prepare highlight data for actual outcome
   df_mt_highlight <- NULL
   if (!is.null(actual_outcome)) {
     actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
@@ -510,23 +548,33 @@ for (mt in future_meetings_all) {
     }
   }
   
-  # *** CHANGED: Filename with 'daily' prefix ***
+  # RBA meetings in range
+  rba_meetings_in_range <- meeting_schedule %>%
+    dplyr::filter(
+      meeting_date > start_xlim_mt,
+      meeting_date < meeting_date_proper
+    )
+  
+  # ABS data releases in range
+  abs_releases_in_range <- abs_releases %>%
+    dplyr::mutate(release_date = as.Date(datetime)) %>%
+    dplyr::filter(
+      release_date > start_xlim_mt,
+      release_date < meeting_date_proper
+    )
+  
   filename <- paste0("docs/meetings/daily_area_", fmt_file(meeting_date_proper), ".png")
   
   tryCatch({
-    # *** CHANGED: Monthly ticks on the 1st of each month ***
-    # Get first day of month for start and end dates
     start_month <- lubridate::floor_date(start_xlim_mt, "month")
     end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
     
-    # Create breaks on the 1st of each month
     breaks_vec <- seq.Date(
       from = start_month,
       to = end_month,
       by = "month"
     )
     
-    # Format as MMM-YYYY (e.g., Jan-2025)
     date_labels <- function(x) format(x, "%b-%Y")
     
     area_mt <- ggplot2::ggplot(
@@ -614,7 +662,6 @@ for (mt in future_meetings_all) {
     cat("✗ Error:", e$message, "\n")
   })
 }
-
 # *** CHANGED: CSV exports with 'daily' prefix ***
 for (mt in future_meetings_all) {
   df_mt_csv <- all_estimates_buckets_ext %>%
