@@ -626,7 +626,7 @@ for (mt in future_meetings_all) {
         expand = c(0, 0)
       ) +
       ggplot2::labs(
-        title = paste("Daily Cash Rate Scenarios for Meeting on", fmt_date(meeting_date_proper)),
+        title = paste("Cash Rate Scenarios for Meeting on", fmt_date(meeting_date_proper)),
         subtitle = if(!is.null(actual_outcome)) {
           paste0("Daily probability distribution | Actual outcome: <span style='color:gold;'>**", 
                  sprintf("%.2f%%", actual_outcome), "**</span>")
