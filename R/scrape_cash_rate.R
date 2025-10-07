@@ -77,12 +77,12 @@ delete_files_by_criteria <- function(
 
 # Example usage
 # CONFIGURATION - Modify these values
-GITHUB_DIR <- ""
+GITHUB_DIR <- "docs/meetings/"
 
 # Criteria for deletion
 FILE_TYPES <- c(".log", ".tmp", ".png")  # File extensions to delete
-FILE_PREFIX <- ""  # Files starting with this string
-MINUTES_OLD <- 60*24*5  # Delete files older than this many minutes
+FILE_PREFIX <- "area"  # Files starting with this string
+MINUTES_OLD <- 10  # Delete files older than this many minutes
 
 # Safety: Start with dry_run=TRUE to see what would be deleted
 DRY_RUN <- TRUE
