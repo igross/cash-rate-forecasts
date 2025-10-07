@@ -5,6 +5,112 @@ library(jsonlite)
 library(lubridate)
 
 
+# Function to delete files based on multiple criteria
+delete_files_by_criteria <- function(
+    root_directory,
+    file_extensions = NULL,
+    prefix = NULL,
+    minutes_old = NULL,
+    dry_run = TRUE
+) {
+  
+  # Get all files recursively from all subdirectories
+  all_files <- list.files(
+    path = root_directory,
+    recursive = TRUE,      # This searches ALL subdirectories
+    full.names = TRUE,     # Returns full paths
+    include.dirs = FALSE,  # Files only, not directories
+    all.files = TRUE       # Include hidden files
+  )
+  
+  cat("Found", length(all_files), "total files across all subdirectories\n\n")
+  
+  deleted_files <- c()
+  
+  for (filepath in all_files) {
+    should_delete <- TRUE
+    filename <- basename(filepath)
+    
+    # Check file extension
+    if (!is.null(file_extensions)) {
+      file_ext <- tools::file_ext(filename)
+      if (!paste0(".", file_ext) %in% file_extensions) {
+        should_delete <- FALSE
+      }
+    }
+    
+    # Check prefix
+    if (!is.null(prefix) && should_delete) {
+      if (!startsWith(filename, prefix)) {
+        should_delete <- FALSE
+      }
+    }
+    
+    # Check modification date
+    if (!is.null(minutes_old) && should_delete) {
+      file_info <- file.info(filepath)
+      cutoff_time <- Sys.time() - (minutes_old * 60)
+      if (file_info$mtime >= cutoff_time) {
+        should_delete <- FALSE
+      }
+    }
+    
+    # Delete or log the file
+    if (should_delete) {
+      if (dry_run) {
+        cat("[DRY RUN] Would delete:", filepath, "\n")
+      } else {
+        tryCatch({
+          file.remove(filepath)
+          cat("Deleted:", filepath, "\n")
+        }, error = function(e) {
+          cat("Error deleting", filepath, ":", conditionMessage(e), "\n")
+        })
+      }
+      deleted_files <- c(deleted_files, filepath)
+    }
+  }
+  
+  return(deleted_files)
+}
+
+
+# Example usage
+# CONFIGURATION - Modify these values
+GITHUB_DIR <- ""
+
+# Criteria for deletion
+FILE_TYPES <- c(".log", ".tmp", ".png")  # File extensions to delete
+FILE_PREFIX <- ""  # Files starting with this string
+MINUTES_OLD <- 60*24*5  # Delete files older than this many minutes
+
+# Safety: Start with dry_run=TRUE to see what would be deleted
+DRY_RUN <- TRUE
+
+cat("Searching in:", GITHUB_DIR, "\n")
+cat("File types:", paste(FILE_TYPES, collapse = ", "), "\n")
+cat("Prefix:", FILE_PREFIX, "\n")
+cat("Older than:", MINUTES_OLD, "minutes\n")
+cat("Dry run:", DRY_RUN, "\n")
+cat(strrep("-", 60), "\n")
+
+deleted <- delete_files_by_criteria(
+  root_directory = GITHUB_DIR,
+  file_extensions = FILE_TYPES,
+  prefix = FILE_PREFIX,
+  minutes_old = MINUTES_OLD,
+  dry_run = DRY_RUN
+)
+
+cat(strrep("-", 60), "\n")
+cat("Total files", 
+    if (DRY_RUN) "that would be deleted" else "deleted", 
+    ":", length(deleted), "\n")
+
+if (DRY_RUN) {
+  cat("\nTo actually delete files, set DRY_RUN <- FALSE\n")
+}
+
 json_url <- "https://asx.api.markitdigital.com/asx-research/1.0/derivatives/interest-rate/IB/futures?days=1&height=179&width=179"
 json_file <- tempfile()
 
