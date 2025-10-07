@@ -32,7 +32,7 @@ if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 # Find meeting PNGs
 png_basenames <- list.files(
   "docs/meetings",
-  pattern = "^area_all_moves_\\d{4}-\\d{2}-\\d{2}\\.png$",
+  pattern = "^daily_area_\\d{4}-\\d{2}-\\d{2}\\.png$",
   full.names = FALSE
 )
 
@@ -44,7 +44,7 @@ future_cards <- character(0)
 past_cards <- character(0)
 
 if (length(png_basenames) > 0) {
-  dates_chr <- str_match(png_basenames, "pattern = "^daily_area_\\d{4}-\\d{2}-\\d{2}\\.png$")[, 2]
+  dates_chr <- str_match(png_basenames, "daily_area_(\\d{4}-\\d{2}-\\d{2})\\.png")[, 2]
   dates_obj <- as.Date(dates_chr, format = "%Y-%m-%d")
   
   # Separate future and past
