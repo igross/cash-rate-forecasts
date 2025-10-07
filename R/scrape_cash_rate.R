@@ -67,7 +67,7 @@ GITHUB_DIR <- "docs/meetings"
 
 # Criteria for deletion
 FILE_TYPES <- c(".log", ".tmp", ".png")  # File extensions to delete
-FILE_PREFIX <- "area"  # Files starting with this string
+FILE_PREFIX <- "daily"  # Files starting with this string
 MINUTES_OLD <- 10  # Delete files older than this many minutes
 
 # Safety: Start with dry_run=TRUE to see what would be deleted
