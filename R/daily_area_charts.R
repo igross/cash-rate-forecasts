@@ -369,7 +369,7 @@ fill_map <- setNames(character(length(all_rates)), sprintf("%.2f%%", all_rates))
 
 for (i in seq_along(all_rates)) {
   rate <- all_rates[i]
-  diff_from_current <- rate - actual_outcome
+  diff_from_current <- rate - current_rate
   
   if (abs(diff_from_current) < 0.01) {
     fill_map[i] <- "#BFBFBF"
@@ -452,8 +452,8 @@ for (mt in future_meetings_all) {
   if (nrow(df_mt) == 0) next
   
   # Legend setup
-  legend_min <- actual_outcome - 1.50
-  legend_max <- actual_outcome + 1.50
+  legend_min <- current_rate - 1.50
+  legend_max <- current_rate + 1.50
   legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
   if (current_rate %in% all_rates && !(current_rate %in% legend_rates)) {
     legend_rates <- sort(c(legend_rates, current_rate))
