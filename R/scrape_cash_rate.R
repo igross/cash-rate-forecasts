@@ -31,13 +31,7 @@ delete_files_by_criteria <- function(
     should_delete <- TRUE
     filename <- basename(filepath)
     
-    # Check file extension
-    if (!is.null(file_extensions)) {
-      file_ext <- tools::file_ext(filename)
-      if (!paste0(".", file_ext) %in% file_extensions) {
-        should_delete <- FALSE
-      }
-    }
+
     
     # Check prefix
     if (!is.null(prefix) && should_delete) {
@@ -46,14 +40,6 @@ delete_files_by_criteria <- function(
       }
     }
     
-    # Check modification date
-    if (!is.null(minutes_old) && should_delete) {
-      file_info <- file.info(filepath)
-      cutoff_time <- Sys.time() - (minutes_old * 60)
-      if (file_info$mtime >= cutoff_time) {
-        should_delete <- FALSE
-      }
-    }
     
     # Delete or log the file
     if (should_delete) {
