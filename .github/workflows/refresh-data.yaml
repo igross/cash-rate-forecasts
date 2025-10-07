@@ -5,7 +5,7 @@ permissions:
 
 on:
   schedule:
-    # 23:00–05:00 UTC → 10:00–16:00 AEST (non-DST)
+  # 23:00–05:00 UTC → 10:00–16:00 AEST (non-DST)
     - cron: '*/5 23,0-6 * * *'
   push:
     branches: [main, master]
@@ -13,15 +13,15 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+ 
 jobs:
   refresh-data:
-    runs-on: ubuntu-latest  # ⚡ much faster than macOS
+    runs-on: macOS-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -29,41 +29,35 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      # ⚡ Cache installed R packages
-      - name: Cache R packages
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ hashFiles('**/DESCRIPTION') }}
-          restore-keys: ${{ runner.os }}-r-
+      - name: Install XQuartz on macOS
+        if: runner.os == 'macOS'
+        run: brew install xquartz --cask
 
-      - name: Install required packages
-        run: |
-          Rscript -e 'pkgs <- c("tidyverse", "here", "jsonlite", "ggrepel", "conflicted",
-                                "tidyr", "scales", "readabs", "readrba", "plotly", 
-                                "purrr", "cachem", "dplyr", "ggpattern", "ggtext", "zoo", "vctrs");
-                      to_install <- setdiff(pkgs, rownames(installed.packages()));
-                      if (length(to_install)) install.packages(to_install)'
+      - name: Install vctrs
+        run: Rscript -e 'install.packages(c("vctrs"))'
+
+      - name: Install packages
+        run: Rscript -e 'install.packages(c("tidyverse", "here", "jsonlite", "ggrepel", "conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo"))'
 
       - name: Get data
         run: Rscript -e 'source(here::here("R", "scrape_cash_rate.R"), echo = TRUE)'
 
       - name: Make line graph
-        run: Rscript -e 'source(here::here("R", "line_chart.R"), echo = TRUE)'
+        run: Rscript -e 'source(here::here("R", "line_chart.R"), echo = TRUE)'          
 
       - name: Make area graphs
-        run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'
+        run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'  
 
       - name: Make daily area graphs
-        run: Rscript -e 'source(here::here("R", "daily_area_charts.R"), echo = TRUE)'
+        run: Rscript -e 'source(here::here("R", "daily_area_charts.R"), echo = TRUE)'         
 
       - name: Generate index.html from charts
         run: Rscript R/write_index_html.R
 
-      - name: Commit updates
+      - name: Commit
         run: |
           git config --global user.name 'igross'
-          git config --global user.email 'actions@github.com'
-          git add docs/*.png docs/index.html || true
+          git add .
+          git add docs/*.png docs/index.html
           git commit -m 'refreshing data' || echo "No changes to commit"
           git push || echo "No changes to commit"
