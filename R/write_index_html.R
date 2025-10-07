@@ -60,7 +60,7 @@ if (length(png_basenames) > 0) {
     
     future_cards <- vapply(
       file.path("meetings", future_files),
-      function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" />\n</div>', 
+      function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" class="expandable" />\n</div>', 
                              file, file),
       character(1)
     )
@@ -75,7 +75,7 @@ if (length(png_basenames) > 0) {
     
     past_cards <- vapply(
       file.path("meetings", past_files),
-      function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" />\n</div>', 
+      function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" class="expandable" />\n</div>', 
                              file, file),
       character(1)
     )
@@ -97,6 +97,7 @@ if (file.exists("docs/line.png")) {
     <img 
       src="line.png" 
       alt="Next RBA Meeting Line Chart"
+      class="expandable"
       style="
         width: 80%;
         height: auto;
@@ -118,6 +119,7 @@ if (file.exists("docs/area.png")) {
     <img 
       src="area.png" 
       alt="Next RBA Meeting Area Chart"
+      class="expandable"
       style="
         width: 80%;
         height: auto;
@@ -185,6 +187,50 @@ html <- sprintf('
       width: 100%%;
       border-radius: 6px;
     }
+    .expandable {
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .expandable:hover {
+      opacity: 0.85;
+    }
+    
+    /* Lightbox modal styles */
+    .lightbox {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%%;
+      height: 100%%;
+      background-color: rgba(0, 0, 0, 0.9);
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox.active {
+      display: flex;
+    }
+    .lightbox-content {
+      max-width: 95%%;
+      max-height: 95%%;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 35px;
+      color: #f1f1f1;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .lightbox-close:hover {
+      color: #bbb;
+    }
+    
     @media (max-width: 1024px) {
       .grid {
         grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -195,6 +241,11 @@ html <- sprintf('
       .grid {
         grid-template-columns: 1fr;
         max-width: 95vw;
+      }
+      .lightbox-close {
+        top: 10px;
+        right: 20px;
+        font-size: 30px;
       }
     }
   </style>
@@ -212,6 +263,47 @@ html <- sprintf('
   %s
 
   %s
+  
+  <!-- Lightbox Modal -->
+  <div id="lightbox" class="lightbox">
+    <span class="lightbox-close">&times;</span>
+    <img class="lightbox-content" id="lightbox-img" alt="Expanded view">
+  </div>
+  
+  <script>
+    // Get the lightbox elements
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightbox-img");
+    const closeBtn = document.querySelector(".lightbox-close");
+    
+    // Add click listeners to all expandable images
+    document.querySelectorAll(".expandable").forEach(img => {
+      img.addEventListener("click", function() {
+        lightbox.classList.add("active");
+        lightboxImg.src = this.src;
+        lightboxImg.alt = this.alt;
+      });
+    });
+    
+    // Close the lightbox when clicking the X button
+    closeBtn.addEventListener("click", function() {
+      lightbox.classList.remove("active");
+    });
+    
+    // Close the lightbox when clicking outside the image
+    lightbox.addEventListener("click", function(e) {
+      if (e.target === lightbox) {
+        lightbox.classList.remove("active");
+      }
+    });
+    
+    // Close the lightbox with Escape key
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape" && lightbox.classList.contains("active")) {
+        lightbox.classList.remove("active");
+      }
+    });
+  </script>
 
 </body>
 </html>
