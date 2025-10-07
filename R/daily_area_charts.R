@@ -452,8 +452,8 @@ for (mt in future_meetings_all) {
   if (nrow(df_mt) == 0) next
   
   # Legend setup
-  legend_min <- current_rate - 1.00
-  legend_max <- current_rate + 1.00
+  legend_min <- current_rate - 2.00
+  legend_max <- current_rate + 2.00
   legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
   if (current_rate %in% all_rates && !(current_rate %in% legend_rates)) {
     legend_rates <- sort(c(legend_rates, current_rate))
