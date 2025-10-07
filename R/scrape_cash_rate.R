@@ -63,7 +63,7 @@ delete_files_by_criteria <- function(
 
 # Example usage
 # CONFIGURATION - Modify these values
-GITHUB_DIR <- "docs/meetings/"
+GITHUB_DIR <- "docs/meetings"
 
 # Criteria for deletion
 FILE_TYPES <- c(".log", ".tmp", ".png")  # File extensions to delete
