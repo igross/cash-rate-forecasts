@@ -647,8 +647,10 @@ for (mt in future_meetings_all) {
         legend.title = ggplot2::element_blank()
       )
     
+temp_filename <- paste0(filename, ".tmp")
+    
     ggplot2::ggsave(
-      filename = filename,
+      filename = temp_filename,
       plot = area_mt,
       width = 12,
       height = 5,
@@ -656,7 +658,12 @@ for (mt in future_meetings_all) {
       device = "png"
     )
     
-    cat("✓ Saved:", filename, "\n")
+ if (file.exists(temp_filename)) {
+      file.rename(temp_filename, filename)
+      cat("✓ Saved:", filename, "\n")
+    } else {
+      cat("✗ Temp file was not created\n")
+    }
     
   }, error = function(e) {
     cat("✗ Error:", e$message, "\n")
