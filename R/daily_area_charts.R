@@ -660,7 +660,7 @@ temp_filename <- paste0(filename, ".tmp")
     
  if (file.exists(temp_filename)) {
       file.rename(temp_filename, filename)
-      cat("✓ Saved:", filename, "\n")
+      cat("✓ Saved from temp file:", filename, "\n")
     } else {
       cat("✗ Temp file was not created\n")
     }
