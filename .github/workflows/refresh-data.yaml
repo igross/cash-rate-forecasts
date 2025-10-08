@@ -57,7 +57,6 @@ jobs:
       - name: Commit
         run: |
           git config --global user.name 'igross'
-          git add .
-          git add docs/*.png docs/index.html
+          git add -A
           git commit -m 'refreshing data' || echo "No changes to commit"
           git push || echo "No changes to commit"
