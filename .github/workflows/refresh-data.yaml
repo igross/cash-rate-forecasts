@@ -54,8 +54,10 @@ jobs:
       - name: Generate index.html from charts
         run: Rscript R/write_index_html.R
 
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: 'refreshing data'
-          file_pattern: 'docs/**/*.png docs/**/*.csv docs/index.html combined_data/*.Rds daily_data/*.csv'
+      - name: Commit
+        run: |
+          git config --global user.name 'igross'
+          git add .
+          git add docs/*.png docs/index.html
+          git commit -m 'refreshing data' || echo "No changes to commit"
+          git push || echo "No changes to commit"
