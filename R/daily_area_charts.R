@@ -736,6 +736,7 @@ cat("\nDaily analysis completed successfully!\n")
 
 # =============================================
 # HEATMAP-STYLE VISUALIZATIONS
+# Note: Requires library(zoo) for na.locf
 # =============================================
 cat("\n=== Creating heatmap visualizations ===\n")
 
@@ -818,25 +819,43 @@ for (mt in future_meetings_all) {
       by = c("scrape_date", "move")
     )
   
-  # Forward fill missing values for each rate bucket (carry previous day forward)
+  # Get the last date with actual data for each rate bucket
+  last_data_dates <- df_mt_heat %>%
+    dplyr::filter(!is.na(probability)) %>%
+    dplyr::group_by(move) %>%
+    dplyr::summarise(last_date = max(scrape_date), .groups = "drop")
+  
+  # Forward fill missing values ONLY up to the last date with data
   df_mt_heat <- df_mt_heat %>%
+    dplyr::left_join(last_data_dates, by = "move") %>%
     dplyr::group_by(move) %>%
     dplyr::arrange(scrape_date) %>%
-    tidyr::fill(probability, .direction = "down") %>%
+    dplyr::mutate(
+      # Only fill if we're on or before the last data date
+      probability = ifelse(scrape_date <= last_date,
+                          zoo::na.locf(probability, na.rm = FALSE),
+                          NA_real_)
+    ) %>%
+    dplyr::select(-last_date) %>%
     dplyr::ungroup()
   
-  # Fill any remaining NAs with 0 (only for start of series)
+  # Fill any remaining NAs at the start with 0
   df_mt_heat <- df_mt_heat %>%
+    dplyr::group_by(move) %>%
     dplyr::mutate(
-      probability = ifelse(is.na(probability), 0, probability)
-    )
+      first_non_na = min(scrape_date[!is.na(probability)], na.rm = TRUE),
+      probability = ifelse(is.na(probability) & scrape_date < first_non_na, 0, probability)
+    ) %>%
+    dplyr::select(-first_non_na) %>%
+    dplyr::ungroup()
   
   # =============================================
   # CALCULATE PERCENTILE LINES
   # =============================================
   
-  # Calculate percentiles for each date
+  # Calculate percentiles for each date (only where we have data)
   percentile_lines <- df_mt_heat %>%
+    dplyr::filter(!is.na(probability)) %>%
     dplyr::arrange(scrape_date, move) %>%
     dplyr::group_by(scrape_date) %>%
     dplyr::mutate(
@@ -897,13 +916,14 @@ for (mt in future_meetings_all) {
         values = c(0, 0.10, 0.30, 0.50, 0.70, 1.0),
         limits = c(0, 1),
         labels = scales::percent_format(accuracy = 1),
+        na.value = "transparent",
         name = "Probability"
       ) +
       # Add percentile lines
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p25),
-        color = "white",
+        color = "#00FF00",
         linewidth = 0.6,
         linetype = "dashed",
         inherit.aes = FALSE
@@ -911,7 +931,7 @@ for (mt in future_meetings_all) {
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p50),
-        color = "white",
+        color = "#00FF00",
         linewidth = 0.8,
         linetype = "dashed",
         inherit.aes = FALSE
@@ -919,7 +939,7 @@ for (mt in future_meetings_all) {
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p75),
-        color = "white",
+        color = "#00FF00",
         linewidth = 0.6,
         linetype = "dashed",
         inherit.aes = FALSE
@@ -932,7 +952,7 @@ for (mt in future_meetings_all) {
           ggplot2::geom_hline(
             yintercept = outcome_position,
             color = "black",
-            linewidth = 1,
+            linewidth = 1.2,
             linetype = "solid"
           )
         }
@@ -959,10 +979,10 @@ for (mt in future_meetings_all) {
       ggplot2::labs(
         title = paste("Cash Rate Probability Heatmap for Meeting on", fmt_date(meeting_date_proper)),
         subtitle = if(!is.null(actual_outcome)) {
-          paste0("Daily probability distribution with quartiles (white dashed lines) | Actual outcome: **", 
+          paste0("Daily probability distribution with quartiles (green dashed lines) | Actual outcome: **", 
                  sprintf("%.2f%%", actual_outcome), "** (black line)")
         } else {
-          "Daily probability distribution with quartiles (white dashed lines)"
+          "Daily probability distribution with quartiles (green dashed lines)"
         },
         x = "Date",
         y = "Cash Rate"
