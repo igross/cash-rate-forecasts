@@ -869,6 +869,32 @@ for (mt in future_meetings_all) {
       .groups = "drop"
     )
   
+  # =============================================
+  # PREPARE ACTUAL CASH RATE LINE
+  # =============================================
+  
+  # Get historical cash rate for this date range
+  actual_rate_line <- rba_historical %>%
+    dplyr::filter(
+      date >= start_xlim_mt,
+      date <= end_xlim_mt
+    ) %>%
+    dplyr::mutate(
+      rate_label = sprintf("%.2f%%", value)
+    )
+  
+  # Convert rate values to factor positions for plotting
+  # Find the nearest factor level for each actual rate
+  actual_rate_line <- actual_rate_line %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(
+      # Find closest rate level
+      closest_level = valid_move_levels[which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - value))],
+      rate_position = which(levels(df_mt_heat$move) == closest_level)
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(date, value, rate_position)
+  
   # Check for actual outcome
   actual_outcome <- NULL
   is_past_meeting <- meeting_date_proper < Sys.Date()
@@ -923,7 +949,7 @@ for (mt in future_meetings_all) {
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p25),
-        color = "#00FF00",
+        color = "#228B22",
         linewidth = 0.6,
         linetype = "dashed",
         inherit.aes = FALSE
@@ -931,7 +957,7 @@ for (mt in future_meetings_all) {
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p50),
-        color = "#00FF00",
+        color = "#228B22",
         linewidth = 0.8,
         linetype = "dashed",
         inherit.aes = FALSE
@@ -939,11 +965,22 @@ for (mt in future_meetings_all) {
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p75),
-        color = "#00FF00",
+        color = "#228B22",
         linewidth = 0.6,
         linetype = "dashed",
         inherit.aes = FALSE
       ) +
+      # Add actual cash rate line
+      {if(nrow(actual_rate_line) > 0)
+        ggplot2::geom_line(
+          data = actual_rate_line,
+          aes(x = date, y = rate_position),
+          color = "#0066CC",
+          linewidth = 1.0,
+          linetype = "solid",
+          inherit.aes = FALSE
+        )
+      } +
       {if(!is.null(actual_outcome)) {
         actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
         # Find the position of the actual outcome in the factor levels
@@ -979,10 +1016,10 @@ for (mt in future_meetings_all) {
       ggplot2::labs(
         title = paste("Cash Rate Probability Heatmap for Meeting on", fmt_date(meeting_date_proper)),
         subtitle = if(!is.null(actual_outcome)) {
-          paste0("Daily probability distribution with quartiles (green dashed lines) | Actual outcome: **", 
+          paste0("Quartiles (green) | Actual cash rate (blue) | Actual outcome: **", 
                  sprintf("%.2f%%", actual_outcome), "** (black line)")
         } else {
-          "Daily probability distribution with quartiles (green dashed lines)"
+          "Quartiles (green dashed) | Actual cash rate (blue solid)"
         },
         x = "Date",
         y = "Cash Rate"
