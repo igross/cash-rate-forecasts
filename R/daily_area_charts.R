@@ -732,3 +732,200 @@ if (nrow(combined_csv) > 0) {
 }
 
 cat("\nDaily analysis completed successfully!\n")
+
+
+
+
+
+# =============================================
+# HEATMAP-STYLE VISUALIZATIONS
+# =============================================
+cat("\n=== Creating heatmap visualizations ===\n")
+
+for (mt in future_meetings_all) {
+  cat("\n=== Processing heatmap for meeting:", as.character(as.Date(mt)), "===\n")
+  
+  df_mt_heat <- all_estimates_buckets_ext %>%
+    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+    dplyr::group_by(scrape_date, move, bucket) %>%
+    dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
+    tidyr::complete(scrape_date, move, fill = list(probability = 0)) %>%
+    dplyr::arrange(scrape_date, move)
+  
+  if (nrow(df_mt_heat) == 0) {
+    cat("Skipping - no data for meeting\n")
+    next 
+  }
+  
+  # Get the bucket value for each move level
+  bucket_lookup <- all_estimates_buckets_ext %>%
+    dplyr::select(move, bucket) %>%
+    dplyr::distinct()
+  
+  df_mt_heat <- df_mt_heat %>%
+    dplyr::left_join(bucket_lookup, by = "move")
+  
+  # Filter and clean data
+  df_mt_heat <- df_mt_heat %>%
+    dplyr::filter(
+      !is.na(scrape_date),
+      !is.na(probability),
+      is.finite(probability),
+      probability >= 0,
+      !is.na(move)
+    ) %>%
+    dplyr::mutate(
+      probability = pmin(probability, 1.0),
+      probability = pmax(probability, 0.0)
+    )
+  
+  if (nrow(df_mt_heat) == 0) next
+  
+  meeting_date_proper <- as.Date(mt) - days(1)
+  
+  start_xlim_mt <- min(df_mt_heat$scrape_date, na.rm = TRUE)
+  end_xlim_mt   <- meeting_date_proper
+  
+  available_moves <- unique(df_mt_heat$move[!is.na(df_mt_heat$move)])
+  valid_move_levels <- rate_labels[rate_labels %in% available_moves]
+  
+  df_mt_heat <- df_mt_heat %>%
+    dplyr::filter(move %in% valid_move_levels) %>%
+    dplyr::mutate(
+      move = factor(move, levels = valid_move_levels)  # Ascending order for heatmap
+    ) %>%
+    dplyr::filter(!is.na(move))
+  
+  if (nrow(df_mt_heat) == 0) next
+  
+  # Check for actual outcome
+  actual_outcome <- NULL
+  is_past_meeting <- meeting_date_proper < Sys.Date()
+  
+  if (is_past_meeting) {
+    actual_outcome_data <- rba_historical %>%
+      dplyr::filter(date > meeting_date_proper + 2) %>%
+      dplyr::slice_min(date, n = 1, with_ties = FALSE)
+    
+    if (nrow(actual_outcome_data) > 0) {
+      actual_outcome <- actual_outcome_data$value
+      cat("Actual outcome for heatmap:", actual_outcome, "%\n")
+    }
+  }
+  
+  # RBA meetings in range
+  rba_meetings_in_range <- meeting_schedule %>%
+    dplyr::filter(
+      meeting_date > start_xlim_mt,
+      meeting_date < meeting_date_proper
+    )
+  
+  filename <- paste0("docs/meetings/daily_heatmap_", fmt_file(meeting_date_proper), ".png")
+  
+  tryCatch({
+    start_month <- lubridate::floor_date(start_xlim_mt, "month")
+    end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
+    
+    breaks_vec <- seq.Date(
+      from = start_month,
+      to = end_month,
+      by = "month"
+    )
+    
+    date_labels <- function(x) format(x, "%b-%Y")
+    
+    # Create heatmap
+    heatmap_mt <- ggplot2::ggplot(
+      df_mt_heat,
+      ggplot2::aes(x = scrape_date, y = move, fill = probability)
+    ) +
+      ggplot2::geom_tile() +
+      ggplot2::scale_fill_gradient2(
+        low = "white",
+        mid = "#FFA500",
+        high = "#8B0000",
+        midpoint = 0.5,
+        limits = c(0, 1),
+        labels = scales::percent_format(accuracy = 1),
+        name = "Probability"
+      ) +
+      {if(!is.null(actual_outcome)) {
+        actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
+        # Find the position of the actual outcome in the factor levels
+        outcome_position <- which(levels(df_mt_heat$move) == actual_outcome_label)
+        if (length(outcome_position) > 0) {
+          ggplot2::geom_hline(
+            yintercept = outcome_position,
+            color = "gold",
+            linewidth = 2,
+            linetype = "solid"
+          )
+        }
+      }} +
+      {if(nrow(rba_meetings_in_range) > 0) 
+        ggplot2::geom_vline(
+          data = rba_meetings_in_range,
+          aes(xintercept = as.numeric(meeting_date)),
+          linetype = "dashed",
+          color = "grey30",
+          linewidth = 0.5,
+          alpha = 0.7
+        )
+      } +
+      ggplot2::scale_x_date(
+        limits = c(start_xlim_mt, end_xlim_mt),
+        breaks = breaks_vec,
+        labels = date_labels,
+        expand = c(0, 0)
+      ) +
+      ggplot2::scale_y_discrete(
+        expand = c(0, 0)
+      ) +
+      ggplot2::labs(
+        title = paste("Cash Rate Probability Heatmap for Meeting on", fmt_date(meeting_date_proper)),
+        subtitle = if(!is.null(actual_outcome)) {
+          paste0("Daily probability distribution | Actual outcome: <span style='color:gold;'>**", 
+                 sprintf("%.2f%%", actual_outcome), "**</span> (gold line)")
+        } else {
+          "Daily probability distribution"
+        },
+        x = "Date",
+        y = "Cash Rate"
+      ) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = ggplot2::element_text(size = 9),
+        axis.title.x = ggplot2::element_text(size = 14),
+        axis.title.y = ggplot2::element_text(size = 14),
+        plot.subtitle = ggtext::element_markdown(),
+        legend.position = "right",
+        panel.grid.major = ggplot2::element_blank(),
+        panel.grid.minor = ggplot2::element_blank()
+      )
+    
+    temp_filename <- paste0(filename, ".tmp")
+    
+    ggplot2::ggsave(
+      filename = temp_filename,
+      plot = heatmap_mt,
+      width = 12,
+      height = 8,
+      dpi = 300,
+      device = "png"
+    )
+    
+    if (file.exists(temp_filename)) {
+      file.rename(temp_filename, filename)
+      cat("✓ Saved heatmap:", filename, "\n")
+    } else {
+      cat("✗ Temp file was not created\n")
+    }
+    
+  }, error = function(e) {
+    cat("✗ Error creating heatmap:", e$message, "\n")
+  })
+}
+
+cat("\nHeatmap visualizations completed!\n")
+cat("\nDaily analysis completed successfully!\n")
