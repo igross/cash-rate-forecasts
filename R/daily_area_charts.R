@@ -932,7 +932,7 @@ for (mt in future_meetings_all) {
           ggplot2::geom_hline(
             yintercept = outcome_position,
             color = "black",
-            linewidth = 1.2,
+            linewidth = 1,
             linetype = "solid"
           )
         }
