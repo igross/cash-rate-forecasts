@@ -735,6 +735,7 @@ cat("\nDaily analysis completed successfully!\n")
 
 
 
+
 # =============================================
 # HEATMAP-STYLE VISUALIZATIONS
 # =============================================
@@ -794,67 +795,6 @@ for (mt in future_meetings_all) {
     ) %>%
     dplyr::filter(!is.na(move))
   
-  # =============================================
-  # INTERPOLATE MISSING DAYS
-  # =============================================
-  
-  # Create complete date sequence
-  all_dates_seq <- seq.Date(
-    from = start_xlim_mt,
-    to = end_xlim_mt,
-    by = "day"
-  )
-  
-  # Create complete grid
-  complete_grid <- expand.grid(
-    scrape_date = all_dates_seq,
-    move = valid_move_levels,
-    stringsAsFactors = FALSE
-  ) %>%
-    dplyr::mutate(move = factor(move, levels = valid_move_levels))
-  
-  # Join with existing data
-  df_mt_heat <- complete_grid %>%
-    dplyr::left_join(
-      df_mt_heat %>% dplyr::select(scrape_date, move, probability, bucket),
-      by = c("scrape_date", "move")
-    )
-  
-  # Interpolate missing values for each rate bucket
-  df_mt_heat <- df_mt_heat %>%
-    dplyr::group_by(move) %>%
-    dplyr::arrange(scrape_date) %>%
-    dplyr::mutate(
-      probability = zoo::na.approx(probability, x = scrape_date, na.rm = FALSE, rule = 2),
-      bucket = zoo::na.locf(bucket, na.rm = FALSE)
-    ) %>%
-    dplyr::ungroup()
-  
-  # Fill any remaining NAs with 0
-  df_mt_heat <- df_mt_heat %>%
-    dplyr::mutate(
-      probability = ifelse(is.na(probability), 0, probability)
-    )
-  
-  # =============================================
-  # CALCULATE PERCENTILE LINES
-  # =============================================
-  
-  # Calculate percentiles for each date
-  percentile_lines <- df_mt_heat %>%
-    dplyr::arrange(scrape_date, move) %>%
-    dplyr::group_by(scrape_date) %>%
-    dplyr::mutate(
-      cumulative_prob = cumsum(probability),
-      bucket_numeric = as.numeric(move)
-    ) %>%
-    dplyr::summarise(
-      p25 = approx(cumulative_prob, bucket_numeric, xout = 0.25, rule = 2)$y,
-      p50 = approx(cumulative_prob, bucket_numeric, xout = 0.50, rule = 2)$y,
-      p75 = approx(cumulative_prob, bucket_numeric, xout = 0.75, rule = 2)$y,
-      .groups = "drop"
-    )
-  
   if (nrow(df_mt_heat) == 0) next
   
   # Check for actual outcome
@@ -893,43 +833,20 @@ for (mt in future_meetings_all) {
     
     date_labels <- function(x) format(x, "%b-%Y")
     
-    # Create heatmap with sharper gradient in 0-30% range
+    # Create heatmap
     heatmap_mt <- ggplot2::ggplot(
       df_mt_heat,
       ggplot2::aes(x = scrape_date, y = move, fill = probability)
     ) +
       ggplot2::geom_tile() +
-      ggplot2::scale_fill_gradientn(
-        colors = c("white", "#FFE4B5", "#FFA500", "#FF8C00", "#FF4500", "#8B0000"),
-        values = c(0, 0.10, 0.30, 0.50, 0.70, 1.0),
+      ggplot2::scale_fill_gradient2(
+        low = "white",
+        mid = "#FFA500",
+        high = "#8B0000",
+        midpoint = 0.5,
         limits = c(0, 1),
         labels = scales::percent_format(accuracy = 1),
         name = "Probability"
-      ) +
-      # Add percentile lines
-      ggplot2::geom_line(
-        data = percentile_lines,
-        aes(x = scrape_date, y = p25),
-        color = "white",
-        linewidth = 0.6,
-        linetype = "dashed",
-        inherit.aes = FALSE
-      ) +
-      ggplot2::geom_line(
-        data = percentile_lines,
-        aes(x = scrape_date, y = p50),
-        color = "white",
-        linewidth = 0.8,
-        linetype = "dashed",
-        inherit.aes = FALSE
-      ) +
-      ggplot2::geom_line(
-        data = percentile_lines,
-        aes(x = scrape_date, y = p75),
-        color = "white",
-        linewidth = 0.6,
-        linetype = "dashed",
-        inherit.aes = FALSE
       ) +
       {if(!is.null(actual_outcome)) {
         actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
@@ -938,8 +855,8 @@ for (mt in future_meetings_all) {
         if (length(outcome_position) > 0) {
           ggplot2::geom_hline(
             yintercept = outcome_position,
-            color = "black",
-            linewidth = 1.2,
+            color = "gold",
+            linewidth = 2,
             linetype = "solid"
           )
         }
@@ -966,8 +883,8 @@ for (mt in future_meetings_all) {
       ggplot2::labs(
         title = paste("Cash Rate Probability Heatmap for Meeting on", fmt_date(meeting_date_proper)),
         subtitle = if(!is.null(actual_outcome)) {
-          paste0("Daily probability distribution | Actual outcome: **", 
-                 sprintf("%.2f%%", actual_outcome), "** (black line)")
+          paste0("Daily probability distribution | Actual outcome: <span style='color:gold;'>**", 
+                 sprintf("%.2f%%", actual_outcome), "**</span> (gold line)")
         } else {
           "Daily probability distribution"
         },
@@ -1011,4 +928,3 @@ for (mt in future_meetings_all) {
 
 cat("\nHeatmap visualizations completed!\n")
 cat("\nDaily analysis completed successfully!\n")
-
