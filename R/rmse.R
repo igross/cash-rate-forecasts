@@ -147,10 +147,108 @@ day_distribution <- cash_rate %>%
   count(day_of_week)
 print(day_distribution)
 
+meeting_schedule <- tibble(
+  meeting_date = as.Date(c(
+    "2024-02-06", "2024-03-19", "2024-05-07", "2024-06-18",
+    "2024-08-06", "2024-09-24", "2024-11-05", "2024-12-10",
+    "2025-02-18", "2025-04-01", "2025-05-20", "2025-07-08",
+    "2025-08-12", "2025-09-30", "2025-11-04", "2025-12-09"
+  ))
+) %>% 
+  mutate(
+    expiry = if_else(
+      day(meeting_date) >= days_in_month(meeting_date) - 1,
+      ceiling_date(meeting_date, "month"),
+      floor_date(meeting_date, "month")
+    ),
+    day_of_week = lubridate::wday(meeting_date, label = TRUE, week_start = 1)
+  )
+
+# Verify all meetings are on Tuesday
+cat("\n=== VERIFYING MEETING DAYS ===\n")
+non_tuesday_meetings <- meeting_schedule %>%
+  filter(day_of_week != "Tue")
+
+if (nrow(non_tuesday_meetings) > 0) {
+  cat("⚠ WARNING: Found meetings not on Tuesday:\n")
+  print(non_tuesday_meetings %>% select(meeting_date, day_of_week))
+} else {
+  cat("✓ All", nrow(meeting_schedule), "meetings are on Tuesday\n")
+}
+
+meeting_schedule <- meeting_schedule %>% select(-day_of_week)
+
 # Load actual RBA cash rate outcomes
 library(readrba)
 rba_actual <- read_rba(series_id = "FIRMMCRTD") %>%
   arrange(date)
+
+meeting_outcomes <- meeting_schedule %>%
+  rowwise() %>%
+  mutate(
+    actual_rate = {
+      outcome_data <- rba_actual %>%
+        filter(date > meeting_date) %>%
+        slice_min(date, n = 1, with_ties = FALSE)
+      if (nrow(outcome_data) > 0) outcome_data$value else NA_real_
+    }
+  ) %>%
+  ungroup() %>%
+  filter(!is.na(actual_rate))
+
+# Prepare daily forecasts
+daily_forecasts <- cash_rate %>%
+  inner_join(meeting_schedule, by = c("date" = "expiry")) %>%
+  inner_join(
+    meeting_outcomes %>% select(meeting_date, actual_rate),
+    by = "meeting_date"
+  ) %>%
+  mutate(
+    forecast_date = as.Date(scrape_time),
+    days_ahead = as.integer(meeting_date - forecast_date),
+    forecast_rate = cash_rate,
+    day_of_week = lubridate::wday(forecast_date, week_start = 1)
+  ) %>%
+  # Remove weekends (Saturday = 6, Sunday = 7)
+  filter(day_of_week %in% 1:5) %>%
+  # Keep only one forecast per day per meeting (e.g., latest scrape of the day)
+  arrange(meeting_date, forecast_date, desc(scrape_time)) %>%
+  group_by(meeting_date, forecast_date) %>%
+  slice(1) %>%
+  ungroup() %>%
+  filter(days_ahead > 0) %>%
+  select(forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate)
+
+cat("\n=== DAILY FORECASTS (CLEANED) ===\n")
+cat("Total rows:", nrow(daily_forecasts), "\n")
+cat("Date range:", format(min(daily_forecasts$forecast_date), "%Y-%m-%d"), "to", 
+    format(max(daily_forecasts$forecast_date), "%Y-%m-%d"), "\n")
+cat("Unique forecast dates:", length(unique(daily_forecasts$forecast_date)), "\n")
+cat("Unique meetings:", length(unique(daily_forecasts$meeting_date)), "\n")
+
+# Verify no weekends
+weekend_check <- daily_forecasts %>%
+  mutate(day_of_week = lubridate::wday(forecast_date, label = TRUE, week_start = 1)) %>%
+  filter(day_of_week %in% c("Sat", "Sun"))
+
+if (nrow(weekend_check) > 0) {
+  cat("⚠ WARNING: Found", nrow(weekend_check), "weekend forecasts that weren't removed\n")
+} else {
+  cat("✓ No weekend forecasts (Saturday/Sunday removed)\n")
+}
+
+# Check for duplicates
+dup_check <- daily_forecasts %>%
+  count(meeting_date, forecast_date) %>%
+  filter(n > 1)
+
+if (nrow(dup_check) > 0) {
+  cat("⚠ WARNING: Found", nrow(dup_check), "duplicate date combinations\n")
+} else {
+  cat("✓ One forecast per date per meeting\n")
+}
+
+cat("\n")
 
 # =============================================
 # 3. Calculate RMSE for Quarterly Forecasts
@@ -176,50 +274,44 @@ cat("=== QUARTERLY RMSE (every ~91 days) ===\n")
 print(quarterly_rmse %>% select(days_ahead, n_forecasts, rmse, mae), n = 20)
 
 # =============================================
-# 4. Calculate RMSE for Daily Forecasts (if available)
+# 4. Calculate RMSE for Daily Forecasts
 # =============================================
 
-# Check if we have the necessary data for daily forecasts
-if (exists("cash_rate") && "cash_rate" %in% names(cash_rate)) {
-  
-  cat("\n=== DAILY FORECAST DATA NOT AVAILABLE ===\n")
-  cat("Skipping daily RMSE calculation - only using quarterly data\n\n")
-  
-  # Create empty daily_rmse for compatibility
-  daily_rmse <- tibble(
-    days_ahead = integer(),
-    n_forecasts = integer(),
-    mean_error = numeric(),
-    rmse = numeric(),
-    mae = numeric(),
-    source = character()
-  )
-  
-} else {
-  cat("\n=== DAILY RMSE ===\n")
-  cat("No daily forecast data available\n\n")
-  
-  daily_rmse <- tibble(
-    days_ahead = integer(),
-    n_forecasts = integer(),
-    mean_error = numeric(),
-    rmse = numeric(),
-    mae = numeric(),
-    source = character()
-  )
-}
+daily_rmse <- daily_forecasts %>%
+  mutate(
+    forecast_error = forecast_rate - actual_rate,
+    squared_error = forecast_error^2
+  ) %>%
+  group_by(days_ahead) %>%
+  summarise(
+    n_forecasts = n(),
+    mean_error = mean(forecast_error, na.rm = TRUE),
+    rmse = sqrt(mean(squared_error, na.rm = TRUE)),
+    mae = mean(abs(forecast_error), na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(days_ahead) %>%
+  mutate(source = "daily")
+
+cat("\n=== DAILY RMSE (sample) ===\n")
+print(daily_rmse %>% select(days_ahead, n_forecasts, rmse, mae) %>% head(20))
 
 # =============================================
 # 5. Combine and Interpolate RMSE
 # =============================================
 
-cat("\n=== CREATING FINAL RMSE SERIES ===\n")
+# Combine both RMSE series
+combined_rmse <- bind_rows(
+  quarterly_rmse %>% select(days_ahead, rmse, n_forecasts, source),
+  daily_rmse %>% select(days_ahead, rmse, n_forecasts, source)
+)
 
-# Since we only have quarterly data, use it directly
-combined_rmse <- quarterly_rmse %>% 
-  select(days_ahead, rmse, n_forecasts, source)
+# Create final RMSE series using priority rules:
+# 1. Use quarterly RMSE at quarterly horizons (91, 183, 274, ...)
+# 2. Use daily RMSE where available between quarterly points
+# 3. Interpolate to fill any gaps
 
-# Identify quarterly anchor points
+# Identify quarterly anchor points (specific horizons from the data)
 quarterly_horizons <- c(91, 183, 274, 365, 456, 548, 639, 730, 821, 913, 1004, 1095, 
                         1186, 1278, 1369, 1460, 1551, 1643, 1734, 1825, 1916, 2008, 
                         2099, 2190, 2281, 2373, 2464, 2555, 2646, 2738, 2829, 2920, 
@@ -228,27 +320,36 @@ quarterly_horizons <- c(91, 183, 274, 365, 456, 548, 639, 730, 821, 913, 1004, 1
 # Filter to only anchors that exist in our data
 quarterly_horizons <- quarterly_horizons[quarterly_horizons %in% quarterly_rmse$days_ahead]
 
-cat("Using", length(quarterly_horizons), "quarterly anchor points:\n")
-cat(paste(head(quarterly_horizons, 12), collapse = ", "), "...\n\n")
+cat("\nUsing", length(quarterly_horizons), "quarterly anchor points:\n")
+cat(paste(head(quarterly_horizons, 12), collapse = ", "), "...\n")
 
 # Get all horizons we need to cover
-min_horizon <- min(quarterly_rmse$days_ahead)
-max_horizon <- max(quarterly_rmse$days_ahead)
+min_horizon <- min(c(daily_rmse$days_ahead, quarterly_rmse$days_ahead))
+max_horizon <- max(quarterly_rmse$days_ahead)  # Use quarterly max as upper bound
 all_horizons <- seq(min_horizon, max_horizon, by = 1)
 
-# Create RMSE values for all horizons through interpolation
+# Create priority-based RMSE values
 rmse_priority <- tibble(days_ahead = all_horizons) %>%
   left_join(
     quarterly_rmse %>% 
+      filter(days_ahead %in% quarterly_horizons) %>%
       select(days_ahead, rmse_quarterly = rmse),
     by = "days_ahead"
   ) %>%
+  left_join(
+    daily_rmse %>% select(days_ahead, rmse_daily = rmse),
+    by = "days_ahead"
+  ) %>%
   mutate(
-    # Interpolate between quarterly points
-    rmse_interpolated = na.approx(rmse_quarterly, x = days_ahead, na.rm = FALSE, rule = 2)
+    # Priority: quarterly at anchor points, daily in between, interpolate gaps
+    rmse_base = coalesce(rmse_quarterly, rmse_daily)
   )
 
-cat("Created continuous RMSE series from", min_horizon, "to", max_horizon, "days\n")
+# Interpolate remaining gaps using linear interpolation
+rmse_priority <- rmse_priority %>%
+  mutate(
+    rmse_interpolated = na.approx(rmse_base, x = days_ahead, na.rm = FALSE, rule = 2)
+  )
 
 # =============================================
 # 6. Create Final RMSE Lookup Table
@@ -258,7 +359,11 @@ rmse_days <- rmse_priority %>%
   mutate(
     finalrmse = rmse_interpolated,
     # Track which source was used
-    source = if_else(!is.na(rmse_quarterly), "quarterly_anchor", "interpolated")
+    source = case_when(
+      !is.na(rmse_quarterly) ~ "quarterly_anchor",
+      !is.na(rmse_daily) ~ "daily",
+      TRUE ~ "interpolated"
+    )
   ) %>%
   rename(days_to_meeting = days_ahead) %>%
   select(days_to_meeting, finalrmse, source)
