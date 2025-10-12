@@ -575,8 +575,10 @@ if (nrow(overlap_comparison) > 0) {
 
 cat("\n=== CREATING RMSE BY HORIZON VISUALIZATIONS ===\n")
 
-# 1. Daily RMSE over horizon (full range)
+# 1. Daily RMSE over horizon with multiple smoothing options
 if (nrow(daily_rmse) > 0) {
+  
+  # Plot 1: Raw data with one smoothed line
   daily_rmse_plot <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
     geom_line(color = "steelblue", linewidth = 1, alpha = 0.5) +
     geom_point(aes(size = n_forecasts), color = "steelblue", alpha = 0.3) +
@@ -598,13 +600,122 @@ if (nrow(daily_rmse) > 0) {
          plot = daily_rmse_plot, width = 12, height = 7, dpi = 300)
   cat("✓ Saved: combined_data/daily_rmse_by_horizon.png\n")
   
-  # Additional: Just the smoothed line for cleaner view
+  # Plot 2: Comparison of different LOESS smoothing spans
+  loess_comparison <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
+    geom_point(color = "grey70", alpha = 0.3, size = 1) +
+    geom_smooth(aes(color = "span = 0.1 (very flexible)"), method = "loess", span = 0.1, 
+                se = FALSE, linewidth = 1) +
+    geom_smooth(aes(color = "span = 0.2"), method = "loess", span = 0.2, 
+                se = FALSE, linewidth = 1) +
+    geom_smooth(aes(color = "span = 0.3 (moderate)"), method = "loess", span = 0.3, 
+                se = FALSE, linewidth = 1.2) +
+    geom_smooth(aes(color = "span = 0.5"), method = "loess", span = 0.5, 
+                se = FALSE, linewidth = 1) +
+    geom_smooth(aes(color = "span = 0.75 (very smooth)"), method = "loess", span = 0.75, 
+                se = FALSE, linewidth = 1) +
+    scale_color_manual(
+      name = "LOESS Smoothing",
+      values = c("span = 0.1 (very flexible)" = "#e41a1c",
+                 "span = 0.2" = "#377eb8",
+                 "span = 0.3 (moderate)" = "#4daf4a",
+                 "span = 0.5" = "#984ea3",
+                 "span = 0.75 (very smooth)" = "#ff7f00")
+    ) +
+    labs(
+      title = "Daily RMSE: Comparison of LOESS Smoothing",
+      subtitle = "Different span values (smaller = more flexible, larger = smoother)",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "right"
+    )
+  
+  ggsave("combined_data/daily_rmse_loess_comparison.png",
+         plot = loess_comparison, width = 14, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/daily_rmse_loess_comparison.png\n")
+  
+  # Plot 3: Different smoothing methods
+  methods_comparison <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
+    geom_point(color = "grey70", alpha = 0.3, size = 1) +
+    geom_smooth(aes(color = "LOESS (span=0.3)"), method = "loess", span = 0.3, 
+                se = FALSE, linewidth = 1.2) +
+    geom_smooth(aes(color = "GAM (spline)"), method = "gam", formula = y ~ s(x, bs = "cs"), 
+                se = FALSE, linewidth = 1.2) +
+    geom_smooth(aes(color = "Moving Average (21d)"), method = "lm", 
+                formula = y ~ splines::ns(x, df = 10), se = FALSE, linewidth = 1.2) +
+    scale_color_manual(
+      name = "Smoothing Method",
+      values = c("LOESS (span=0.3)" = "#e41a1c",
+                 "GAM (spline)" = "#377eb8",
+                 "Moving Average (21d)" = "#4daf4a")
+    ) +
+    labs(
+      title = "Daily RMSE: Comparison of Smoothing Methods",
+      subtitle = "LOESS vs GAM vs Natural Spline",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "right"
+    )
+  
+  ggsave("combined_data/daily_rmse_methods_comparison.png",
+         plot = methods_comparison, width = 14, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/daily_rmse_methods_comparison.png\n")
+  
+  # Plot 4: Rolling mean smoothing (manual calculation)
+  library(zoo)
+  
+  daily_rmse_with_rolling <- daily_rmse %>%
+    arrange(days_ahead) %>%
+    mutate(
+      roll_7 = rollmean(rmse, k = 7, fill = NA, align = "center"),
+      roll_14 = rollmean(rmse, k = 14, fill = NA, align = "center"),
+      roll_21 = rollmean(rmse, k = 21, fill = NA, align = "center"),
+      roll_30 = rollmean(rmse, k = 30, fill = NA, align = "center")
+    )
+  
+  rolling_comparison <- ggplot(daily_rmse_with_rolling, aes(x = days_ahead)) +
+    geom_point(aes(y = rmse), color = "grey70", alpha = 0.3, size = 1) +
+    geom_line(aes(y = roll_7, color = "7-day rolling mean"), linewidth = 1, na.rm = TRUE) +
+    geom_line(aes(y = roll_14, color = "14-day rolling mean"), linewidth = 1, na.rm = TRUE) +
+    geom_line(aes(y = roll_21, color = "21-day rolling mean"), linewidth = 1.2, na.rm = TRUE) +
+    geom_line(aes(y = roll_30, color = "30-day rolling mean"), linewidth = 1, na.rm = TRUE) +
+    scale_color_manual(
+      name = "Rolling Average",
+      values = c("7-day rolling mean" = "#e41a1c",
+                 "14-day rolling mean" = "#377eb8",
+                 "21-day rolling mean" = "#4daf4a",
+                 "30-day rolling mean" = "#984ea3")
+    ) +
+    labs(
+      title = "Daily RMSE: Rolling Average Smoothing",
+      subtitle = "Different window sizes for moving averages",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "right"
+    )
+  
+  ggsave("combined_data/daily_rmse_rolling_comparison.png",
+         plot = rolling_comparison, width = 14, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/daily_rmse_rolling_comparison.png\n")
+  
+  # Plot 5: Clean plot with recommended smoothing (LOESS span=0.3)
   daily_rmse_smooth_only <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
     geom_smooth(method = "loess", span = 0.3, color = "darkblue", linewidth = 1.5, 
                 se = TRUE, fill = "steelblue", alpha = 0.2) +
     labs(
       title = "Daily Forecast RMSE - Smoothed Trend",
-      subtitle = "LOESS smoothing removes day-to-day fluctuations",
+      subtitle = "LOESS smoothing (span=0.3) removes day-to-day fluctuations",
       x = "Days to Meeting",
       y = "RMSE (percentage points)"
     ) +
@@ -616,6 +727,39 @@ if (nrow(daily_rmse) > 0) {
   ggsave("combined_data/daily_rmse_smoothed.png",
          plot = daily_rmse_smooth_only, width = 12, height = 7, dpi = 300)
   cat("✓ Saved: combined_data/daily_rmse_smoothed.png\n")
+  
+  # Plot 6: Faceted comparison (small multiples)
+  daily_rmse_long <- daily_rmse_with_rolling %>%
+    select(days_ahead, rmse, roll_7, roll_14, roll_21, roll_30) %>%
+    pivot_longer(cols = starts_with("roll"), names_to = "method", values_to = "smoothed") %>%
+    mutate(
+      method = recode(method,
+        "roll_7" = "7-day Rolling Mean",
+        "roll_14" = "14-day Rolling Mean", 
+        "roll_21" = "21-day Rolling Mean",
+        "roll_30" = "30-day Rolling Mean"
+      )
+    )
+  
+  faceted_plot <- ggplot(daily_rmse_long, aes(x = days_ahead)) +
+    geom_point(aes(y = rmse), color = "grey70", alpha = 0.2, size = 0.5) +
+    geom_line(aes(y = smoothed), color = "steelblue", linewidth = 1, na.rm = TRUE) +
+    facet_wrap(~method, ncol = 2) +
+    labs(
+      title = "Daily RMSE: Rolling Average Comparison (Faceted)",
+      subtitle = "Raw data (grey) with smoothed trends",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      strip.background = element_rect(fill = "grey90")
+    )
+  
+  ggsave("combined_data/daily_rmse_faceted_comparison.png",
+         plot = faceted_plot, width = 12, height = 10, dpi = 300)
+  cat("✓ Saved: combined_data/daily_rmse_faceted_comparison.png\n")
 }
 
 # 2. Quarterly RMSE over horizon
