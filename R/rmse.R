@@ -443,15 +443,34 @@ if (nrow(rmse_days) > 1) {
 # 7. Save Results
 # =============================================
 
+# Save original format with source tracking
 save(rmse_days, file = "combined_data/rmse_days.RData")
 cat("\nSaved to: combined_data/rmse_days.RData\n")
 
+# Save simplified format with only days_to_meeting and finalrmse for rmse_new.RData
+rmse_days_simple <- rmse_days %>%
+  select(days_to_meeting, finalrmse)
+
+save(rmse_days_simple, file = "combined_data/rmse_new.RData")
+cat("Saved simplified version to: combined_data/rmse_new.RData\n")
+
+# Also save as CSV for reference
 write_csv(rmse_days, "combined_data/rmse_days_combined.csv")
 cat("Saved to: combined_data/rmse_days_combined.csv\n")
+
+write_csv(rmse_days_simple, "combined_data/rmse_new.csv")
+cat("Saved simplified version to: combined_data/rmse_new.csv\n")
 
 # Save detailed comparison
 write_csv(rmse_priority, "combined_data/rmse_detailed_sources.csv")
 cat("Saved detailed sources to: combined_data/rmse_detailed_sources.csv\n")
+
+# Display the final output format
+cat("\n=== FINAL OUTPUT FORMAT ===\n")
+cat("Variable name: rmse_days_simple\n")
+cat("Format:\n")
+print(head(rmse_days_simple))
+cat("Total rows:", nrow(rmse_days_simple), "\n")
 
 # =============================================
 # 8. Visualize RMSE Series
