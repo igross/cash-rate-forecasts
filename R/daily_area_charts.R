@@ -750,6 +750,7 @@ for (mt in future_meetings_all) {
     dplyr::arrange(scrape_date, move)
   
   if (nrow(df_mt_heat) == 0) {
+    
     cat("Skipping - no data for meeting\n")
     next 
   }
@@ -854,20 +855,34 @@ for (mt in future_meetings_all) {
   # =============================================
   
   # Calculate percentiles for each date (only where we have data)
-  percentile_lines <- df_mt_heat %>%
-    dplyr::filter(!is.na(probability)) %>%
-    dplyr::arrange(scrape_date, move) %>%
-    dplyr::group_by(scrape_date) %>%
-    dplyr::mutate(
-      cumulative_prob = cumsum(probability),
-      bucket_numeric = as.numeric(move)
-    ) %>%
-    dplyr::summarise(
-      p25 = approx(cumulative_prob, bucket_numeric, xout = 0.25, rule = 2)$y,
-      p50 = approx(cumulative_prob, bucket_numeric, xout = 0.50, rule = 2)$y,
-      p75 = approx(cumulative_prob, bucket_numeric, xout = 0.75, rule = 2)$y,
-      .groups = "drop"
-    )
+percentile_lines <- df_mt_heat %>%
+  dplyr::filter(!is.na(probability)) %>%
+  dplyr::arrange(scrape_date, move) %>%
+  dplyr::group_by(scrape_date) %>%
+  dplyr::mutate(
+    cumulative_prob = cumsum(probability),
+    bucket_numeric = bucket  # Use the actual bucket rate value instead
+  ) %>%
+  dplyr::summarise(
+    p25 = approx(cumulative_prob, bucket_numeric, xout = 0.25, rule = 2)$y,
+    p50 = approx(cumulative_prob, bucket_numeric, xout = 0.50, rule = 2)$y,
+    p75 = approx(cumulative_prob, bucket_numeric, xout = 0.75, rule = 2)$y,
+    .groups = "drop"
+  )
+
+# After calculating percentile_lines, convert to y-axis positions
+percentile_lines <- percentile_lines %>%
+  dplyr::mutate(
+    p25_pos = sapply(p25, function(val) {
+      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+    }),
+    p50_pos = sapply(p50, function(val) {
+      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+    }),
+    p75_pos = sapply(p75, function(val) {
+      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+    })
+  )
   
   # =============================================
   # PREPARE ACTUAL CASH RATE LINE
@@ -945,31 +960,30 @@ for (mt in future_meetings_all) {
         na.value = "transparent",
         name = "Probability"
       ) +
-      # Add percentile lines
       ggplot2::geom_line(
-        data = percentile_lines,
-        aes(x = scrape_date, y = p25),
-        color = "#0e610e",
-        linewidth = 0.5,
-        linetype = "dashed",
-        inherit.aes = FALSE
-      ) +
-      ggplot2::geom_line(
-        data = percentile_lines,
-        aes(x = scrape_date, y = p50),
-        color = "#0e610e",
-        linewidth = 0.8,
-        linetype = "dashed",
-        inherit.aes = FALSE
-      ) +
-      ggplot2::geom_line(
-        data = percentile_lines,
-        aes(x = scrape_date, y = p75),
-        color = "#0e610e",
-        linewidth = 0.5,
-        linetype = "dashed",
-        inherit.aes = FALSE
-      ) +
+  data = percentile_lines,
+  aes(x = scrape_date, y = p25_pos),
+  color = "#0e610e",
+  linewidth = 0.25,
+  linetype = "dashed",
+  inherit.aes = FALSE
+) +
+ggplot2::geom_line(
+  data = percentile_lines,
+  aes(x = scrape_date, y = p50_pos),
+  color = "#0e610e",
+  linewidth = 0.5,
+  linetype = "dashed",
+  inherit.aes = FALSE
+) +
+ggplot2::geom_line(
+  data = percentile_lines,
+  aes(x = scrape_date, y = p75_pos),
+  color = "#0e610e",
+  linewidth = 0.25,
+  linetype = "dashed",
+  inherit.aes = FALSE
+)
       # Add actual cash rate line
       {if(nrow(actual_rate_line) > 0)
         ggplot2::geom_line(
