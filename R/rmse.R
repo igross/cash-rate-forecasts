@@ -31,11 +31,31 @@ quarterly_data <- quarterly_data_raw %>%
   mutate(
     days_ahead = as.integer(gsub("days", "", horizon))
   ) %>%
-  filter(!is.na(forecast_rate), !is.na(actual_rate))
+  filter(!is.na(forecast_rate), !is.na(actual_rate), !is.na(days_ahead))
 
 cat("Quarterly forecasts: ", nrow(quarterly_data), "rows\n")
-cat("Date range:", min(quarterly_data$forecast_date), "to", max(quarterly_data$forecast_date), "\n")
-cat("Horizon range:", min(quarterly_data$days_ahead), "to", max(quarterly_data$days_ahead), "days\n\n")
+cat("Date range:", format(min(quarterly_data$forecast_date), "%Y-%m-%d"), "to", 
+    format(max(quarterly_data$forecast_date), "%Y-%m-%d"), "\n")
+cat("Horizon range:", min(quarterly_data$days_ahead, na.rm = TRUE), "to", 
+    max(quarterly_data$days_ahead, na.rm = TRUE), "days\n\n")
+
+# Check for any parsing issues
+na_dates <- sum(is.na(quarterly_data_raw[[1]]))
+na_after_parse <- quarterly_data_raw %>%
+  mutate(parsed_date = dmy(.[[1]])) %>%
+  pull(parsed_date) %>%
+  is.na() %>%
+  sum()
+
+if (na_after_parse > na_dates) {
+  cat("⚠ WARNING:", na_after_parse - na_dates, "dates failed to parse\n")
+  cat("Sample of unparsed dates:\n")
+  problem_dates <- quarterly_data_raw %>%
+    mutate(parsed_date = dmy(.[[1]])) %>%
+    filter(is.na(parsed_date)) %>%
+    slice(1:5)
+  print(problem_dates[[1]])
+}
 
 # =============================================
 # 2. Load Daily Forecast Data
@@ -708,7 +728,23 @@ abs_releases <- tribble(
 # Analyze RMSE changes around events
 analyze_rmse_around_events <- function(forecasts_df, event_dates, event_name, window_days = 7) {
   
+  cat("\n  Analyzing", event_name, "...\n")
+  cat("  Events to check:", length(event_dates), "\n")
+  cat("  Event date range:", format(min(event_dates), "%Y-%m-%d"), "to", 
+      format(max(event_dates), "%Y-%m-%d"), "\n")
+  
+  # Debug: check date classes
+  cat("  Event date class:", class(event_dates), "\n")
+  cat("  Forecast date class:", class(forecasts_df$forecast_date), "\n")
+  cat("  Meeting date class:", class(forecasts_df$meeting_date), "\n")
+  
+  # Debug: show sample dates
+  cat("  Sample event dates:", paste(format(head(event_dates, 3), "%Y-%m-%d"), collapse = ", "), "\n")
+  cat("  Sample forecast dates:", paste(format(head(forecasts_df$forecast_date, 3), "%Y-%m-%d"), collapse = ", "), "\n")
+  cat("  Sample meeting dates:", paste(format(head(unique(forecasts_df$meeting_date), 3), "%Y-%m-%d"), collapse = ", "), "\n")
+  
   results <- list()
+  events_with_data <- 0
   
   for (i in seq_along(event_dates)) {
     event_date <- event_dates[i]
@@ -759,10 +795,67 @@ analyze_rmse_around_events <- function(forecasts_df, event_dates, event_name, wi
     
     if (nrow(comparison) > 0) {
       results[[i]] <- comparison
+      events_with_data <- events_with_data + 1
     }
   }
   
-  bind_rows(results)
+  cat("  Events with usable data:", events_with_data, "/", length(event_dates), "\n")
+  
+  final_result <- bind_rows(results)
+  
+  if (nrow(final_result) == 0) {
+    cat("  ⚠ No comparisons found. Debugging first event...\n")
+    
+    # Debug the first event in detail
+    event_date <- event_dates[1]
+    cat("  First event date:", format(event_date, "%Y-%m-%d"), "(class:", class(event_date), ")\n")
+    
+    # Check meetings after this event
+    meetings_after <- forecasts_df %>%
+      filter(meeting_date > event_date) %>%
+      distinct(meeting_date) %>%
+      arrange(meeting_date)
+    
+    cat("  Meetings after this event:", nrow(meetings_after), "\n")
+    if (nrow(meetings_after) > 0) {
+      cat("  First few meetings:", paste(format(head(meetings_after$meeting_date, 3), "%Y-%m-%d"), collapse = ", "), "\n")
+      
+      # Check forecasts for first meeting
+      first_meeting <- meetings_after$meeting_date[1]
+      forecasts_for_meeting <- forecasts_df %>%
+        filter(meeting_date == first_meeting)
+      
+      cat("  Forecasts for first meeting (", format(first_meeting, "%Y-%m-%d"), "):", nrow(forecasts_for_meeting), "\n")
+      cat("  Forecast date range:", format(min(forecasts_for_meeting$forecast_date), "%Y-%m-%d"), "to",
+          format(max(forecasts_for_meeting$forecast_date), "%Y-%m-%d"), "\n")
+      
+      if (nrow(forecasts_for_meeting) > 0) {
+        # Check dates relative to event
+        forecasts_with_timing <- forecasts_for_meeting %>%
+          mutate(days_from_event = as.integer(forecast_date - event_date)) %>%
+          filter(abs(days_from_event) <= window_days)
+        
+        cat("  Within", window_days, "days of event:", nrow(forecasts_with_timing), "\n")
+        
+        if (nrow(forecasts_with_timing) > 0) {
+          timing_summary <- forecasts_with_timing %>%
+            mutate(period = ifelse(days_from_event < 0, "before", "after")) %>%
+            count(period)
+          cat("  Breakdown:\n")
+          print(timing_summary)
+        } else {
+          cat("  ⚠ No forecasts within", window_days, "days of event\n")
+          cat("  Days from event range:", min(forecasts_for_meeting$forecast_date - event_date), "to",
+              max(forecasts_for_meeting$forecast_date - event_date), "\n")
+        }
+      }
+    } else {
+      cat("  ⚠ No meetings found after this event date\n")
+      cat("  Latest forecast meeting date:", format(max(forecasts_df$meeting_date), "%Y-%m-%d"), "\n")
+    }
+  }
+  
+  final_result
 }
 
 # Analyze for each event type
