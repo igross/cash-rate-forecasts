@@ -413,3 +413,234 @@ if (nrow(overlap_comparison) > 0) {
 } else {
   cat("No overlapping horizons between daily and quarterly data\n")
 }
+
+# =============================================
+# 10. Analyze RMSE Changes Around Key Events
+# =============================================
+
+cat("\n\n=== ANALYZING RMSE CHANGES AROUND KEY EVENTS ===\n")
+
+# Define event schedule
+abs_releases <- tribble(
+  ~dataset,           ~datetime,
+  
+  # CPI (quarterly)
+  "CPI",  ymd_hm("2024-01-31 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2024-04-24 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2024-07-31 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2024-10-30 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
+  
+  # Labour Force (monthly) - sample
+  "Labour Force", ymd_hm("2024-01-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-02-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-03-21 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-04-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-05-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-06-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-07-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-08-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-09-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-10-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-11-21 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2024-12-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-02-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-03-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-04-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-05-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-06-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-07-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-08-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne")
+) %>%
+  mutate(release_date = as.Date(datetime))
+
+# Analyze RMSE changes around events
+analyze_rmse_around_events <- function(forecasts_df, event_dates, event_name, window_days = 7) {
+  
+  results <- list()
+  
+  for (i in seq_along(event_dates)) {
+    event_date <- event_dates[i]
+    
+    # For each meeting, look at forecasts made before and after this event
+    event_analysis <- forecasts_df %>%
+      filter(meeting_date > event_date) %>%  # Only meetings after the event
+      mutate(
+        days_from_event = as.integer(forecast_date - event_date),
+        period = case_when(
+          days_from_event >= -window_days & days_from_event < 0 ~ "before",
+          days_from_event >= 0 & days_from_event <= window_days ~ "after",
+          TRUE ~ "other"
+        )
+      ) %>%
+      filter(period %in% c("before", "after"))
+    
+    if (nrow(event_analysis) == 0) next
+    
+    # Calculate RMSE before and after
+    rmse_by_period <- event_analysis %>%
+      mutate(squared_error = (forecast_rate - actual_rate)^2) %>%
+      group_by(period, meeting_date, days_ahead) %>%
+      summarise(
+        n = n(),
+        rmse = sqrt(mean(squared_error, na.rm = TRUE)),
+        .groups = "drop"
+      )
+    
+    # Compare before vs after for same horizon
+    comparison <- rmse_by_period %>%
+      pivot_wider(names_from = period, values_from = c(rmse, n)) %>%
+      filter(!is.na(rmse_before), !is.na(rmse_after)) %>%
+      mutate(
+        rmse_change = rmse_after - rmse_before,
+        rmse_pct_change = (rmse_after - rmse_before) / rmse_before * 100,
+        event_date = event_date,
+        event_name = event_name
+      )
+    
+    if (nrow(comparison) > 0) {
+      results[[i]] <- comparison
+    }
+  }
+  
+  bind_rows(results)
+}
+
+# Analyze for each event type
+cat("\nAnalyzing RMSE changes around RBA meetings...\n")
+rba_meeting_analysis <- analyze_rmse_around_events(
+  daily_forecasts,
+  meeting_schedule$meeting_date,
+  "RBA Meeting",
+  window_days = 5
+)
+
+cat("Analyzing RMSE changes around CPI releases...\n")
+cpi_analysis <- analyze_rmse_around_events(
+  daily_forecasts,
+  abs_releases %>% filter(dataset == "CPI") %>% pull(release_date),
+  "CPI Release",
+  window_days = 5
+)
+
+cat("Analyzing RMSE changes around Labour Force releases...\n")
+labour_analysis <- analyze_rmse_around_events(
+  daily_forecasts,
+  abs_releases %>% filter(dataset == "Labour Force") %>% pull(release_date),
+  "Labour Force Release",
+  window_days = 5
+)
+
+# Combine all analyses
+all_event_analysis <- bind_rows(rba_meeting_analysis, cpi_analysis, labour_analysis)
+
+# Summary statistics
+cat("\n=== RMSE CHANGES AFTER KEY EVENTS ===\n")
+cat("(Comparing forecasts made within 5 days before vs after each event)\n\n")
+
+event_summary <- all_event_analysis %>%
+  group_by(event_name) %>%
+  summarise(
+    n_comparisons = n(),
+    mean_rmse_change = mean(rmse_change, na.rm = TRUE),
+    median_rmse_change = median(rmse_change, na.rm = TRUE),
+    pct_improved = mean(rmse_change < 0, na.rm = TRUE) * 100,
+    mean_pct_change = mean(rmse_pct_change, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+print(event_summary)
+
+cat("\nInterpretation:\n")
+cat("- Negative mean_rmse_change = RMSE decreased (forecasts improved) after event\n")
+cat("- pct_improved = percentage of cases where RMSE decreased\n\n")
+
+# Statistical test: does RMSE significantly decrease after events?
+if (nrow(all_event_analysis) > 0) {
+  cat("=== STATISTICAL TESTS ===\n")
+  
+  for (evt in unique(all_event_analysis$event_name)) {
+    evt_data <- all_event_analysis %>% filter(event_name == evt)
+    
+    if (nrow(evt_data) >= 3) {
+      test_result <- t.test(evt_data$rmse_change, alternative = "less")
+      
+      cat("\n", evt, ":\n", sep = "")
+      cat("  Mean RMSE change:", round(mean(evt_data$rmse_change), 4), "\n")
+      cat("  t-statistic:", round(test_result$statistic, 3), "\n")
+      cat("  p-value:", format.pval(test_result$p.value, digits = 3), "\n")
+      cat("  ", ifelse(test_result$p.value < 0.05, 
+                      "✓ Significant decrease in RMSE", 
+                      "✗ No significant decrease"), "\n", sep = "")
+    }
+  }
+}
+
+# =============================================
+# 11. Visualize RMSE Changes Around Events
+# =============================================
+
+if (nrow(all_event_analysis) > 0) {
+  
+  # Plot distribution of RMSE changes
+  rmse_change_plot <- ggplot(all_event_analysis, 
+                              aes(x = rmse_pct_change, fill = event_name)) +
+    geom_histogram(bins = 30, alpha = 0.7, position = "identity") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "red", linewidth = 1) +
+    facet_wrap(~event_name, ncol = 1, scales = "free_y") +
+    labs(
+      title = "Distribution of RMSE Changes After Key Events",
+      subtitle = "Negative values = Forecast accuracy improved after event",
+      x = "RMSE Change (%)",
+      y = "Count",
+      fill = "Event Type"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "none"
+    )
+  
+  ggsave("combined_data/rmse_changes_after_events.png",
+         plot = rmse_change_plot, width = 10, height = 8, dpi = 300)
+  
+  cat("\n\nSaved RMSE change distribution to: combined_data/rmse_changes_after_events.png\n")
+  
+  # Box plot comparing before vs after
+  rmse_before_after <- all_event_analysis %>%
+    select(event_name, event_date, meeting_date, days_ahead, rmse_before, rmse_after) %>%
+    pivot_longer(cols = c(rmse_before, rmse_after), 
+                 names_to = "period", values_to = "rmse") %>%
+    mutate(period = ifelse(period == "rmse_before", "Before Event", "After Event"))
+  
+  box_plot <- ggplot(rmse_before_after, aes(x = period, y = rmse, fill = period)) +
+    geom_boxplot(alpha = 0.7) +
+    facet_wrap(~event_name, scales = "free_y") +
+    scale_fill_manual(values = c("Before Event" = "lightcoral", "After Event" = "lightgreen")) +
+    labs(
+      title = "RMSE Before vs After Key Events",
+      subtitle = "Lower RMSE after event = Improved forecast accuracy",
+      x = "",
+      y = "RMSE (percentage points)",
+      fill = "Period"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "bottom"
+    )
+  
+  ggsave("combined_data/rmse_before_after_events.png",
+         plot = box_plot, width = 12, height = 6, dpi = 300)
+  
+  cat("Saved before/after comparison to: combined_data/rmse_before_after_events.png\n")
+  
+  # Save detailed results
+  write_csv(all_event_analysis, "combined_data/rmse_event_analysis_detailed.csv")
+  cat("Saved detailed event analysis to: combined_data/rmse_event_analysis_detailed.csv\n")
+}
