@@ -804,10 +804,78 @@ if (nrow(all_event_analysis) == 0) {
   cat("  - Forecast data doesn't overlap with event dates\n")
   cat("  - Not enough forecasts within the window before/after events\n")
   cat("  - Date range mismatch between forecasts and events\n\n")
-  cat("Daily forecasts date range:", min(daily_forecasts$forecast_date), "to", 
-      max(daily_forecasts$forecast_date), "\n")
-  cat("Event date range:", min(abs_releases$release_date), "to", 
-      max(abs_releases$release_date), "\n")
+  
+  # Better date range display
+  cat("DIAGNOSTICS:\n")
+  cat("Daily forecasts:\n")
+  cat("  Count:", nrow(daily_forecasts), "\n")
+  cat("  Date range:", format(min(daily_forecasts$forecast_date), "%Y-%m-%d"), "to", 
+      format(max(daily_forecasts$forecast_date), "%Y-%m-%d"), "\n")
+  cat("  Meeting dates in forecasts:", length(unique(daily_forecasts$meeting_date)), "\n")
+  
+  cat("\nEvents:\n")
+  cat("  Total events:", nrow(abs_releases), "\n")
+  cat("  Date range:", format(min(abs_releases$release_date), "%Y-%m-%d"), "to", 
+      format(max(abs_releases$release_date), "%Y-%m-%d"), "\n")
+  
+  cat("\nRBA Meetings:\n")
+  cat("  Total meetings:", nrow(meeting_schedule), "\n")
+  cat("  Date range:", format(min(meeting_schedule$meeting_date), "%Y-%m-%d"), "to", 
+      format(max(meeting_schedule$meeting_date), "%Y-%m-%d"), "\n")
+  
+  # Check overlap
+  forecast_range <- interval(min(daily_forecasts$forecast_date), max(daily_forecasts$forecast_date))
+  event_range <- interval(min(abs_releases$release_date), max(abs_releases$release_date))
+  meeting_range <- interval(min(meeting_schedule$meeting_date), max(meeting_schedule$meeting_date))
+  
+  cat("\nOverlap check:\n")
+  cat("  Forecasts overlap with events:", int_overlaps(forecast_range, event_range), "\n")
+  cat("  Forecasts overlap with meetings:", int_overlaps(forecast_range, meeting_range), "\n")
+  
+  # Sample of what we're looking for
+  cat("\nSample events in forecast period:\n")
+  events_in_range <- abs_releases %>%
+    filter(release_date >= min(daily_forecasts$forecast_date),
+           release_date <= max(daily_forecasts$forecast_date)) %>%
+    count(dataset) %>%
+    arrange(desc(n))
+  print(events_in_range)
+  
+  # Check if there are forecasts around a sample event
+  sample_event <- abs_releases %>%
+    filter(release_date >= min(daily_forecasts$forecast_date),
+           release_date <= max(daily_forecasts$forecast_date)) %>%
+    slice(1)
+  
+  if (nrow(sample_event) > 0) {
+    cat("\nChecking forecasts around sample event:", format(sample_event$release_date[1], "%Y-%m-%d"), 
+        "(", sample_event$dataset[1], ")\n")
+    
+    window <- 5
+    forecasts_around_event <- daily_forecasts %>%
+      filter(forecast_date >= sample_event$release_date[1] - window,
+             forecast_date <= sample_event$release_date[1] + window) %>%
+      mutate(
+        days_from_event = as.integer(forecast_date - sample_event$release_date[1]),
+        period = case_when(
+          days_from_event < 0 ~ "before",
+          days_from_event > 0 ~ "after",
+          TRUE ~ "on_day"
+        )
+      )
+    
+    cat("  Forecasts before event:", sum(forecasts_around_event$period == "before"), "\n")
+    cat("  Forecasts after event:", sum(forecasts_around_event$period == "after"), "\n")
+    cat("  Forecasts on event day:", sum(forecasts_around_event$period == "on_day"), "\n")
+    
+    if (nrow(forecasts_around_event) > 0) {
+      cat("\n  Sample of these forecasts:\n")
+      print(forecasts_around_event %>% 
+              select(forecast_date, meeting_date, days_ahead, period) %>% 
+              head(10))
+    }
+  }
+  
   cat("\nSkipping event analysis...\n")
 } else {
 
