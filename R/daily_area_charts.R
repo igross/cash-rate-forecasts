@@ -949,15 +949,15 @@ for (mt in future_meetings_all) {
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p25),
-        color = "#228B22",
-        linewidth = 0.6,
+        color = "#0e610e",
+        linewidth = 0.5,
         linetype = "dashed",
         inherit.aes = FALSE
       ) +
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p50),
-        color = "#228B22",
+        color = "#0e610e",
         linewidth = 0.8,
         linetype = "dashed",
         inherit.aes = FALSE
@@ -965,8 +965,8 @@ for (mt in future_meetings_all) {
       ggplot2::geom_line(
         data = percentile_lines,
         aes(x = scrape_date, y = p75),
-        color = "#228B22",
-        linewidth = 0.6,
+        color = "#0e610e",
+        linewidth = 0.5,
         linetype = "dashed",
         inherit.aes = FALSE
       ) +
