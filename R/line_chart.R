@@ -30,7 +30,7 @@ suppressPackageStartupMessages({
 cash_rate <- readRDS("combined_data/all_data.Rds")
 
 # Load RMSE lookup table (days_to_meeting → forecast error)
-load("combined_data/rmse_new.RData")
+load("combined_data/rmse_days.RData")
 
 # Configuration parameters
 spread <- 0.00  # Spread adjustment for cash rate
