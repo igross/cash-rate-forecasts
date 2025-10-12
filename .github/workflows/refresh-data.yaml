@@ -49,10 +49,10 @@ jobs:
         run: Rscript -e 'source(here::here("R", "line_chart.R"), echo = TRUE)'          
 
       - name: Make area graphs
-        run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'  
+        #run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'  
 
       - name: Make daily area graphs
-        run: Rscript -e 'source(here::here("R", "daily_area_charts.R"), echo = TRUE)'         
+        #run: Rscript -e 'source(here::here("R", "daily_area_charts.R"), echo = TRUE)'         
 
       - name: Generate index.html from charts
         run: Rscript R/write_index_html.R
