@@ -1,1168 +1,100 @@
-# =============================================
-# Calculate and Interpolate RMSE from Both Data Sources
-# =============================================
+# ==============================================================================
+# RBA CASH RATE PROBABILITY ANALYSIS
+# ==============================================================================
+# Purpose: Analyze and visualize RBA cash rate futures data to calculate
+#          probabilities of different rate outcomes for upcoming meetings
+# ==============================================================================
 
-library(dplyr)
-library(tidyr)
-library(lubridate)
-library(readr)
-library(ggplot2)
-library(zoo)
+# ------------------------------------------------------------------------------
+# 1. SETUP & LIBRARY LOADING
+# ------------------------------------------------------------------------------
 
-# =============================================
-# 1. Load Quarterly Forecast Data
-# =============================================
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(lubridate)
+  library(purrr)
+  library(tibble)
+  library(ggplot2)
+  library(tidyr)
+  library(plotly)
+  library(readrba)   # For RBA data access
+  library(scales)
+  library(glue)
+})
 
-quarterly_file <- "combined_data/f17_rmse.csv"
+# ------------------------------------------------------------------------------
+# 2. DATA LOADING & CONFIGURATION
+# ------------------------------------------------------------------------------
 
-quarterly_data_raw <- read_csv(quarterly_file, col_types = cols())
-
-cat("Quarterly data dimensions:", nrow(quarterly_data_raw), "x", ncol(quarterly_data_raw), "\n")
-
-# Transform from wide to long format
-quarterly_data <- quarterly_data_raw %>%
-  rename(forecast_date = 1, actual_rate = Actual) %>%
-  mutate(forecast_date = dmy(forecast_date)) %>%
-  pivot_longer(
-    cols = -c(forecast_date, actual_rate),
-    names_to = "horizon",
-    values_to = "forecast_rate"
-  ) %>%
-  mutate(
-    days_ahead = as.integer(gsub("days", "", horizon))
-  ) %>%
-  filter(!is.na(forecast_rate), !is.na(actual_rate), !is.na(days_ahead))
-
-cat("Quarterly forecasts: ", nrow(quarterly_data), "rows\n")
-cat("Date range:", format(min(quarterly_data$forecast_date), "%Y-%m-%d"), "to", 
-    format(max(quarterly_data$forecast_date), "%Y-%m-%d"), "\n")
-cat("Horizon range:", min(quarterly_data$days_ahead, na.rm = TRUE), "to", 
-    max(quarterly_data$days_ahead, na.rm = TRUE), "days\n\n")
-
-# Check for any parsing issues
-na_dates <- sum(is.na(quarterly_data_raw[[1]]))
-na_after_parse <- quarterly_data_raw %>%
-  mutate(parsed_date = dmy(.[[1]])) %>%
-  pull(parsed_date) %>%
-  is.na() %>%
-  sum()
-
-if (na_after_parse > na_dates) {
-  cat("⚠ WARNING:", na_after_parse - na_dates, "dates failed to parse\n")
-  cat("Sample of unparsed dates:\n")
-  problem_dates <- quarterly_data_raw %>%
-    mutate(parsed_date = dmy(.[[1]])) %>%
-    filter(is.na(parsed_date)) %>%
-    slice(1:5)
-  print(problem_dates[[1]])
-}
-
-# =============================================
-# 2. Load Daily Forecast Data
-# =============================================
-
+# Load cash rate futures data (columns: date, cash_rate, scrape_time)
 cash_rate <- readRDS("combined_data/all_data.Rds")
 
-# Check timezone issues
-cat("\n=== CHECKING TIMEZONE AND SCRAPE TIMING ===\n")
+# Load RMSE lookup table (days_to_meeting → forecast error)
+load("combined_data/rmse_days.RData")
 
-# Examine the scrape_time field
-cat("Sample scrape_time values:\n")
-print(head(cash_rate %>% select(scrape_time, date, cash_rate), 10))
+# Configuration parameters
+spread <- 0.00  # Spread adjustment for cash rate
+override <- 3.60  # Manual override for current rate (if needed)
 
-cat("\nTimezone of scrape_time:", attr(cash_rate$scrape_time, "tzone"), "\n")
+# Apply spread adjustment
+cash_rate$cash_rate <- cash_rate$cash_rate + spread
 
-# Create both UTC and Melbourne time versions for comparison
-cash_rate_timezone_check <- cash_rate %>%
-  mutate(
-    # Original scrape_time
-    scrape_time_original = scrape_time,
-    scrape_time_tz_orig = attr(scrape_time, "tzone"),
-    
-    # Convert to Melbourne time if not already
-    scrape_time_melb = with_tz(scrape_time, "Australia/Melbourne"),
-    scrape_date_melb = as.Date(scrape_time_melb),
-    day_of_week_melb = lubridate::wday(scrape_date_melb, label = TRUE, week_start = 1),
-    hour_melb = lubridate::hour(scrape_time_melb),
-    
-    # Also check UTC for comparison
-    scrape_time_utc = with_tz(scrape_time, "UTC"),
-    scrape_date_utc = as.Date(scrape_time_utc),
-    day_of_week_utc = lubridate::wday(scrape_date_utc, label = TRUE, week_start = 1)
-  )
+# Create output directory structure
+if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-# Compare weekend counts in different timezones
-cat("\n=== WEEKEND DATA COMPARISON ===\n")
-cat("Using original timezone:\n")
-weekend_orig <- cash_rate_timezone_check %>%
-  mutate(day_of_week = lubridate::wday(as.Date(scrape_time), label = TRUE, week_start = 1)) %>%
-  filter(day_of_week %in% c("Sat", "Sun")) %>%
-  count(day_of_week)
-print(weekend_orig)
+# ------------------------------------------------------------------------------
+# 3. HELPER FUNCTIONS
+# ------------------------------------------------------------------------------
 
-cat("\nUsing Melbourne timezone:\n")
-weekend_melb <- cash_rate_timezone_check %>%
-  filter(day_of_week_melb %in% c("Sat", "Sun")) %>%
-  count(day_of_week_melb)
-print(weekend_melb)
-
-cat("\nUsing UTC timezone:\n")
-weekend_utc <- cash_rate_timezone_check %>%
-  filter(day_of_week_utc %in% c("Sat", "Sun")) %>%
-  count(day_of_week_utc)
-print(weekend_utc)
-
-# Show examples of the timezone difference issue
-cat("\n=== EXAMPLES OF POTENTIAL TIMEZONE ISSUES ===\n")
-cat("Showing cases where day-of-week differs between timezones:\n")
-timezone_diff_examples <- cash_rate_timezone_check %>%
-  filter(day_of_week_melb != day_of_week_utc) %>%
-  select(scrape_time_original, scrape_time_melb, scrape_time_utc, 
-         day_of_week_melb, day_of_week_utc, hour_melb) %>%
-  head(20)
-
-if (nrow(timezone_diff_examples) > 0) {
-  print(timezone_diff_examples)
-  cat("\n⚠ Timezone differences found! The scrape_time likely needs correction.\n")
-} else {
-  cat("✓ No timezone differences detected\n")
+# Linear blend weight: transitions from discrete (0) to probabilistic (1)
+# over the last 30 days before a meeting
+blend_weight <- function(days_to_meeting) {
+  pmax(0, pmin(1, 1 - days_to_meeting / 30))
 }
 
-# Fix timezone: ensure all times are in Australia/Melbourne
-cat("\n=== CORRECTING TIMEZONE ===\n")
-cash_rate <- cash_rate %>%
+# ------------------------------------------------------------------------------
+# 4. DEFINE RBA MEETING SCHEDULE
+# ------------------------------------------------------------------------------
+
+meeting_schedule <- tibble(
+  meeting_date = as.Date(c(
+    # 2025 meetings
+    "2025-02-18", "2025-04-01", "2025-05-20", "2025-07-08",
+    "2025-08-12", "2025-09-30", "2025-11-04", "2025-12-09",
+    # 2026 meetings (second day of each two-day meeting)
+    "2026-02-03", "2026-03-17", "2026-05-05", "2026-06-16",
+    "2026-08-11", "2026-09-29", "2026-11-03", "2026-12-08"
+  ))
+) %>% 
   mutate(
-    scrape_time = force_tz(scrape_time, "Australia/Melbourne")
-  )
-
-cat("Updated scrape_time timezone to:", attr(cash_rate$scrape_time, "tzone"), "\n")
-
-# Verify the fix
-cat("\nAfter correction, checking day-of-week distribution:\n")
-day_distribution <- cash_rate %>%
-  mutate(
-    scrape_date = as.Date(scrape_time),
-    day_of_week = lubridate::wday(scrape_date, label = TRUE, week_start = 1)
-  ) %>%
-  count(day_of_week)
-print(day_distribution)
-
-# Load actual RBA cash rate outcomes
-library(readrba)
-rba_actual <- read_rba(series_id = "FIRMMCRTD") %>%
-  arrange(date)
-
-# =============================================
-# 3. Calculate RMSE for Quarterly Forecasts
-# =============================================
-
-quarterly_rmse <- quarterly_data %>%
-  mutate(
-    forecast_error = forecast_rate - actual_rate,
-    squared_error = forecast_error^2
-  ) %>%
-  group_by(days_ahead) %>%
-  summarise(
-    n_forecasts = n(),
-    mean_error = mean(forecast_error, na.rm = TRUE),
-    rmse = sqrt(mean(squared_error, na.rm = TRUE)),
-    mae = mean(abs(forecast_error), na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  arrange(days_ahead) %>%
-  mutate(source = "quarterly")
-
-cat("=== QUARTERLY RMSE (every ~91 days) ===\n")
-print(quarterly_rmse %>% select(days_ahead, n_forecasts, rmse, mae), n = 20)
-
-# =============================================
-# 4. Calculate RMSE for Daily Forecasts
-# =============================================
-
-daily_rmse <- daily_forecasts %>%
-  mutate(
-    forecast_error = forecast_rate - actual_rate,
-    squared_error = forecast_error^2
-  ) %>%
-  group_by(days_ahead) %>%
-  summarise(
-    n_forecasts = n(),
-    mean_error = mean(forecast_error, na.rm = TRUE),
-    rmse = sqrt(mean(squared_error, na.rm = TRUE)),
-    mae = mean(abs(forecast_error), na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  arrange(days_ahead) %>%
-  mutate(source = "daily")
-
-cat("\n=== DAILY RMSE (sample) ===\n")
-print(daily_rmse %>% select(days_ahead, n_forecasts, rmse, mae) %>% head(20))
-
-# =============================================
-# 5. Combine and Interpolate RMSE
-# =============================================
-
-# Combine both RMSE series
-combined_rmse <- bind_rows(
-  quarterly_rmse %>% select(days_ahead, rmse, n_forecasts, source),
-  daily_rmse %>% select(days_ahead, rmse, n_forecasts, source)
-)
-
-# Create final RMSE series using priority rules:
-# 1. Use quarterly RMSE at quarterly horizons (91, 183, 274, ...)
-# 2. Use daily RMSE where available between quarterly points
-# 3. Interpolate to fill any gaps
-
-# Identify quarterly anchor points (specific horizons from the data)
-quarterly_horizons <- c(91, 183, 274, 365, 456, 548, 639, 730, 821, 913, 1004, 1095, 
-                        1186, 1278, 1369, 1460, 1551, 1643, 1734, 1825, 1916, 2008, 
-                        2099, 2190, 2281, 2373, 2464, 2555, 2646, 2738, 2829, 2920, 
-                        3011, 3103, 3194, 3285, 3376, 3468, 3559, 3650)
-
-# Filter to only anchors that exist in our data
-quarterly_horizons <- quarterly_horizons[quarterly_horizons %in% quarterly_rmse$days_ahead]
-
-cat("\nUsing", length(quarterly_horizons), "quarterly anchor points:\n")
-cat(paste(head(quarterly_horizons, 12), collapse = ", "), "...\n")
-
-# Get all horizons we need to cover
-min_horizon <- min(c(daily_rmse$days_ahead, quarterly_rmse$days_ahead))
-max_horizon <- max(quarterly_rmse$days_ahead)  # Use quarterly max as upper bound
-all_horizons <- seq(min_horizon, max_horizon, by = 1)
-
-# Create priority-based RMSE values
-rmse_priority <- tibble(days_ahead = all_horizons) %>%
-  left_join(
-    quarterly_rmse %>% 
-      filter(days_ahead %in% quarterly_horizons) %>%
-      select(days_ahead, rmse_quarterly = rmse),
-    by = "days_ahead"
-  ) %>%
-  left_join(
-    daily_rmse %>% select(days_ahead, rmse_daily = rmse),
-    by = "days_ahead"
-  ) %>%
-  mutate(
-    # Priority: quarterly at anchor points, daily in between, interpolate gaps
-    rmse_base = coalesce(rmse_quarterly, rmse_daily)
-  )
-
-# Interpolate remaining gaps using linear interpolation
-rmse_priority <- rmse_priority %>%
-  mutate(
-    rmse_interpolated = na.approx(rmse_base, x = days_ahead, na.rm = FALSE, rule = 2)
-  )
-
-# =============================================
-# 6. Create Final RMSE Lookup Table
-# =============================================
-
-rmse_days <- rmse_priority %>%
-  mutate(
-    finalrmse = rmse_interpolated,
-    # Track which source was used
-    source = case_when(
-      !is.na(rmse_quarterly) ~ "quarterly_anchor",
-      !is.na(rmse_daily) ~ "daily",
-      TRUE ~ "interpolated"
+    # Determine futures contract expiry month
+    # If meeting is in last 1-2 days of month, contract expires next month
+    expiry = if_else(
+      day(meeting_date) >= days_in_month(meeting_date) - 1,
+      ceiling_date(meeting_date, "month"),
+      floor_date(meeting_date, "month")
     )
-  ) %>%
-  rename(days_to_meeting = days_ahead) %>%
-  select(days_to_meeting, finalrmse, source)
+  ) %>% 
+  select(expiry, meeting_date)
 
-cat("\n=== FINAL RMSE LOOKUP TABLE (sample) ===\n")
-cat("Total horizons:", nrow(rmse_days), "\n")
-cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n\n")
+# ------------------------------------------------------------------------------
+# 5. DEFINE ABS DATA RELEASE SCHEDULE
+# ------------------------------------------------------------------------------
 
-# =============================================
-# 6b. Check for Missing Days and Fill Gaps
-# =============================================
-
-cat("=== CHECKING FOR MISSING DAYS ===\n")
-
-# Create complete sequence from min to max
-min_day <- min(rmse_days$days_to_meeting)
-max_day <- max(rmse_days$days_to_meeting)
-complete_days <- seq(min_day, max_day, by = 1)
-
-# Find missing days
-missing_days <- setdiff(complete_days, rmse_days$days_to_meeting)
-
-if (length(missing_days) > 0) {
-  cat("Found", length(missing_days), "missing days in the sequence\n")
-  cat("Sample of missing days:", paste(head(missing_days, 20), collapse = ", "), "\n")
-  
-  # Create tibble with all days
-  rmse_days_complete <- tibble(days_to_meeting = complete_days) %>%
-    left_join(rmse_days, by = "days_to_meeting")
-  
-  # Interpolate missing values
-  cat("Interpolating missing RMSE values...\n")
-  rmse_days_complete <- rmse_days_complete %>%
-    mutate(
-      finalrmse = na.approx(finalrmse, x = days_to_meeting, na.rm = FALSE, rule = 2),
-      source = if_else(is.na(source), "interpolated_gap", source)
-    )
-  
-  # Check if any NAs remain
-  remaining_na <- sum(is.na(rmse_days_complete$finalrmse))
-  if (remaining_na > 0) {
-    cat("⚠ Warning:", remaining_na, "values could not be interpolated\n")
-    # Fill remaining NAs with nearest neighbor
-    rmse_days_complete <- rmse_days_complete %>%
-      mutate(finalrmse = na.locf(finalrmse, na.rm = FALSE))
-  }
-  
-  rmse_days <- rmse_days_complete
-  
-  cat("✓ Gap filling complete. Now have", nrow(rmse_days), "consecutive days\n\n")
-  
-  # Show breakdown by source including gap fills
-  cat("Data source breakdown after gap filling:\n")
-  print(rmse_days %>% count(source))
-  
-} else {
-  cat("✓ No missing days found - sequence is complete\n\n")
-}
-
-# Show samples at key horizons
-cat("\nRMSE at key horizons:\n")
-sample_horizons <- c(1, 7, 14, 30, 60, 91, 120, 183, 274, 365)
-print(rmse_days %>% filter(days_to_meeting %in% sample_horizons))
-
-# Verify continuity
-if (nrow(rmse_days) > 1) {
-  gaps <- diff(rmse_days$days_to_meeting)
-  max_gap <- max(gaps)
-  if (max_gap > 1) {
-    cat("\n⚠ Warning: Maximum gap in sequence is", max_gap, "days\n")
-  } else {
-    cat("\n✓ Sequence is fully continuous (no gaps)\n")
-  }
-}
-
-# =============================================
-# 7. Save Results
-# =============================================
-
-# Save original format with source tracking
-save(rmse_days, file = "combined_data/rmse_days.RData")
-cat("\nSaved to: combined_data/rmse_days.RData\n")
-
-# Save simplified format with only days_to_meeting and finalrmse for rmse_new.RData
-rmse_days_simple <- rmse_days %>%
-  select(days_to_meeting, finalrmse)
-
-save(rmse_days_simple, file = "combined_data/rmse_new.RData")
-cat("Saved simplified version to: combined_data/rmse_new.RData\n")
-
-# Also save as CSV for reference
-write_csv(rmse_days, "combined_data/rmse_days_combined.csv")
-cat("Saved to: combined_data/rmse_days_combined.csv\n")
-
-write_csv(rmse_days_simple, "combined_data/rmse_new.csv")
-cat("Saved simplified version to: combined_data/rmse_new.csv\n")
-
-# Save detailed comparison
-write_csv(rmse_priority, "combined_data/rmse_detailed_sources.csv")
-cat("Saved detailed sources to: combined_data/rmse_detailed_sources.csv\n")
-
-# Display the final output format
-cat("\n=== FINAL OUTPUT FORMAT ===\n")
-cat("Variable name: rmse_days_simple\n")
-cat("Format:\n")
-print(head(rmse_days_simple))
-cat("Total rows:", nrow(rmse_days_simple), "\n")
-
-# =============================================
-# 8. Visualize RMSE Series
-# =============================================
-
-# Prepare plotting data
-plot_data <- rmse_priority %>%
-  select(days_ahead, rmse_quarterly, rmse_daily, finalrmse = rmse_interpolated) %>%
-  pivot_longer(
-    cols = -days_ahead,
-    names_to = "series",
-    values_to = "rmse"
-  ) %>%
-  filter(!is.na(rmse)) %>%
-  mutate(
-    series = recode(series,
-      "rmse_quarterly" = "Quarterly (anchor points)",
-      "rmse_daily" = "Daily",
-      "finalrmse" = "Final (combined & interpolated)"
-    )
-  )
-
-rmse_plot <- ggplot(plot_data, aes(x = days_ahead, y = rmse, color = series)) +
-  geom_line(data = plot_data %>% filter(series == "Final (combined & interpolated)"),
-            linewidth = 1.2, alpha = 0.8) +
-  geom_point(data = plot_data %>% filter(series == "Quarterly (anchor points)"),
-             size = 3, alpha = 0.7) +
-  geom_point(data = plot_data %>% filter(series == "Daily"),
-             size = 1, alpha = 0.4) +
-  scale_color_manual(values = c(
-    "Quarterly (anchor points)" = "red",
-    "Daily" = "steelblue",
-    "Final (combined & interpolated)" = "darkgreen"
-  )) +
-  labs(
-    title = "Combined RMSE by Forecast Horizon",
-    subtitle = "Quarterly forecasts anchor the series, daily forecasts fill gaps, interpolation smooths",
-    x = "Days to Meeting",
-    y = "RMSE (percentage points)",
-    color = "Data Source"
-  ) +
-  theme_bw() +
-  theme(
-    legend.position = "bottom",
-    plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 10)
-  )
-
-ggsave("combined_data/rmse_combined_interpolated.png",
-       plot = rmse_plot, width = 12, height = 7, dpi = 300)
-
-cat("\nSaved plot to: combined_data/rmse_combined_interpolated.png\n")
-
-# =============================================
-# 8b. Detailed Sense Check Plot
-# =============================================
-
-# Create a more detailed plot showing the interpolation process
-sense_check_data <- rmse_priority %>%
-  mutate(
-    # Mark which values are original vs interpolated
-    data_type = case_when(
-      !is.na(rmse_quarterly) ~ "Quarterly Anchor",
-      !is.na(rmse_daily) ~ "Daily Data",
-      TRUE ~ "Interpolated"
-    )
-  )
-
-sense_check_plot <- ggplot(sense_check_data, aes(x = days_ahead)) +
-  # Show the final interpolated line
-  geom_line(aes(y = rmse_interpolated), 
-            color = "darkgreen", linewidth = 1, alpha = 0.6) +
-  # Show quarterly anchor points prominently
-  geom_point(data = sense_check_data %>% filter(!is.na(rmse_quarterly)),
-             aes(y = rmse_quarterly), 
-             color = "red", size = 4, shape = 18) +
-  # Show daily data points
-  geom_point(data = sense_check_data %>% filter(!is.na(rmse_daily) & is.na(rmse_quarterly)),
-             aes(y = rmse_daily), 
-             color = "steelblue", size = 2, alpha = 0.6) +
-  # Show interpolated points
-  geom_point(data = sense_check_data %>% filter(data_type == "Interpolated"),
-             aes(y = rmse_interpolated), 
-             color = "lightgreen", size = 0.5, alpha = 0.4) +
-  # Add vertical lines at quarterly intervals for reference
-  geom_vline(xintercept = seq(91, max(sense_check_data$days_ahead), by = 91),
-             linetype = "dashed", alpha = 0.2, color = "gray40") +
-  labs(
-    title = "RMSE Interpolation Sense Check",
-    subtitle = paste0(
-      "Red diamonds = Quarterly anchors (", 
-      sum(!is.na(sense_check_data$rmse_quarterly)), " points) | ",
-      "Blue circles = Daily data (", 
-      sum(!is.na(sense_check_data$rmse_daily) & is.na(sense_check_data$rmse_quarterly)), " points) | ",
-      "Light green = Interpolated (", 
-      sum(sense_check_data$data_type == "Interpolated"), " points)"
-    ),
-    x = "Days to Meeting",
-    y = "RMSE (percentage points)"
-  ) +
-  theme_bw() +
-  theme(
-    plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 9)
-  )
-
-ggsave("combined_data/rmse_sense_check.png",
-       plot = sense_check_plot, width = 14, height = 7, dpi = 300)
-
-cat("Saved sense check plot to: combined_data/rmse_sense_check.png\n")
-
-# =============================================
-# 8c. Zoomed Plot for Short Horizons
-# =============================================
-
-# Create a zoomed-in version for first 180 days
-zoom_plot <- ggplot(sense_check_data %>% filter(days_ahead <= 180), 
-                     aes(x = days_ahead)) +
-  geom_line(aes(y = rmse_interpolated), 
-            color = "darkgreen", linewidth = 1.2) +
-  geom_point(data = sense_check_data %>% 
-               filter(days_ahead <= 180, !is.na(rmse_quarterly)),
-             aes(y = rmse_quarterly), 
-             color = "red", size = 5, shape = 18) +
-  geom_point(data = sense_check_data %>% 
-               filter(days_ahead <= 180, !is.na(rmse_daily), is.na(rmse_quarterly)),
-             aes(y = rmse_daily), 
-             color = "steelblue", size = 2.5, alpha = 0.7) +
-  geom_vline(xintercept = c(91, 182), 
-             linetype = "dashed", alpha = 0.3, color = "red") +
-  labs(
-    title = "RMSE Interpolation: First 180 Days (Zoomed)",
-    subtitle = "Red diamonds = Quarterly | Blue circles = Daily | Green line = Final interpolated",
-    x = "Days to Meeting",
-    y = "RMSE (percentage points)"
-  ) +
-  theme_bw() +
-  theme(
-    plot.title = element_text(face = "bold", size = 14)
-  )
-
-ggsave("combined_data/rmse_sense_check_zoom.png",
-       plot = zoom_plot, width = 12, height = 6, dpi = 300)
-
-cat("Saved zoomed sense check plot to: combined_data/rmse_sense_check_zoom.png\n\n")
-
-# =============================================
-# 9. Summary Statistics
-# =============================================
-
-cat("\n=== SUMMARY STATISTICS ===\n")
-cat("Data source breakdown:\n")
-print(rmse_days %>% count(source))
-
-cat("\nRMSE at key horizons:\n")
-key_points <- rmse_days %>%
-  filter(days_to_meeting %in% c(7, 30, 60, 91, 120, 183, 274, 365)) %>%
-  select(days_to_meeting, finalrmse, source)
-print(key_points)
-
-cat("\nQuarterly vs Daily comparison at overlapping points:\n")
-overlap_comparison <- daily_rmse %>%
-  inner_join(
-    quarterly_rmse %>% select(days_ahead, rmse_quarterly = rmse),
-    by = "days_ahead"
-  ) %>%
-  mutate(
-    difference = rmse - rmse_quarterly,
-    pct_difference = (rmse - rmse_quarterly) / rmse_quarterly * 100
-  ) %>%
-  select(days_ahead, rmse_daily = rmse, rmse_quarterly, difference, pct_difference)
-
-if (nrow(overlap_comparison) > 0) {
-  print(head(overlap_comparison, 10))
-  cat("\nMean absolute difference:", mean(abs(overlap_comparison$difference)), "\n")
-  cat("Mean percentage difference:", mean(abs(overlap_comparison$pct_difference)), "%\n")
-} else {
-  cat("No overlapping horizons between daily and quarterly data\n")
-}
-
-# =============================================
-# 9b. Additional RMSE Visualizations by Horizon
-# =============================================
-
-cat("\n=== CREATING RMSE BY HORIZON VISUALIZATIONS ===\n")
-
-# 1. Daily RMSE over horizon with multiple smoothing options
-if (nrow(daily_rmse) > 0) {
-  
-  # Plot 1: Raw data with one smoothed line
-  daily_rmse_plot <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
-    geom_line(color = "steelblue", linewidth = 1, alpha = 0.5) +
-    geom_point(aes(size = n_forecasts), color = "steelblue", alpha = 0.3) +
-    geom_smooth(method = "loess", span = 0.3, color = "darkblue", linewidth = 1.5, se = TRUE, alpha = 0.2) +
-    scale_size_continuous(name = "N Forecasts", range = c(1, 4)) +
-    labs(
-      title = "Daily Forecast RMSE by Horizon",
-      subtitle = "Raw data (light blue) with smoothed trend (dark blue)",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "right"
-    )
-  
-  ggsave("combined_data/daily_rmse_by_horizon.png",
-         plot = daily_rmse_plot, width = 12, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/daily_rmse_by_horizon.png\n")
-  
-  # Plot 2: Comparison of different LOESS smoothing spans
-  loess_comparison <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
-    geom_point(color = "grey70", alpha = 0.3, size = 1) +
-    geom_smooth(aes(color = "span = 0.1 (very flexible)"), method = "loess", span = 0.1, 
-                se = FALSE, linewidth = 1) +
-    geom_smooth(aes(color = "span = 0.2"), method = "loess", span = 0.2, 
-                se = FALSE, linewidth = 1) +
-    geom_smooth(aes(color = "span = 0.3 (moderate)"), method = "loess", span = 0.3, 
-                se = FALSE, linewidth = 1.2) +
-    geom_smooth(aes(color = "span = 0.5"), method = "loess", span = 0.5, 
-                se = FALSE, linewidth = 1) +
-    geom_smooth(aes(color = "span = 0.75 (very smooth)"), method = "loess", span = 0.75, 
-                se = FALSE, linewidth = 1) +
-    scale_color_manual(
-      name = "LOESS Smoothing",
-      values = c("span = 0.1 (very flexible)" = "#e41a1c",
-                 "span = 0.2" = "#377eb8",
-                 "span = 0.3 (moderate)" = "#4daf4a",
-                 "span = 0.5" = "#984ea3",
-                 "span = 0.75 (very smooth)" = "#ff7f00")
-    ) +
-    labs(
-      title = "Daily RMSE: Comparison of LOESS Smoothing",
-      subtitle = "Different span values (smaller = more flexible, larger = smoother)",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "right"
-    )
-  
-  ggsave("combined_data/daily_rmse_loess_comparison.png",
-         plot = loess_comparison, width = 14, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/daily_rmse_loess_comparison.png\n")
-  
-  # Plot 3: Different smoothing methods
-  methods_comparison <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
-    geom_point(color = "grey70", alpha = 0.3, size = 1) +
-    geom_smooth(aes(color = "LOESS (span=0.3)"), method = "loess", span = 0.3, 
-                se = FALSE, linewidth = 1.2) +
-    geom_smooth(aes(color = "GAM (spline)"), method = "gam", formula = y ~ s(x, bs = "cs"), 
-                se = FALSE, linewidth = 1.2) +
-    geom_smooth(aes(color = "Moving Average (21d)"), method = "lm", 
-                formula = y ~ splines::ns(x, df = 10), se = FALSE, linewidth = 1.2) +
-    scale_color_manual(
-      name = "Smoothing Method",
-      values = c("LOESS (span=0.3)" = "#e41a1c",
-                 "GAM (spline)" = "#377eb8",
-                 "Moving Average (21d)" = "#4daf4a")
-    ) +
-    labs(
-      title = "Daily RMSE: Comparison of Smoothing Methods",
-      subtitle = "LOESS vs GAM vs Natural Spline",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "right"
-    )
-  
-  ggsave("combined_data/daily_rmse_methods_comparison.png",
-         plot = methods_comparison, width = 14, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/daily_rmse_methods_comparison.png\n")
-  
-  # Plot 4: Rolling mean smoothing (manual calculation)
-  library(zoo)
-  
-  daily_rmse_with_rolling <- daily_rmse %>%
-    arrange(days_ahead) %>%
-    mutate(
-      roll_7 = rollmean(rmse, k = 7, fill = NA, align = "center"),
-      roll_14 = rollmean(rmse, k = 14, fill = NA, align = "center"),
-      roll_21 = rollmean(rmse, k = 21, fill = NA, align = "center"),
-      roll_30 = rollmean(rmse, k = 30, fill = NA, align = "center")
-    )
-  
-  rolling_comparison <- ggplot(daily_rmse_with_rolling, aes(x = days_ahead)) +
-    geom_point(aes(y = rmse), color = "grey70", alpha = 0.3, size = 1) +
-    geom_line(aes(y = roll_7, color = "7-day rolling mean"), linewidth = 1, na.rm = TRUE) +
-    geom_line(aes(y = roll_14, color = "14-day rolling mean"), linewidth = 1, na.rm = TRUE) +
-    geom_line(aes(y = roll_21, color = "21-day rolling mean"), linewidth = 1.2, na.rm = TRUE) +
-    geom_line(aes(y = roll_30, color = "30-day rolling mean"), linewidth = 1, na.rm = TRUE) +
-    scale_color_manual(
-      name = "Rolling Average",
-      values = c("7-day rolling mean" = "#e41a1c",
-                 "14-day rolling mean" = "#377eb8",
-                 "21-day rolling mean" = "#4daf4a",
-                 "30-day rolling mean" = "#984ea3")
-    ) +
-    labs(
-      title = "Daily RMSE: Rolling Average Smoothing",
-      subtitle = "Different window sizes for moving averages",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "right"
-    )
-  
-  ggsave("combined_data/daily_rmse_rolling_comparison.png",
-         plot = rolling_comparison, width = 14, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/daily_rmse_rolling_comparison.png\n")
-  
-  # Plot 5: Clean plot with recommended smoothing (LOESS span=0.3)
-  daily_rmse_smooth_only <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
-    geom_smooth(method = "loess", span = 0.3, color = "darkblue", linewidth = 1.5, 
-                se = TRUE, fill = "steelblue", alpha = 0.2) +
-    labs(
-      title = "Daily Forecast RMSE - Smoothed Trend",
-      subtitle = "LOESS smoothing (span=0.3) removes day-to-day fluctuations",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14)
-    )
-  
-  ggsave("combined_data/daily_rmse_smoothed.png",
-         plot = daily_rmse_smooth_only, width = 12, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/daily_rmse_smoothed.png\n")
-  
-  # Plot 6: Faceted comparison (small multiples)
-  daily_rmse_long <- daily_rmse_with_rolling %>%
-    select(days_ahead, rmse, roll_7, roll_14, roll_21, roll_30) %>%
-    pivot_longer(cols = starts_with("roll"), names_to = "method", values_to = "smoothed") %>%
-    mutate(
-      method = recode(method,
-        "roll_7" = "7-day Rolling Mean",
-        "roll_14" = "14-day Rolling Mean", 
-        "roll_21" = "21-day Rolling Mean",
-        "roll_30" = "30-day Rolling Mean"
-      )
-    )
-  
-  faceted_plot <- ggplot(daily_rmse_long, aes(x = days_ahead)) +
-    geom_point(aes(y = rmse), color = "grey70", alpha = 0.2, size = 0.5) +
-    geom_line(aes(y = smoothed), color = "steelblue", linewidth = 1, na.rm = TRUE) +
-    facet_wrap(~method, ncol = 2) +
-    labs(
-      title = "Daily RMSE: Rolling Average Comparison (Faceted)",
-      subtitle = "Raw data (grey) with smoothed trends",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      strip.background = element_rect(fill = "grey90")
-    )
-  
-  ggsave("combined_data/daily_rmse_faceted_comparison.png",
-         plot = faceted_plot, width = 12, height = 10, dpi = 300)
-  cat("✓ Saved: combined_data/daily_rmse_faceted_comparison.png\n")
-}
-
-# 2. Quarterly RMSE over horizon
-if (nrow(quarterly_rmse) > 0) {
-  quarterly_rmse_plot <- ggplot(quarterly_rmse, aes(x = days_ahead, y = rmse)) +
-    geom_line(color = "darkred", linewidth = 1.2) +
-    geom_point(aes(size = n_forecasts), color = "darkred", alpha = 0.7) +
-    scale_size_continuous(name = "N Forecasts", range = c(3, 8)) +
-    labs(
-      title = "Quarterly Forecast RMSE by Horizon",
-      subtitle = "Long-term forecast accuracy (91-day intervals)",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "right"
-    )
-  
-  ggsave("combined_data/quarterly_rmse_by_horizon.png",
-         plot = quarterly_rmse_plot, width = 12, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/quarterly_rmse_by_horizon.png\n")
-}
-
-# 3. Combined comparison (overlay)
-if (nrow(daily_rmse) > 0 && nrow(quarterly_rmse) > 0) {
-  combined_comparison <- bind_rows(
-    daily_rmse %>% select(days_ahead, rmse, n_forecasts) %>% mutate(source = "Daily"),
-    quarterly_rmse %>% select(days_ahead, rmse, n_forecasts) %>% mutate(source = "Quarterly")
-  )
-  
-  overlay_plot <- ggplot(combined_comparison, aes(x = days_ahead, y = rmse, color = source)) +
-    geom_line(linewidth = 1) +
-    geom_point(aes(size = n_forecasts), alpha = 0.6) +
-    scale_color_manual(values = c("Daily" = "steelblue", "Quarterly" = "darkred")) +
-    scale_size_continuous(name = "N Forecasts", range = c(1, 6)) +
-    labs(
-      title = "RMSE Comparison: Daily vs Quarterly Forecasts",
-      subtitle = "Forecast error by horizon for both data sources",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)",
-      color = "Source"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "right"
-    )
-  
-  ggsave("combined_data/rmse_comparison_overlay.png",
-         plot = overlay_plot, width = 12, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/rmse_comparison_overlay.png\n")
-}
-
-# 4. Final interpolated RMSE (zoomed to useful range)
-if (nrow(rmse_days) > 0) {
-  # Short-term (0-180 days)
-  short_term_plot <- ggplot(rmse_days %>% filter(days_to_meeting <= 180), 
-                             aes(x = days_to_meeting, y = finalrmse)) +
-    geom_line(color = "darkgreen", linewidth = 1.2) +
-    geom_point(data = rmse_days %>% 
-                 filter(days_to_meeting <= 180, source == "quarterly_anchor"),
-               aes(color = "Quarterly Anchor"), size = 4, shape = 18) +
-    geom_point(data = rmse_days %>% 
-                 filter(days_to_meeting <= 180, source == "daily"),
-               aes(color = "Daily"), size = 2, alpha = 0.6) +
-    scale_color_manual(values = c("Quarterly Anchor" = "red", "Daily" = "steelblue"),
-                       name = "Data Source") +
-    labs(
-      title = "Final RMSE by Horizon (0-180 Days)",
-      subtitle = "Combined and interpolated forecast error",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "right"
-    )
-  
-  ggsave("combined_data/final_rmse_short_term.png",
-         plot = short_term_plot, width = 12, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/final_rmse_short_term.png\n")
-  
-  # Medium-term (0-365 days)
-  medium_term_plot <- ggplot(rmse_days %>% filter(days_to_meeting <= 365), 
-                              aes(x = days_to_meeting, y = finalrmse)) +
-    geom_line(color = "darkgreen", linewidth = 1) +
-    geom_point(data = rmse_days %>% 
-                 filter(days_to_meeting <= 365, source == "quarterly_anchor"),
-               color = "red", size = 3, shape = 18) +
-    labs(
-      title = "Final RMSE by Horizon (0-365 Days)",
-      subtitle = "One year forecast horizon",
-      x = "Days to Meeting",
-      y = "RMSE (percentage points)"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14)
-    )
-  
-  ggsave("combined_data/final_rmse_medium_term.png",
-         plot = medium_term_plot, width = 12, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/final_rmse_medium_term.png\n")
-}
-
-# 5. MAE comparison (if useful)
-if (nrow(daily_rmse) > 0 && nrow(quarterly_rmse) > 0) {
-  mae_comparison <- bind_rows(
-    daily_rmse %>% select(days_ahead, mae, n_forecasts) %>% mutate(source = "Daily"),
-    quarterly_rmse %>% select(days_ahead, mae, n_forecasts) %>% mutate(source = "Quarterly")
-  )
-  
-  mae_plot <- ggplot(mae_comparison, aes(x = days_ahead, y = mae, color = source)) +
-    geom_line(linewidth = 1) +
-    geom_point(aes(size = n_forecasts), alpha = 0.6) +
-    scale_color_manual(values = c("Daily" = "steelblue", "Quarterly" = "darkred")) +
-    scale_size_continuous(name = "N Forecasts", range = c(1, 6)) +
-    labs(
-      title = "Mean Absolute Error (MAE) by Horizon",
-      subtitle = "Alternative error metric: less sensitive to outliers than RMSE",
-      x = "Days to Meeting",
-      y = "MAE (percentage points)",
-      color = "Source"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "right"
-    )
-  
-  ggsave("combined_data/mae_comparison_by_horizon.png",
-         plot = mae_plot, width = 12, height = 7, dpi = 300)
-  cat("✓ Saved: combined_data/mae_comparison_by_horizon.png\n")
-}
-
-cat("\n")
-
-# =============================================
-# 10. Run CPI Event Analysis
-# =============================================
-
-cat("\n\n")
-cat(strrep("=", 60), "\n")
-cat("RUNNING CPI RELEASE EVENT ANALYSIS\n")
-cat(strrep("=", 60), "\n\n")
-
-# Source the CPI event analysis script
-# Note: This assumes the cpi_event_analysis.R file exists
-# Alternatively, we can inline the code here
-
-# CPI Release dates
-cpi_releases <- tribble(
-  ~release_date,
-  "2022-01-26",
-  "2022-04-27",
-  "2022-07-27",
-  "2022-10-26",
-  "2023-01-25",
-  "2023-04-26",
-  "2023-07-26",
-  "2023-10-25",
-  "2024-01-31",
-  "2024-04-24",
-  "2024-07-31",
-  "2024-10-30",
-  "2025-01-29",
-  "2025-04-30",
-  "2025-07-30",
-  "2025-10-29"
-) %>%
-  mutate(release_date = as.Date(release_date))
-
-cat("=== CPI RELEASES ===\n")
-cat("Total CPI releases:", nrow(cpi_releases), "\n")
-cat("Date range:", format(min(cpi_releases$release_date), "%Y-%m-%d"), "to",
-    format(max(cpi_releases$release_date), "%Y-%m-%d"), "\n\n")
-
-# Analyze CPI releases
-window_days <- 5
-cat("=== ANALYZING CPI RELEASES (window =", window_days, "days) ===\n\n")
-
-all_comparisons <- list()
-
-for (i in 1:nrow(cpi_releases)) {
-  cpi_date <- cpi_releases$release_date[i]
-  
-  cat("CPI Release #", i, ":", format(cpi_date, "%Y-%m-%d"), "\n", sep = "")
-  
-  # Get forecasts made within window_days of this CPI release
-  forecasts_around_cpi <- daily_forecasts %>%
-    filter(
-      meeting_date > cpi_date,  # Only meetings after this CPI
-      abs(as.integer(forecast_date - cpi_date)) <= window_days  # Within window
-    ) %>%
-    mutate(
-      days_from_cpi = as.integer(forecast_date - cpi_date),
-      period = ifelse(days_from_cpi < 0, "before", "after")
-    ) %>%
-    filter(days_from_cpi != 0)  # Exclude exact CPI date
-  
-  forecasts_before <- forecasts_around_cpi %>% filter(period == "before")
-  forecasts_after <- forecasts_around_cpi %>% filter(period == "after")
-  
-  cat("  Forecasts before CPI:", nrow(forecasts_before), "\n")
-  cat("  Forecasts after CPI:", nrow(forecasts_after), "\n")
-  
-  if (nrow(forecasts_before) == 0 || nrow(forecasts_after) == 0) {
-    cat("  Insufficient data for comparison\n\n")
-    next
-  }
-  
-  # Calculate RMSE for each period
-  combined <- bind_rows(forecasts_before, forecasts_after) %>%
-    mutate(squared_error = (forecast_rate - actual_rate)^2)
-  
-  rmse_by_group <- combined %>%
-    group_by(period, meeting_date, days_ahead) %>%
-    summarise(
-      n = n(),
-      rmse = sqrt(mean(squared_error, na.rm = TRUE)),
-      mean_forecast = mean(forecast_rate),
-      .groups = "drop"
-    )
-  
-  # Match before and after
-  rmse_before <- rmse_by_group %>%
-    filter(period == "before") %>%
-    select(meeting_date, days_ahead, rmse_before = rmse, n_before = n, 
-           forecast_before = mean_forecast)
-  
-  rmse_after <- rmse_by_group %>%
-    filter(period == "after") %>%
-    select(meeting_date, days_ahead, rmse_after = rmse, n_after = n,
-           forecast_after = mean_forecast)
-  
-  comparison <- rmse_before %>%
-    inner_join(rmse_after, by = c("meeting_date", "days_ahead")) %>%
-    mutate(
-      cpi_date = cpi_date,
-      rmse_change = rmse_after - rmse_before,
-      rmse_pct_change = (rmse_after - rmse_before) / rmse_before * 100,
-      forecast_change = forecast_after - forecast_before
-    )
-  
-  cat("  Valid comparisons:", nrow(comparison), "\n\n")
-  
-  if (nrow(comparison) > 0) {
-    all_comparisons[[i]] <- comparison
-  }
-}
-
-# Analyze results
-if (length(all_comparisons) == 0) {
-  cat("⚠ NO COMPARISONS FOUND FOR CPI ANALYSIS\n\n")
-} else {
-  cpi_analysis <- bind_rows(all_comparisons)
-  
-  cat("=== CPI ANALYSIS RESULTS ===\n")
-  cat("Total comparisons:", nrow(cpi_analysis), "\n")
-  cat("CPI releases with data:", length(unique(cpi_analysis$cpi_date)), "\n")
-  cat("Meetings analyzed:", length(unique(cpi_analysis$meeting_date)), "\n\n")
-  
-  # Summary statistics
-  summary_stats <- cpi_analysis %>%
-    summarise(
-      n_comparisons = n(),
-      mean_rmse_change = mean(rmse_change, na.rm = TRUE),
-      median_rmse_change = median(rmse_change, na.rm = TRUE),
-      pct_improved = mean(rmse_change < 0, na.rm = TRUE) * 100,
-      mean_pct_change = mean(rmse_pct_change, na.rm = TRUE),
-      sd_pct_change = sd(rmse_pct_change, na.rm = TRUE)
-  )
-  
-  cat("Summary Statistics:\n")
-  print(summary_stats)
-  
-  cat("\nInterpretation:\n")
-  if (summary_stats$mean_rmse_change < 0) {
-    cat("✓ RMSE decreased on average after CPI releases (forecasts improved)\n")
-  } else {
-    cat("✗ RMSE increased on average after CPI releases (forecasts worse)\n")
-  }
-  
-  cat("- Average change:", round(summary_stats$mean_rmse_change, 4), "percentage points\n")
-  cat("- Percentage of cases that improved:", round(summary_stats$pct_improved, 1), "%\n\n")
-  
-  # Statistical test
-  cat("=== STATISTICAL TEST ===\n")
-  t_test_result <- t.test(cpi_analysis$rmse_change, alternative = "less")
-  
-  cat("Null hypothesis: Mean RMSE change >= 0 (no improvement)\n")
-  cat("Alternative: Mean RMSE change < 0 (improvement)\n\n")
-  cat("t-statistic:", round(t_test_result$statistic, 3), "\n")
-  cat("p-value:", format.pval(t_test_result$p.value, digits = 3), "\n")
-  cat("95% CI upper bound:", round(t_test_result$conf.int[2], 4), "\n\n")
-  
-  if (t_test_result$p.value < 0.05) {
-    cat("✓ SIGNIFICANT: RMSE significantly decreases after CPI releases (p < 0.05)\n")
-  } else {
-    cat("✗ NOT SIGNIFICANT: No significant change in RMSE after CPI releases\n")
-  }
-  
-  # Save results
-  write_csv(cpi_analysis, "combined_data/cpi_event_analysis.csv")
-  cat("\n✓ Saved CPI analysis: combined_data/cpi_event_analysis.csv\n")
-  
-  # Visualizations
-  if (requireNamespace("ggplot2", quietly = TRUE)) {
-    
-    # Histogram
-    hist_plot <- ggplot(cpi_analysis, aes(x = rmse_pct_change)) +
-      geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
-      geom_vline(xintercept = 0, color = "red", linetype = "dashed", linewidth = 1) +
-      geom_vline(xintercept = median(cpi_analysis$rmse_pct_change), 
-                 color = "darkgreen", linetype = "solid", linewidth = 1) +
-      labs(
-        title = "RMSE Change After CPI Releases",
-        subtitle = paste0("Negative = Improvement | Median = ", 
-                         round(median(cpi_analysis$rmse_pct_change), 2), "%"),
-        x = "RMSE Change (%)",
-        y = "Count"
-      ) +
-      theme_bw() +
-      theme(plot.title = element_text(face = "bold", size = 14))
-    
-    ggsave("combined_data/cpi_rmse_changes_histogram.png",
-           plot = hist_plot, width = 10, height = 6, dpi = 300)
-    cat("✓ Saved histogram: combined_data/cpi_rmse_changes_histogram.png\n")
-    
-    # Before vs After boxplot
-    before_after_data <- cpi_analysis %>%
-      select(cpi_date, meeting_date, days_ahead, rmse_before, rmse_after) %>%
-      pivot_longer(cols = c(rmse_before, rmse_after), 
-                   names_to = "period", values_to = "rmse") %>%
-      mutate(period = ifelse(period == "rmse_before", "Before CPI", "After CPI"))
-    
-    box_plot <- ggplot(before_after_data, aes(x = period, y = rmse, fill = period)) +
-      geom_boxplot(alpha = 0.7, outlier.alpha = 0.5) +
-      scale_fill_manual(values = c("Before CPI" = "lightcoral", "After CPI" = "lightgreen")) +
-      labs(
-        title = "Forecast RMSE: Before vs After CPI Releases",
-        subtitle = paste0("Based on ", nrow(cpi_analysis), " comparisons across ", 
-                         length(unique(cpi_analysis$cpi_date)), " CPI releases"),
-        x = "",
-        y = "RMSE (percentage points)"
-      ) +
-      theme_bw() +
-      theme(
-        plot.title = element_text(face = "bold", size = 14),
-        legend.position = "none"
-      )
-    
-    ggsave("combined_data/cpi_rmse_before_after_boxplot.png",
-           plot = box_plot, width = 10, height = 6, dpi = 300)
-    cat("✓ Saved boxplot: combined_data/cpi_rmse_before_after_boxplot.png\n")
-  }
-}
-
-cat("\n=== RMSE CALCULATION AND CPI ANALYSIS COMPLETE ===\n")
-
-# =============================================
-# 10. Analyze RMSE Changes Around Key Events
-# =============================================
-
-cat("\n\n=== ANALYZING RMSE CHANGES AROUND KEY EVENTS ===\n")
-
-# Define event schedule
 abs_releases <- tribble(
-  ~dataset,           ~datetime,
+  ~dataset, ~datetime,
   
-  # CPI (quarterly) - back to 2022
-  "CPI",  ymd_hm("2022-01-26 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2022-04-27 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2022-07-27 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2022-10-26 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2023-01-25 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2023-04-26 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2023-07-26 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2023-10-25 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2024-01-31 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2024-04-24 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2024-07-31 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2024-10-30 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
-  "CPI",  ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
+  # CPI (quarterly releases at 11:30 AM AEST)
+  "CPI", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2026-01-28 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
   
-  # CPI Indicator (monthly) - started in 2022
-  "CPI Indicator", ymd_hm("2022-10-26 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2022-11-30 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2022-12-21 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-01-25 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-02-22 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-03-29 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-04-26 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-05-31 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-06-28 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-07-26 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-08-30 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-09-27 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-10-25 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-11-29 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2023-12-20 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-01-31 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-02-28 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-03-27 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-04-24 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-05-29 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-06-26 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-07-31 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-08-28 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-09-25 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-10-30 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-11-27 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2024-12-30 11:30", tz = "Australia/Melbourne"),
+  # CPI Indicator (monthly releases)
   "CPI Indicator", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
   "CPI Indicator", ymd_hm("2025-02-26 11:30", tz = "Australia/Melbourne"),
   "CPI Indicator", ymd_hm("2025-03-26 11:30", tz = "Australia/Melbourne"),
@@ -1172,78 +104,41 @@ abs_releases <- tribble(
   "CPI Indicator", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
   "CPI Indicator", ymd_hm("2025-08-27 11:30", tz = "Australia/Melbourne"),
   "CPI Indicator", ymd_hm("2025-09-24 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-11-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-12-31 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-02-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-03-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-05-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-06-24 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-08-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-09-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-11-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2026-12-30 11:30", tz = "Australia/Melbourne"),
   
-  # WPI (quarterly) - back to 2022
-  "WPI",  ymd_hm("2022-02-23 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2022-05-18 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2022-08-17 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2022-11-16 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2023-02-22 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2023-05-17 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2023-08-16 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2023-11-15 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2024-02-21 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2024-05-15 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2024-08-14 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2024-11-13 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2025-05-14 11:30", tz = "Australia/Melbourne"),
-  "WPI",  ymd_hm("2025-08-13 11:30", tz = "Australia/Melbourne"),
+  # WPI (quarterly releases)
+  "WPI", ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2025-05-14 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2025-08-13 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2025-11-12 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-02-18 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-05-13 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-08-12 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-11-11 11:30", tz = "Australia/Melbourne"),
   
-  # National Accounts (quarterly) - back to 2022
-  "National Accounts", ymd_hm("2022-03-02 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2022-06-01 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2022-09-07 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2022-12-07 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2023-03-01 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2023-05-31 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2023-09-06 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2023-12-06 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2024-03-06 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2024-06-05 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2024-09-04 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2024-12-04 11:30", tz = "Australia/Melbourne"),
+  # National Accounts (quarterly releases)
   "National Accounts", ymd_hm("2025-03-05 11:30", tz = "Australia/Melbourne"),
   "National Accounts", ymd_hm("2025-06-04 11:30", tz = "Australia/Melbourne"),
   "National Accounts", ymd_hm("2025-09-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-12-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-03-04 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-06-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-09-02 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2026-12-02 11:30", tz = "Australia/Melbourne"),
   
-  # Labour Force (monthly) - back to 2022
-  "Labour Force", ymd_hm("2022-01-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-02-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-03-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-04-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-05-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-06-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-07-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-08-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-09-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-10-13 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-11-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2022-12-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-01-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-02-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-03-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-04-13 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-05-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-06-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-07-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-08-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-09-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-10-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-11-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2023-12-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-01-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-02-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-03-21 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-04-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-05-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-06-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-07-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-08-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-09-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-10-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-11-21 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2024-12-19 11:30", tz = "Australia/Melbourne"),
+  # Labour Force (monthly releases)
   "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-02-20 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-03-20 11:30", tz = "Australia/Melbourne"),
@@ -1253,402 +148,458 @@ abs_releases <- tribble(
   "Labour Force", ymd_hm("2025-07-17 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-08-14 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne"),
-  
-  # Retail Trade (monthly) - back to 2022
-  "Retail Trade", ymd_hm("2022-02-04 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-03-04 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-04-07 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-05-06 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-06-08 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-07-08 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-08-05 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-09-07 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-10-07 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-11-04 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2022-12-07 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-02-03 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-03-03 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-04-06 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-05-05 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-06-07 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-07-07 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-08-04 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-09-06 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-10-06 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-11-03 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2023-12-06 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-02-02 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-03-01 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-04-05 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-05-03 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-06-05 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-07-05 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-08-02 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-09-04 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-10-04 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-11-08 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2024-12-06 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2025-02-07 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2025-03-07 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2025-04-04 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2025-05-02 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2025-06-06 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2025-07-04 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2025-08-01 11:30", tz = "Australia/Melbourne"),
-  "Retail Trade", ymd_hm("2025-09-05 11:30", tz = "Australia/Melbourne")
-) %>%
-  mutate(release_date = as.Date(datetime))
-
-# Analyze RMSE changes around events
-analyze_rmse_around_events <- function(forecasts_df, event_dates, event_name, window_days = 7) {
-  
-  cat("\n  Analyzing", event_name, "...\n")
-  cat("  Events to check:", length(event_dates), "\n")
-  cat("  Event date range:", format(min(event_dates), "%Y-%m-%d"), "to", 
-      format(max(event_dates), "%Y-%m-%d"), "\n")
-  
-  # Debug: check date classes
-  cat("  Event date class:", class(event_dates), "\n")
-  cat("  Forecast date class:", class(forecasts_df$forecast_date), "\n")
-  cat("  Meeting date class:", class(forecasts_df$meeting_date), "\n")
-  
-  # Debug: show sample dates
-  cat("  Sample event dates:", paste(format(head(event_dates, 3), "%Y-%m-%d"), collapse = ", "), "\n")
-  cat("  Sample forecast dates:", paste(format(head(forecasts_df$forecast_date, 3), "%Y-%m-%d"), collapse = ", "), "\n")
-  cat("  Sample meeting dates:", paste(format(head(unique(forecasts_df$meeting_date), 3), "%Y-%m-%d"), collapse = ", "), "\n")
-  
-  results <- list()
-  events_with_data <- 0
-  
-  for (i in seq_along(event_dates)) {
-    event_date <- event_dates[i]
-    
-    # For each meeting, look at forecasts made before and after this event
-    event_analysis <- forecasts_df %>%
-      filter(meeting_date > event_date) %>%  # Only meetings after the event
-      mutate(
-        days_from_event = as.integer(forecast_date - event_date),
-        period = case_when(
-          days_from_event >= -window_days & days_from_event < 0 ~ "before",
-          days_from_event >= 0 & days_from_event <= window_days ~ "after",
-          TRUE ~ "other"
-        )
-      ) %>%
-      filter(period %in% c("before", "after"))
-    
-    if (nrow(event_analysis) == 0) next
-    
-    # Calculate RMSE before and after
-    rmse_by_period <- event_analysis %>%
-      mutate(squared_error = (forecast_rate - actual_rate)^2) %>%
-      group_by(period, meeting_date, days_ahead) %>%
-      summarise(
-        n = n(),
-        rmse = sqrt(mean(squared_error, na.rm = TRUE)),
-        .groups = "drop"
-      )
-    
-    # Compare before vs after for same horizon
-    # Split into before and after, then join
-    rmse_before <- rmse_by_period %>%
-      filter(period == "before") %>%
-      select(meeting_date, days_ahead, rmse_before = rmse, n_before = n)
-    
-    rmse_after <- rmse_by_period %>%
-      filter(period == "after") %>%
-      select(meeting_date, days_ahead, rmse_after = rmse, n_after = n)
-    
-    comparison <- rmse_before %>%
-      inner_join(rmse_after, by = c("meeting_date", "days_ahead")) %>%
-      mutate(
-        rmse_change = rmse_after - rmse_before,
-        rmse_pct_change = (rmse_after - rmse_before) / rmse_before * 100,
-        event_date = event_date,
-        event_name = event_name
-      )
-    
-    if (nrow(comparison) > 0) {
-      results[[i]] <- comparison
-      events_with_data <- events_with_data + 1
-    }
-  }
-  
-  cat("  Events with usable data:", events_with_data, "/", length(event_dates), "\n")
-  
-  final_result <- bind_rows(results)
-  
-  if (nrow(final_result) == 0) {
-    cat("  ⚠ No comparisons found. Debugging first event...\n")
-    
-    # Debug the first event in detail
-    event_date <- event_dates[1]
-    cat("  First event date:", format(event_date, "%Y-%m-%d"), "(class:", class(event_date), ")\n")
-    
-    # Check meetings after this event
-    meetings_after <- forecasts_df %>%
-      filter(meeting_date > event_date) %>%
-      distinct(meeting_date) %>%
-      arrange(meeting_date)
-    
-    cat("  Meetings after this event:", nrow(meetings_after), "\n")
-    if (nrow(meetings_after) > 0) {
-      cat("  First few meetings:", paste(format(head(meetings_after$meeting_date, 3), "%Y-%m-%d"), collapse = ", "), "\n")
-      
-      # Check forecasts for first meeting
-      first_meeting <- meetings_after$meeting_date[1]
-      forecasts_for_meeting <- forecasts_df %>%
-        filter(meeting_date == first_meeting)
-      
-      cat("  Forecasts for first meeting (", format(first_meeting, "%Y-%m-%d"), "):", nrow(forecasts_for_meeting), "\n")
-      cat("  Forecast date range:", format(min(forecasts_for_meeting$forecast_date), "%Y-%m-%d"), "to",
-          format(max(forecasts_for_meeting$forecast_date), "%Y-%m-%d"), "\n")
-      
-      if (nrow(forecasts_for_meeting) > 0) {
-        # Check dates relative to event
-        forecasts_with_timing <- forecasts_for_meeting %>%
-          mutate(days_from_event = as.integer(forecast_date - event_date)) %>%
-          filter(abs(days_from_event) <= window_days)
-        
-        cat("  Within", window_days, "days of event:", nrow(forecasts_with_timing), "\n")
-        
-        if (nrow(forecasts_with_timing) > 0) {
-          timing_summary <- forecasts_with_timing %>%
-            mutate(period = ifelse(days_from_event < 0, "before", "after")) %>%
-            count(period)
-          cat("  Breakdown:\n")
-          print(timing_summary)
-        } else {
-          cat("  ⚠ No forecasts within", window_days, "days of event\n")
-          cat("  Days from event range:", min(forecasts_for_meeting$forecast_date - event_date), "to",
-              max(forecasts_for_meeting$forecast_date - event_date), "\n")
-        }
-      }
-    } else {
-      cat("  ⚠ No meetings found after this event date\n")
-      cat("  Latest forecast meeting date:", format(max(forecasts_df$meeting_date), "%Y-%m-%d"), "\n")
-    }
-  }
-  
-  final_result
-}
-
-# Analyze for each event type
-cat("\nAnalyzing RMSE changes around RBA meetings...\n")
-rba_meeting_analysis <- analyze_rmse_around_events(
-  daily_forecasts,
-  meeting_schedule$meeting_date,
-  "RBA Meeting",
-  window_days = 5
+  "Labour Force", ymd_hm("2025-10-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-11-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-12-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-01-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-02-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-03-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-04-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-05-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-06-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-07-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-08-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-09-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-10-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-11-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne")
 )
-cat("Found", nrow(rba_meeting_analysis), "RBA meeting comparisons\n")
 
-cat("Analyzing RMSE changes around CPI releases...\n")
-cpi_analysis <- analyze_rmse_around_events(
-  daily_forecasts,
-  abs_releases %>% filter(dataset == "CPI") %>% pull(release_date),
-  "CPI Release",
-  window_days = 5
-)
-cat("Found", nrow(cpi_analysis), "CPI release comparisons\n")
+# ------------------------------------------------------------------------------
+# 6. DETERMINE CURRENT RATE & MEETING CONTEXT
+# ------------------------------------------------------------------------------
 
-cat("Analyzing RMSE changes around Labour Force releases...\n")
-labour_analysis <- analyze_rmse_around_events(
-  daily_forecasts,
-  abs_releases %>% filter(dataset == "Labour Force") %>% pull(release_date),
-  "Labour Force Release",
-  window_days = 5
-)
-cat("Found", nrow(labour_analysis), "Labour Force release comparisons\n")
+# Find the most recent past meeting
+last_meeting <- max(meeting_schedule$meeting_date[
+  meeting_schedule$meeting_date <= Sys.Date()
+])
 
-# Combine all analyses
-all_event_analysis <- bind_rows(rba_meeting_analysis, cpi_analysis, labour_analysis)
+# Determine whether to use manual override or live RBA data
+use_override <- !is.null(override) && (Sys.Date() - last_meeting <= 1)
 
-cat("\nTotal event comparisons:", nrow(all_event_analysis), "\n")
-
-# Only proceed if we have data
-if (nrow(all_event_analysis) == 0) {
-  cat("\n⚠ WARNING: No event comparisons found. This could mean:\n")
-  cat("  - Forecast data doesn't overlap with event dates\n")
-  cat("  - Not enough forecasts within the window before/after events\n")
-  cat("  - Date range mismatch between forecasts and events\n\n")
-  
-  # Better date range display
-  cat("DIAGNOSTICS:\n")
-  cat("Daily forecasts:\n")
-  cat("  Count:", nrow(daily_forecasts), "\n")
-  cat("  Date range:", format(min(daily_forecasts$forecast_date), "%Y-%m-%d"), "to", 
-      format(max(daily_forecasts$forecast_date), "%Y-%m-%d"), "\n")
-  cat("  Meeting dates in forecasts:", length(unique(daily_forecasts$meeting_date)), "\n")
-  
-  cat("\nEvents:\n")
-  cat("  Total events:", nrow(abs_releases), "\n")
-  cat("  Date range:", format(min(abs_releases$release_date), "%Y-%m-%d"), "to", 
-      format(max(abs_releases$release_date), "%Y-%m-%d"), "\n")
-  
-  cat("\nRBA Meetings:\n")
-  cat("  Total meetings:", nrow(meeting_schedule), "\n")
-  cat("  Date range:", format(min(meeting_schedule$meeting_date), "%Y-%m-%d"), "to", 
-      format(max(meeting_schedule$meeting_date), "%Y-%m-%d"), "\n")
-  
-  # Check overlap
-  forecast_range <- interval(min(daily_forecasts$forecast_date), max(daily_forecasts$forecast_date))
-  event_range <- interval(min(abs_releases$release_date), max(abs_releases$release_date))
-  meeting_range <- interval(min(meeting_schedule$meeting_date), max(meeting_schedule$meeting_date))
-  
-  cat("\nOverlap check:\n")
-  cat("  Forecasts overlap with events:", int_overlaps(forecast_range, event_range), "\n")
-  cat("  Forecasts overlap with meetings:", int_overlaps(forecast_range, meeting_range), "\n")
-  
-  # Sample of what we're looking for
-  cat("\nSample events in forecast period:\n")
-  events_in_range <- abs_releases %>%
-    filter(release_date >= min(daily_forecasts$forecast_date),
-           release_date <= max(daily_forecasts$forecast_date)) %>%
-    count(dataset) %>%
-    arrange(desc(n))
-  print(events_in_range)
-  
-  # Check if there are forecasts around a sample event
-  sample_event <- abs_releases %>%
-    filter(release_date >= min(daily_forecasts$forecast_date),
-           release_date <= max(daily_forecasts$forecast_date)) %>%
-    slice(1)
-  
-  if (nrow(sample_event) > 0) {
-    cat("\nChecking forecasts around sample event:", format(sample_event$release_date[1], "%Y-%m-%d"), 
-        "(", sample_event$dataset[1], ")\n")
-    
-    window <- 5
-    forecasts_around_event <- daily_forecasts %>%
-      filter(forecast_date >= sample_event$release_date[1] - window,
-             forecast_date <= sample_event$release_date[1] + window) %>%
-      mutate(
-        days_from_event = as.integer(forecast_date - sample_event$release_date[1]),
-        period = case_when(
-          days_from_event < 0 ~ "before",
-          days_from_event > 0 ~ "after",
-          TRUE ~ "on_day"
-        )
-      )
-    
-    cat("  Forecasts before event:", sum(forecasts_around_event$period == "before"), "\n")
-    cat("  Forecasts after event:", sum(forecasts_around_event$period == "after"), "\n")
-    cat("  Forecasts on event day:", sum(forecasts_around_event$period == "on_day"), "\n")
-    
-    if (nrow(forecasts_around_event) > 0) {
-      cat("\n  Sample of these forecasts:\n")
-      print(forecasts_around_event %>% 
-              select(forecast_date, meeting_date, days_ahead, period) %>% 
-              head(10))
-    }
-  }
-  
-  cat("\nSkipping event analysis...\n")
+# Get current rate (either from override or latest RBA publication)
+if (use_override) {
+  initial_rt <- override
+  current_rate <- override
 } else {
+  latest_rt <- read_rba(series_id = "FIRMMCRTD") %>%
+    slice_max(date, n = 1, with_ties = FALSE) %>%
+    pull(value)
+  initial_rt <- latest_rt
+  current_rate <- latest_rt
+}
 
-  # Summary statistics
-  cat("\n=== RMSE CHANGES AFTER KEY EVENTS ===\n")
-  cat("(Comparing forecasts made within 5 days before vs after each event)\n\n")
+# Print diagnostics
+print(paste("Last meeting:", last_meeting))
+print(paste("Using override:", use_override))
+print(paste("Initial rate:", initial_rt))
 
-  event_summary <- all_event_analysis %>%
-    group_by(event_name) %>%
-    summarise(
-      n_comparisons = n(),
-      mean_rmse_change = mean(rmse_change, na.rm = TRUE),
-      median_rmse_change = median(rmse_change, na.rm = TRUE),
-      pct_improved = mean(rmse_change < 0, na.rm = TRUE) * 100,
-      mean_pct_change = mean(rmse_pct_change, na.rm = TRUE),
-      .groups = "drop"
-    )
+# ------------------------------------------------------------------------------
+# 7. FILTER SCRAPES BASED ON TIME CUTOFF
+# ------------------------------------------------------------------------------
 
-  print(event_summary)
+# Determine which scrapes to include based on 2:30 PM AEST cutoff
+now_melb <- now(tzone = "Australia/Melbourne")
+cutoff_time <- ymd_hm(paste0(Sys.Date(), " 14:30"), tz = "Australia/Melbourne")
 
-  cat("\nInterpretation:\n")
-  cat("- Negative mean_rmse_change = RMSE decreased (forecasts improved) after event\n")
-  cat("- pct_improved = percentage of cases where RMSE decreased\n\n")
+# If before 2:30 PM, include yesterday's data; otherwise only today's
+cutoff_date <- if (now_melb < cutoff_time) {
+  Sys.Date() - 1
+} else {
+  Sys.Date()
+}
 
-  # Statistical test: does RMSE significantly decrease after events?
-  cat("=== STATISTICAL TESTS ===\n")
+print(paste("Current time (Melbourne):", now_melb))
+print(paste("Cutoff time:", cutoff_time))
+
+# Get all scrape times and filter based on cutoff
+all_times <- sort(unique(cash_rate$scrape_time))
+scrapes <- all_times[all_times >= cutoff_date | all_times > last_meeting]
+
+print("Latest scrapes:")
+print(tail(scrapes))
+
+# ------------------------------------------------------------------------------
+# 8. CALCULATE IMPLIED MEAN RATES FOR EACH SCRAPE × MEETING
+# ------------------------------------------------------------------------------
+
+# For each scrape time, calculate the implied rate for each future meeting
+all_list <- map(scrapes, function(scr) {
   
-  for (evt in unique(all_event_analysis$event_name)) {
-    evt_data <- all_event_analysis %>% filter(event_name == evt)
+  scr_date <- as.Date(scr)
+  
+  # Get the most recent futures price for each contract expiry at this scrape
+  df_rates <- cash_rate %>% 
+    filter(scrape_time == scr) %>%
+    select(
+      expiry = date,
+      forecast_rate = cash_rate,
+      scrape_time
+    )
+  
+  # Join futures prices to meeting schedule
+  df <- meeting_schedule %>%
+    distinct(expiry, meeting_date) %>%
+    mutate(scrape_time = scr) %>%
+    left_join(df_rates, by = "expiry") %>%
+    arrange(expiry)
+  
+  # Remove contracts with no price data yet
+  df <- df %>% filter(!is.na(forecast_rate))
+  if (nrow(df) == 0) return(NULL)
+  
+  # Calculate implied rates iteratively
+  prev_implied <- NA_real_
+  out <- vector("list", nrow(df))
+  
+  for (i in seq_len(nrow(df))) {
+    row <- df[i, ]
     
-    if (nrow(evt_data) >= 3) {
-      test_result <- t.test(evt_data$rmse_change, alternative = "less")
-      
-      cat("\n", evt, ":\n", sep = "")
-      cat("  Mean RMSE change:", round(mean(evt_data$rmse_change), 4), "\n")
-      cat("  t-statistic:", round(test_result$statistic, 3), "\n")
-      cat("  p-value:", format.pval(test_result$p.value, digits = 3), "\n")
-      cat("  ", ifelse(test_result$p.value < 0.05, 
-                      "✓ Significant decrease in RMSE", 
-                      "✗ No significant decrease"), "\n", sep = "")
+    # Starting rate is either initial rate or previous meeting's implied rate
+    rt_in <- if (is.na(prev_implied)) initial_rt else prev_implied
+    
+    # Calculate implied rate for this meeting
+    # If meeting is before contract expiry, use contract rate directly
+    # Otherwise, decompose the weighted average
+    r_tp1 <- if (row$meeting_date < row$expiry) {
+      row$forecast_rate
     } else {
-      cat("\n", evt, ": Insufficient data (n=", nrow(evt_data), ")\n", sep = "")
+      # Days before meeting / total days in month
+      nb <- (day(row$meeting_date) - 1) / days_in_month(row$expiry)
+      na <- 1 - nb
+      # Solve for rate after meeting: (contract_rate - rt_in * nb) / na
+      (row$forecast_rate - rt_in * nb) / na
     }
+    
+    out[[i]] <- tibble(
+      scrape_time = scr,
+      meeting_date = row$meeting_date,
+      implied_mean = r_tp1,
+      days_to_meeting = as.integer(row$meeting_date - scr_date),
+      previous_rate = rt_in
+    )
+    
+    prev_implied <- r_tp1
   }
+  
+  bind_rows(out)
+})
+
+# Combine all scrapes and add forecast uncertainty (RMSE)
+all_estimates <- all_list %>%
+  compact() %>%
+  bind_rows() %>%
+  filter(days_to_meeting >= 0) %>%
+  left_join(rmse_days, by = "days_to_meeting") %>%
+  rename(stdev = finalrmse)
+
+# Handle missing or invalid standard deviations
+max_rmse <- suppressWarnings(max(rmse_days$finalrmse, na.rm = TRUE))
+if (!is.finite(max_rmse)) {
+  stop("No finite RMSE values found in rmse_days$finalrmse")
 }
 
-# =============================================
-# 11. Visualize RMSE Changes Around Events
-# =============================================
+bad_sd <- !is.finite(all_estimates$stdev) | 
+          is.na(all_estimates$stdev) | 
+          all_estimates$stdev <= 0
+n_bad <- sum(bad_sd, na.rm = TRUE)
 
-if (nrow(all_event_analysis) > 0) {
-  
-  # Plot distribution of RMSE changes
-  rmse_change_plot <- ggplot(all_event_analysis, 
-                              aes(x = rmse_pct_change, fill = event_name)) +
-    geom_histogram(bins = 30, alpha = 0.7, position = "identity") +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "red", linewidth = 1) +
-    facet_wrap(~event_name, ncol = 1, scales = "free_y") +
-    labs(
-      title = "Distribution of RMSE Changes After Key Events",
-      subtitle = "Negative values = Forecast accuracy improved after event",
-      x = "RMSE Change (%)",
-      y = "Count",
-      fill = "Event Type"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "none"
-    )
-  
-  ggsave("combined_data/rmse_changes_after_events.png",
-         plot = rmse_change_plot, width = 10, height = 8, dpi = 300)
-  
-  cat("\n\nSaved RMSE change distribution to: combined_data/rmse_changes_after_events.png\n")
-  
-  # Box plot comparing before vs after
-  rmse_before_after <- all_event_analysis %>%
-    select(event_name, event_date, meeting_date, days_ahead, rmse_before, rmse_after) %>%
-    pivot_longer(cols = c(rmse_before, rmse_after), 
-                 names_to = "period", values_to = "rmse") %>%
-    mutate(period = ifelse(period == "rmse_before", "Before Event", "After Event"))
-  
-  box_plot <- ggplot(rmse_before_after, aes(x = period, y = rmse, fill = period)) +
-    geom_boxplot(alpha = 0.7) +
-    facet_wrap(~event_name, scales = "free_y") +
-    scale_fill_manual(values = c("Before Event" = "lightcoral", "After Event" = "lightgreen")) +
-    labs(
-      title = "RMSE Before vs After Key Events",
-      subtitle = "Lower RMSE after event = Improved forecast accuracy",
-      x = "",
-      y = "RMSE (percentage points)",
-      fill = "Period"
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(face = "bold", size = 14),
-      legend.position = "bottom"
-    )
-  
-  ggsave("combined_data/rmse_before_after_events.png",
-         plot = box_plot, width = 12, height = 6, dpi = 300)
-  
-  cat("Saved before/after comparison to: combined_data/rmse_before_after_events.png\n")
-  
-  # Save detailed results
-  write_csv(all_event_analysis, "combined_data/rmse_event_analysis_detailed.csv")
-  cat("Saved detailed event analysis to: combined_data/rmse_event_analysis_detailed.csv\n")
+if (n_bad > 0) {
+  message(sprintf(
+    "Replacing %d missing/invalid stdev(s) with max RMSE = %.4f",
+    n_bad, max_rmse
+  ))
+  all_estimates$stdev[bad_sd] <- max_rmse
 }
+
+# Display sample of estimates
+all_estimates %>% tail(100) %>% print(n = Inf, width = Inf)
+
+# ------------------------------------------------------------------------------
+# 9. CALCULATE PROBABILITIES FOR EACH RATE BUCKET
+# ------------------------------------------------------------------------------
+
+# Define rate buckets (0.10% to 6.10% in 0.25% increments)
+bucket_centers <- seq(0.10, 6.10, by = 0.25)
+half_width <- 0.125  # Each bucket spans ±0.125% around center
+
+# Find the bucket closest to current rate (for "no change")
+current_center <- bucket_centers[which.min(abs(bucket_centers - current_rate))]
+
+# Calculate probabilities for each estimate × bucket combination
+bucket_list <- vector("list", nrow(all_estimates))
+
+for (i in seq_len(nrow(all_estimates))) {
+  mu_i <- all_estimates$implied_mean[i]
+  sigma_i <- all_estimates$stdev[i]
+  d_i <- all_estimates$days_to_meeting[i]
+  
+  # METHOD 1: Probabilistic (uses normal distribution)
+  p_vec <- sapply(bucket_centers, function(b) {
+    lower <- b - half_width
+    upper <- b + half_width
+    pnorm(upper, mean = mu_i, sd = sigma_i) - 
+      pnorm(lower, mean = mu_i, sd = sigma_i)
+  })
+  p_vec[p_vec < 0] <- 0
+  p_vec[p_vec < 0.01] <- 0  # Remove noise
+  p_vec <- p_vec / sum(p_vec)  # Normalize
+  
+  # METHOD 2: Linear interpolation (for near-term precision)
+  nearest <- order(abs(bucket_centers - mu_i))[1:2]
+  b1 <- min(bucket_centers[nearest])
+  b2 <- max(bucket_centers[nearest])
+  w2 <- (mu_i - b1) / (b2 - b1)  # Interpolation weight
+  
+  l_vec <- numeric(length(bucket_centers))
+  l_vec[bucket_centers == b1] <- 1 - w2
+  l_vec[bucket_centers == b2] <- w2
+  
+  # BLEND: Linear method near meeting, probabilistic method far out
+  blend <- blend_weight(d_i)
+  v <- blend * l_vec + (1 - blend) * p_vec
+  
+  bucket_list[[i]] <- tibble(
+    scrape_time = all_estimates$scrape_time[i],
+    meeting_date = all_estimates$meeting_date[i],
+    implied_mean = mu_i,
+    stdev = sigma_i,
+    days_to_meeting = d_i,
+    bucket = bucket_centers,
+    probability_linear = l_vec,
+    probability_prob = p_vec,
+    probability = v,
+    diff = bucket_centers - current_rate,
+    diff_s = sign(bucket_centers - current_rate) * 
+             abs(bucket_centers - current_rate)^(1/4)  # For color scaling
+  )
+}
+
+all_estimates_buckets <- bind_rows(bucket_list)
+
+# ------------------------------------------------------------------------------
+# 10. CREATE BAR CHARTS FOR EACH FUTURE MEETING
+# ------------------------------------------------------------------------------
+
+# Identify future meetings and latest scrape
+future_meetings <- meeting_schedule$meeting_date[
+  meeting_schedule$meeting_date > Sys.Date()
+]
+latest_scrape <- max(all_estimates_buckets$scrape_time) + hours(10)
+
+print(paste("Latest scrape:", latest_scrape))
+
+# Generate a bar chart for each upcoming meeting
+for (mt in future_meetings) {
+  
+  # Filter data for this specific meeting and latest scrape
+  bar_df <- all_estimates_buckets %>%
+    filter(
+      scrape_time == latest_scrape,
+      meeting_date == mt
+    )
+  
+  # Create bar chart with color gradient (blue=cut, gray=hold, red=hike)
+  p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
+    geom_col(show.legend = FALSE) +
+    scale_y_continuous(labels = percent_format(accuracy = 1)) +
+    scale_fill_gradient2(
+      midpoint = 0,
+      low = "#0022FF",      # Blue for cuts
+      mid = "#B3B3B3",      # Gray for no change
+      high = "#FF2200",     # Red for hikes
+      limits = range(bar_df$diff_s, na.rm = TRUE)
+    ) +
+    labs(
+      title = paste("Cash Rate Outcome Probabilities —", 
+                   format(as.Date(mt), "%d %B %Y")),
+      subtitle = paste(
+        "As of", 
+        format(
+          with_tz(as.POSIXct(latest_scrape) + hours(10), 
+                 tzone = "Australia/Sydney"),
+          "%d %B %Y, %I:%M %p AEST"
+        )
+      ),
+      x = "Target Rate (%)",
+      y = "Probability (%)"
+    ) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  # Save chart
+  ggsave(
+    filename = paste0("docs/rate_probabilities_", 
+                     gsub(" ", "_", mt), ".png"),
+    plot = p,
+    width = 6,
+    height = 4,
+    dpi = 300,
+    device = "png"
+  )
+}
+
+# ------------------------------------------------------------------------------
+# 11. DETERMINE NEXT MEETING (ACCOUNTING FOR SAME-DAY TIMING)
+# ------------------------------------------------------------------------------
+
+# If today is a meeting day, show it until 3:00 PM, then roll to next meeting
+now_melb <- now(tzone = "Australia/Melbourne")
+today_melb <- as.Date(now_melb)
+cutoff <- ymd_hm(paste0(today_melb, " 15:00"), tz = "Australia/Melbourne")
+
+next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
+                    now_melb < cutoff) {
+  today_melb
+} else {
+  meeting_schedule %>%
+    filter(meeting_date > today_melb) %>%
+    slice_min(meeting_date) %>%
+    pull(meeting_date)
+}
+
+print(paste("Next meeting:", next_meeting))
+
+# ------------------------------------------------------------------------------
+# 12. PREPARE DATA FOR LINE CHART (TOP 3-4 OUTCOMES)
+# ------------------------------------------------------------------------------
+
+# Identify the 3-4 most probable outcomes for the next meeting
+top3_buckets <- all_estimates_buckets %>% 
+  filter(meeting_date == next_meeting) %>%
+  group_by(bucket) %>%
+  summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
+  slice_max(order_by = probability, n = 4, with_ties = FALSE) %>% 
+  pull(bucket)
+
+# Filter data to these top outcomes and create descriptive labels
+top3_df <- all_estimates_buckets %>%
+  filter(
+    meeting_date == next_meeting,
+    bucket %in% top3_buckets
+  ) %>%
+  mutate(
+    diff_center = bucket - current_center,
+    move = case_when(
+      near(diff_center, -0.75) ~ "-75 bp cut",
+      near(diff_center, -0.50) ~ "-50 bp cut",
+      near(diff_center, -0.25) ~ "-25 bp cut",
+      near(diff_center, 0.00) ~ "No change",
+      near(diff_center, 0.25) ~ "+25 bp hike",
+      near(diff_center, 0.50) ~ "+50 bp hike",
+      near(diff_center, 0.75) ~ "+75 bp hike",
+      TRUE ~ sprintf("%+.0f bp", diff_center * 100)
+    ),
+    move = factor(
+      move,
+      levels = c("-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
+                 "+25 bp hike", "+50 bp hike", "+75 bp hike")
+    )
+  ) %>%
+  select(-diff_center)
+
+# Set x-axis limits for line chart
+start_xlim <- min(top3_df$scrape_time) + hours(10)
+end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(17)
+
+# ------------------------------------------------------------------------------
+# 13. CREATE LINE CHART SHOWING PROBABILITY EVOLUTION
+# ------------------------------------------------------------------------------
+
+# Create static line plot
+line <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
+                            y = probability,
+                            colour = move, 
+                            group = move)) +
+  geom_line(linewidth = 1.2) +
+  scale_colour_manual(
+    values = c(
+      "-75 bp cut" = "#000080",
+      "-50 bp cut" = "#004B8E",
+      "-25 bp cut" = "#5FA4D4",
+      "No change" = "#BFBFBF",
+      "+25 bp hike" = "#E07C7C",
+      "+50 bp hike" = "#B50000",
+      "+75 bp hike" = "#800000",
+      "CPI" = "#FF6B6B",
+      "CPI Indicator" = "#4ECDC4", 
+      "WPI" = "#45B7D1",
+      "National Accounts" = "#FFA726",
+      "Labour Force" = "#AB47BC"
+    ),
+    name = ""
+  ) +
+  scale_x_datetime(
+    limits = c(start_xlim, end_xlim),
+    date_breaks = "2 day",
+    date_labels = "%d %b",
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1),
+    labels = percent_format(accuracy = 1),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    x = "Forecast date",
+    y = "Probability"
+  ) +
+  # Add vertical lines for ABS data releases
+  geom_vline(
+    data = abs_releases,
+    aes(xintercept = datetime, colour = dataset),
+    linetype = "dashed",
+    alpha = 0.8
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = "right",
+    legend.title = element_blank()
+  )
+
+# Save static plot (two versions)
+ggsave("docs/line.png", line, width = 10, height = 5, dpi = 300)
+ggsave(
+  glue("docs/line_{format(next_meeting, '%d %b %Y')}.png"), 
+  line, 
+  width = 10, 
+  height = 5, 
+  dpi = 300
+)
+
+# ------------------------------------------------------------------------------
+# 14. CREATE INTERACTIVE VERSION
+# ------------------------------------------------------------------------------
+
+# Add hover text for interactive plot
+line_int <- line +
+  aes(text = paste0(
+    "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
+    "Move: ", move, "<br>",
+    "Probability: ", percent(probability, accuracy = 1)
+  ))
+
+# Convert to Plotly
+interactive_line <- ggplotly(line_int, tooltip = "text") %>%
+  layout(
+    hovermode = "x unified",
+    legend = list(x = 1.02, y = 0.5, xanchor = "left"),
+    showlegend = TRUE
+  )
+
+# Save interactive HTML
+htmlwidgets::saveWidget(
+  interactive_line,
+  file = "docs/line_interactive.html",
+  selfcontained = TRUE
+)
+
+# ==============================================================================
+# END OF SCRIPT
+# ==============================================================================
