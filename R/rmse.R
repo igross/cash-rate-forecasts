@@ -674,6 +674,7 @@ rba_meeting_analysis <- analyze_rmse_around_events(
   "RBA Meeting",
   window_days = 5
 )
+cat("Found", nrow(rba_meeting_analysis), "RBA meeting comparisons\n")
 
 cat("Analyzing RMSE changes around CPI releases...\n")
 cpi_analysis <- analyze_rmse_around_events(
@@ -682,6 +683,7 @@ cpi_analysis <- analyze_rmse_around_events(
   "CPI Release",
   window_days = 5
 )
+cat("Found", nrow(cpi_analysis), "CPI release comparisons\n")
 
 cat("Analyzing RMSE changes around Labour Force releases...\n")
 labour_analysis <- analyze_rmse_around_events(
@@ -690,33 +692,48 @@ labour_analysis <- analyze_rmse_around_events(
   "Labour Force Release",
   window_days = 5
 )
+cat("Found", nrow(labour_analysis), "Labour Force release comparisons\n")
 
 # Combine all analyses
 all_event_analysis <- bind_rows(rba_meeting_analysis, cpi_analysis, labour_analysis)
 
-# Summary statistics
-cat("\n=== RMSE CHANGES AFTER KEY EVENTS ===\n")
-cat("(Comparing forecasts made within 5 days before vs after each event)\n\n")
+cat("\nTotal event comparisons:", nrow(all_event_analysis), "\n")
 
-event_summary <- all_event_analysis %>%
-  group_by(event_name) %>%
-  summarise(
-    n_comparisons = n(),
-    mean_rmse_change = mean(rmse_change, na.rm = TRUE),
-    median_rmse_change = median(rmse_change, na.rm = TRUE),
-    pct_improved = mean(rmse_change < 0, na.rm = TRUE) * 100,
-    mean_pct_change = mean(rmse_pct_change, na.rm = TRUE),
-    .groups = "drop"
-  )
+# Only proceed if we have data
+if (nrow(all_event_analysis) == 0) {
+  cat("\n⚠ WARNING: No event comparisons found. This could mean:\n")
+  cat("  - Forecast data doesn't overlap with event dates\n")
+  cat("  - Not enough forecasts within the window before/after events\n")
+  cat("  - Date range mismatch between forecasts and events\n\n")
+  cat("Daily forecasts date range:", min(daily_forecasts$forecast_date), "to", 
+      max(daily_forecasts$forecast_date), "\n")
+  cat("Event date range:", min(abs_releases$release_date), "to", 
+      max(abs_releases$release_date), "\n")
+  cat("\nSkipping event analysis...\n")
+} else {
 
-print(event_summary)
+  # Summary statistics
+  cat("\n=== RMSE CHANGES AFTER KEY EVENTS ===\n")
+  cat("(Comparing forecasts made within 5 days before vs after each event)\n\n")
 
-cat("\nInterpretation:\n")
-cat("- Negative mean_rmse_change = RMSE decreased (forecasts improved) after event\n")
-cat("- pct_improved = percentage of cases where RMSE decreased\n\n")
+  event_summary <- all_event_analysis %>%
+    group_by(event_name) %>%
+    summarise(
+      n_comparisons = n(),
+      mean_rmse_change = mean(rmse_change, na.rm = TRUE),
+      median_rmse_change = median(rmse_change, na.rm = TRUE),
+      pct_improved = mean(rmse_change < 0, na.rm = TRUE) * 100,
+      mean_pct_change = mean(rmse_pct_change, na.rm = TRUE),
+      .groups = "drop"
+    )
 
-# Statistical test: does RMSE significantly decrease after events?
-if (nrow(all_event_analysis) > 0) {
+  print(event_summary)
+
+  cat("\nInterpretation:\n")
+  cat("- Negative mean_rmse_change = RMSE decreased (forecasts improved) after event\n")
+  cat("- pct_improved = percentage of cases where RMSE decreased\n\n")
+
+  # Statistical test: does RMSE significantly decrease after events?
   cat("=== STATISTICAL TESTS ===\n")
   
   for (evt in unique(all_event_analysis$event_name)) {
@@ -732,6 +749,8 @@ if (nrow(all_event_analysis) > 0) {
       cat("  ", ifelse(test_result$p.value < 0.05, 
                       "✓ Significant decrease in RMSE", 
                       "✗ No significant decrease"), "\n", sep = "")
+    } else {
+      cat("\n", evt, ": Insufficient data (n=", nrow(evt_data), ")\n", sep = "")
     }
   }
 }
