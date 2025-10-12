@@ -570,6 +570,193 @@ if (nrow(overlap_comparison) > 0) {
 }
 
 # =============================================
+# 9b. Additional RMSE Visualizations by Horizon
+# =============================================
+
+cat("\n=== CREATING RMSE BY HORIZON VISUALIZATIONS ===\n")
+
+# 1. Daily RMSE over horizon (full range)
+if (nrow(daily_rmse) > 0) {
+  daily_rmse_plot <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
+    geom_line(color = "steelblue", linewidth = 1, alpha = 0.5) +
+    geom_point(aes(size = n_forecasts), color = "steelblue", alpha = 0.3) +
+    geom_smooth(method = "loess", span = 0.3, color = "darkblue", linewidth = 1.5, se = TRUE, alpha = 0.2) +
+    scale_size_continuous(name = "N Forecasts", range = c(1, 4)) +
+    labs(
+      title = "Daily Forecast RMSE by Horizon",
+      subtitle = "Raw data (light blue) with smoothed trend (dark blue)",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "right"
+    )
+  
+  ggsave("combined_data/daily_rmse_by_horizon.png",
+         plot = daily_rmse_plot, width = 12, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/daily_rmse_by_horizon.png\n")
+  
+  # Additional: Just the smoothed line for cleaner view
+  daily_rmse_smooth_only <- ggplot(daily_rmse, aes(x = days_ahead, y = rmse)) +
+    geom_smooth(method = "loess", span = 0.3, color = "darkblue", linewidth = 1.5, 
+                se = TRUE, fill = "steelblue", alpha = 0.2) +
+    labs(
+      title = "Daily Forecast RMSE - Smoothed Trend",
+      subtitle = "LOESS smoothing removes day-to-day fluctuations",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14)
+    )
+  
+  ggsave("combined_data/daily_rmse_smoothed.png",
+         plot = daily_rmse_smooth_only, width = 12, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/daily_rmse_smoothed.png\n")
+}
+
+# 2. Quarterly RMSE over horizon
+if (nrow(quarterly_rmse) > 0) {
+  quarterly_rmse_plot <- ggplot(quarterly_rmse, aes(x = days_ahead, y = rmse)) +
+    geom_line(color = "darkred", linewidth = 1.2) +
+    geom_point(aes(size = n_forecasts), color = "darkred", alpha = 0.7) +
+    scale_size_continuous(name = "N Forecasts", range = c(3, 8)) +
+    labs(
+      title = "Quarterly Forecast RMSE by Horizon",
+      subtitle = "Long-term forecast accuracy (91-day intervals)",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "right"
+    )
+  
+  ggsave("combined_data/quarterly_rmse_by_horizon.png",
+         plot = quarterly_rmse_plot, width = 12, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/quarterly_rmse_by_horizon.png\n")
+}
+
+# 3. Combined comparison (overlay)
+if (nrow(daily_rmse) > 0 && nrow(quarterly_rmse) > 0) {
+  combined_comparison <- bind_rows(
+    daily_rmse %>% select(days_ahead, rmse, n_forecasts) %>% mutate(source = "Daily"),
+    quarterly_rmse %>% select(days_ahead, rmse, n_forecasts) %>% mutate(source = "Quarterly")
+  )
+  
+  overlay_plot <- ggplot(combined_comparison, aes(x = days_ahead, y = rmse, color = source)) +
+    geom_line(linewidth = 1) +
+    geom_point(aes(size = n_forecasts), alpha = 0.6) +
+    scale_color_manual(values = c("Daily" = "steelblue", "Quarterly" = "darkred")) +
+    scale_size_continuous(name = "N Forecasts", range = c(1, 6)) +
+    labs(
+      title = "RMSE Comparison: Daily vs Quarterly Forecasts",
+      subtitle = "Forecast error by horizon for both data sources",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)",
+      color = "Source"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "right"
+    )
+  
+  ggsave("combined_data/rmse_comparison_overlay.png",
+         plot = overlay_plot, width = 12, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/rmse_comparison_overlay.png\n")
+}
+
+# 4. Final interpolated RMSE (zoomed to useful range)
+if (nrow(rmse_days) > 0) {
+  # Short-term (0-180 days)
+  short_term_plot <- ggplot(rmse_days %>% filter(days_to_meeting <= 180), 
+                             aes(x = days_to_meeting, y = finalrmse)) +
+    geom_line(color = "darkgreen", linewidth = 1.2) +
+    geom_point(data = rmse_days %>% 
+                 filter(days_to_meeting <= 180, source == "quarterly_anchor"),
+               aes(color = "Quarterly Anchor"), size = 4, shape = 18) +
+    geom_point(data = rmse_days %>% 
+                 filter(days_to_meeting <= 180, source == "daily"),
+               aes(color = "Daily"), size = 2, alpha = 0.6) +
+    scale_color_manual(values = c("Quarterly Anchor" = "red", "Daily" = "steelblue"),
+                       name = "Data Source") +
+    labs(
+      title = "Final RMSE by Horizon (0-180 Days)",
+      subtitle = "Combined and interpolated forecast error",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "right"
+    )
+  
+  ggsave("combined_data/final_rmse_short_term.png",
+         plot = short_term_plot, width = 12, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/final_rmse_short_term.png\n")
+  
+  # Medium-term (0-365 days)
+  medium_term_plot <- ggplot(rmse_days %>% filter(days_to_meeting <= 365), 
+                              aes(x = days_to_meeting, y = finalrmse)) +
+    geom_line(color = "darkgreen", linewidth = 1) +
+    geom_point(data = rmse_days %>% 
+                 filter(days_to_meeting <= 365, source == "quarterly_anchor"),
+               color = "red", size = 3, shape = 18) +
+    labs(
+      title = "Final RMSE by Horizon (0-365 Days)",
+      subtitle = "One year forecast horizon",
+      x = "Days to Meeting",
+      y = "RMSE (percentage points)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14)
+    )
+  
+  ggsave("combined_data/final_rmse_medium_term.png",
+         plot = medium_term_plot, width = 12, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/final_rmse_medium_term.png\n")
+}
+
+# 5. MAE comparison (if useful)
+if (nrow(daily_rmse) > 0 && nrow(quarterly_rmse) > 0) {
+  mae_comparison <- bind_rows(
+    daily_rmse %>% select(days_ahead, mae, n_forecasts) %>% mutate(source = "Daily"),
+    quarterly_rmse %>% select(days_ahead, mae, n_forecasts) %>% mutate(source = "Quarterly")
+  )
+  
+  mae_plot <- ggplot(mae_comparison, aes(x = days_ahead, y = mae, color = source)) +
+    geom_line(linewidth = 1) +
+    geom_point(aes(size = n_forecasts), alpha = 0.6) +
+    scale_color_manual(values = c("Daily" = "steelblue", "Quarterly" = "darkred")) +
+    scale_size_continuous(name = "N Forecasts", range = c(1, 6)) +
+    labs(
+      title = "Mean Absolute Error (MAE) by Horizon",
+      subtitle = "Alternative error metric: less sensitive to outliers than RMSE",
+      x = "Days to Meeting",
+      y = "MAE (percentage points)",
+      color = "Source"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "right"
+    )
+  
+  ggsave("combined_data/mae_comparison_by_horizon.png",
+         plot = mae_plot, width = 12, height = 7, dpi = 300)
+  cat("✓ Saved: combined_data/mae_comparison_by_horizon.png\n")
+}
+
+cat("\n")
+
+# =============================================
 # 10. Run CPI Event Analysis
 # =============================================
 
