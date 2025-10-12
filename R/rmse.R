@@ -206,13 +206,49 @@ daily_forecasts <- cash_rate %>%
   mutate(
     forecast_date = as.Date(scrape_time),
     days_ahead = as.integer(meeting_date - forecast_date),
-    forecast_rate = cash_rate
+    forecast_rate = cash_rate,
+    day_of_week = lubridate::wday(forecast_date, week_start = 1)
   ) %>%
+  # Remove weekends (Saturday = 6, Sunday = 7)
+  filter(day_of_week %in% 1:5) %>%
+  # Keep only one forecast per day per meeting (e.g., latest scrape of the day)
+  arrange(meeting_date, forecast_date, desc(scrape_time)) %>%
+  group_by(meeting_date, forecast_date) %>%
+  slice(1) %>%
+  ungroup() %>%
   filter(days_ahead > 0) %>%
   select(forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate)
 
-cat("Daily forecasts:", nrow(daily_forecasts), "rows\n")
-cat("Date range:", min(daily_forecasts$forecast_date), "to", max(daily_forecasts$forecast_date), "\n\n")
+cat("\n=== DAILY FORECASTS (CLEANED) ===\n")
+cat("Total rows:", nrow(daily_forecasts), "\n")
+cat("Date range:", format(min(daily_forecasts$forecast_date), "%Y-%m-%d"), "to", 
+    format(max(daily_forecasts$forecast_date), "%Y-%m-%d"), "\n")
+cat("Unique forecast dates:", length(unique(daily_forecasts$forecast_date)), "\n")
+cat("Unique meetings:", length(unique(daily_forecasts$meeting_date)), "\n")
+
+# Verify no weekends
+weekend_check <- daily_forecasts %>%
+  mutate(day_of_week = lubridate::wday(forecast_date, label = TRUE, week_start = 1)) %>%
+  filter(day_of_week %in% c("Sat", "Sun"))
+
+if (nrow(weekend_check) > 0) {
+  cat("⚠ WARNING: Found", nrow(weekend_check), "weekend forecasts that weren't removed\n")
+} else {
+  cat("✓ No weekend forecasts (Saturday/Sunday removed)\n")
+}
+
+# Check for duplicates
+dup_check <- daily_forecasts %>%
+  count(meeting_date, forecast_date) %>%
+  filter(n > 1)
+
+if (nrow(dup_check) > 0) {
+  cat("⚠ WARNING: Found", nrow(dup_check), "duplicate date combinations\n")
+} else {
+  cat("✓ One forecast per date per meeting\n")
+}
+
+cat("\n")
 
 # =============================================
 # 3. Calculate RMSE for Quarterly Forecasts
