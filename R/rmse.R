@@ -538,9 +538,9 @@ if (nrow(overlap_comparison) > 0) {
 # =============================================
 
 cat("\n\n")
-cat("="*60, "\n")
+cat(strrep("=", 60), "\n")
 cat("RUNNING CPI RELEASE EVENT ANALYSIS\n")
-cat("="*60, "\n\n")
+cat(strrep("=", 60), "\n\n")
 
 # Source the CPI event analysis script
 # Note: This assumes the cpi_event_analysis.R file exists
