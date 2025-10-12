@@ -43,6 +43,90 @@ cat("Horizon range:", min(quarterly_data$days_ahead), "to", max(quarterly_data$d
 
 cash_rate <- readRDS("combined_data/all_data.Rds")
 
+# Check timezone issues
+cat("\n=== CHECKING TIMEZONE AND SCRAPE TIMING ===\n")
+
+# Examine the scrape_time field
+cat("Sample scrape_time values:\n")
+print(head(cash_rate %>% select(scrape_time, date, cash_rate), 10))
+
+cat("\nTimezone of scrape_time:", attr(cash_rate$scrape_time, "tzone"), "\n")
+
+# Create both UTC and Melbourne time versions for comparison
+cash_rate_timezone_check <- cash_rate %>%
+  mutate(
+    # Original scrape_time
+    scrape_time_original = scrape_time,
+    scrape_time_tz_orig = attr(scrape_time, "tzone"),
+    
+    # Convert to Melbourne time if not already
+    scrape_time_melb = with_tz(scrape_time, "Australia/Melbourne"),
+    scrape_date_melb = as.Date(scrape_time_melb),
+    day_of_week_melb = lubridate::wday(scrape_date_melb, label = TRUE, week_start = 1),
+    hour_melb = lubridate::hour(scrape_time_melb),
+    
+    # Also check UTC for comparison
+    scrape_time_utc = with_tz(scrape_time, "UTC"),
+    scrape_date_utc = as.Date(scrape_time_utc),
+    day_of_week_utc = lubridate::wday(scrape_date_utc, label = TRUE, week_start = 1)
+  )
+
+# Compare weekend counts in different timezones
+cat("\n=== WEEKEND DATA COMPARISON ===\n")
+cat("Using original timezone:\n")
+weekend_orig <- cash_rate_timezone_check %>%
+  mutate(day_of_week = lubridate::wday(as.Date(scrape_time), label = TRUE, week_start = 1)) %>%
+  filter(day_of_week %in% c("Sat", "Sun")) %>%
+  count(day_of_week)
+print(weekend_orig)
+
+cat("\nUsing Melbourne timezone:\n")
+weekend_melb <- cash_rate_timezone_check %>%
+  filter(day_of_week_melb %in% c("Sat", "Sun")) %>%
+  count(day_of_week_melb)
+print(weekend_melb)
+
+cat("\nUsing UTC timezone:\n")
+weekend_utc <- cash_rate_timezone_check %>%
+  filter(day_of_week_utc %in% c("Sat", "Sun")) %>%
+  count(day_of_week_utc)
+print(weekend_utc)
+
+# Show examples of the timezone difference issue
+cat("\n=== EXAMPLES OF POTENTIAL TIMEZONE ISSUES ===\n")
+cat("Showing cases where day-of-week differs between timezones:\n")
+timezone_diff_examples <- cash_rate_timezone_check %>%
+  filter(day_of_week_melb != day_of_week_utc) %>%
+  select(scrape_time_original, scrape_time_melb, scrape_time_utc, 
+         day_of_week_melb, day_of_week_utc, hour_melb) %>%
+  head(20)
+
+if (nrow(timezone_diff_examples) > 0) {
+  print(timezone_diff_examples)
+  cat("\n⚠ Timezone differences found! The scrape_time likely needs correction.\n")
+} else {
+  cat("✓ No timezone differences detected\n")
+}
+
+# Fix timezone: ensure all times are in Australia/Melbourne
+cat("\n=== CORRECTING TIMEZONE ===\n")
+cash_rate <- cash_rate %>%
+  mutate(
+    scrape_time = force_tz(scrape_time, "Australia/Melbourne")
+  )
+
+cat("Updated scrape_time timezone to:", attr(cash_rate$scrape_time, "tzone"), "\n")
+
+# Verify the fix
+cat("\nAfter correction, checking day-of-week distribution:\n")
+day_distribution <- cash_rate %>%
+  mutate(
+    scrape_date = as.Date(scrape_time),
+    day_of_week = lubridate::wday(scrape_date, label = TRUE, week_start = 1)
+  ) %>%
+  count(day_of_week)
+print(day_distribution)
+
 meeting_schedule <- tibble(
   meeting_date = as.Date(c(
     "2024-02-06", "2024-03-19", "2024-05-07", "2024-06-18",
@@ -56,8 +140,23 @@ meeting_schedule <- tibble(
       day(meeting_date) >= days_in_month(meeting_date) - 1,
       ceiling_date(meeting_date, "month"),
       floor_date(meeting_date, "month")
-    )
+    ),
+    day_of_week = lubridate::wday(meeting_date, label = TRUE, week_start = 1)
   )
+
+# Verify all meetings are on Tuesday
+cat("\n=== VERIFYING MEETING DAYS ===\n")
+non_tuesday_meetings <- meeting_schedule %>%
+  filter(day_of_week != "Tue")
+
+if (nrow(non_tuesday_meetings) > 0) {
+  cat("⚠ WARNING: Found meetings not on Tuesday:\n")
+  print(non_tuesday_meetings %>% select(meeting_date, day_of_week))
+} else {
+  cat("✓ All", nrow(meeting_schedule), "meetings are on Tuesday\n")
+}
+
+meeting_schedule <- meeting_schedule %>% select(-day_of_week)
 
 # Load actual RBA cash rate outcomes
 library(readrba)
