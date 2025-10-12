@@ -372,9 +372,72 @@ cat("\n=== FINAL RMSE LOOKUP TABLE (sample) ===\n")
 cat("Total horizons:", nrow(rmse_days), "\n")
 cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n\n")
 
+# =============================================
+# 6b. Check for Missing Days and Fill Gaps
+# =============================================
+
+cat("=== CHECKING FOR MISSING DAYS ===\n")
+
+# Create complete sequence from min to max
+min_day <- min(rmse_days$days_to_meeting)
+max_day <- max(rmse_days$days_to_meeting)
+complete_days <- seq(min_day, max_day, by = 1)
+
+# Find missing days
+missing_days <- setdiff(complete_days, rmse_days$days_to_meeting)
+
+if (length(missing_days) > 0) {
+  cat("Found", length(missing_days), "missing days in the sequence\n")
+  cat("Sample of missing days:", paste(head(missing_days, 20), collapse = ", "), "\n")
+  
+  # Create tibble with all days
+  rmse_days_complete <- tibble(days_to_meeting = complete_days) %>%
+    left_join(rmse_days, by = "days_to_meeting")
+  
+  # Interpolate missing values
+  cat("Interpolating missing RMSE values...\n")
+  rmse_days_complete <- rmse_days_complete %>%
+    mutate(
+      finalrmse = na.approx(finalrmse, x = days_to_meeting, na.rm = FALSE, rule = 2),
+      source = if_else(is.na(source), "interpolated_gap", source)
+    )
+  
+  # Check if any NAs remain
+  remaining_na <- sum(is.na(rmse_days_complete$finalrmse))
+  if (remaining_na > 0) {
+    cat("⚠ Warning:", remaining_na, "values could not be interpolated\n")
+    # Fill remaining NAs with nearest neighbor
+    rmse_days_complete <- rmse_days_complete %>%
+      mutate(finalrmse = na.locf(finalrmse, na.rm = FALSE))
+  }
+  
+  rmse_days <- rmse_days_complete
+  
+  cat("✓ Gap filling complete. Now have", nrow(rmse_days), "consecutive days\n\n")
+  
+  # Show breakdown by source including gap fills
+  cat("Data source breakdown after gap filling:\n")
+  print(rmse_days %>% count(source))
+  
+} else {
+  cat("✓ No missing days found - sequence is complete\n\n")
+}
+
 # Show samples at key horizons
+cat("\nRMSE at key horizons:\n")
 sample_horizons <- c(1, 7, 14, 30, 60, 91, 120, 183, 274, 365)
 print(rmse_days %>% filter(days_to_meeting %in% sample_horizons))
+
+# Verify continuity
+if (nrow(rmse_days) > 1) {
+  gaps <- diff(rmse_days$days_to_meeting)
+  max_gap <- max(gaps)
+  if (max_gap > 1) {
+    cat("\n⚠ Warning: Maximum gap in sequence is", max_gap, "days\n")
+  } else {
+    cat("\n✓ Sequence is fully continuous (no gaps)\n")
+  }
+}
 
 # =============================================
 # 7. Save Results
