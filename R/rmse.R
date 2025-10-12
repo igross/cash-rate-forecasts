@@ -424,7 +424,15 @@ cat("\n\n=== ANALYZING RMSE CHANGES AROUND KEY EVENTS ===\n")
 abs_releases <- tribble(
   ~dataset,           ~datetime,
   
-  # CPI (quarterly)
+  # CPI (quarterly) - back to 2022
+  "CPI",  ymd_hm("2022-01-26 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2022-04-27 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2022-07-27 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2022-10-26 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2023-01-25 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2023-04-26 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2023-07-26 11:30", tz = "Australia/Melbourne"),
+  "CPI",  ymd_hm("2023-10-25 11:30", tz = "Australia/Melbourne"),
   "CPI",  ymd_hm("2024-01-31 11:30", tz = "Australia/Melbourne"),
   "CPI",  ymd_hm("2024-04-24 11:30", tz = "Australia/Melbourne"),
   "CPI",  ymd_hm("2024-07-31 11:30", tz = "Australia/Melbourne"),
@@ -434,7 +442,103 @@ abs_releases <- tribble(
   "CPI",  ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
   "CPI",  ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
   
-  # Labour Force (monthly) - sample
+  # CPI Indicator (monthly) - started in 2022
+  "CPI Indicator", ymd_hm("2022-10-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2022-11-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2022-12-21 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-01-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-02-22 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-03-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-04-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-05-31 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-06-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-07-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-08-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-09-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-10-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-11-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2023-12-20 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-01-31 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-02-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-03-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-04-24 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-05-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-06-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-07-31 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-08-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-09-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-10-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-11-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2024-12-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-02-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-03-26 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-05-28 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-06-25 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-08-27 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-09-24 11:30", tz = "Australia/Melbourne"),
+  
+  # WPI (quarterly) - back to 2022
+  "WPI",  ymd_hm("2022-02-23 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2022-05-18 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2022-08-17 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2022-11-16 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2023-02-22 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2023-05-17 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2023-08-16 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2023-11-15 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2024-02-21 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2024-05-15 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2024-08-14 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2024-11-13 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2025-05-14 11:30", tz = "Australia/Melbourne"),
+  "WPI",  ymd_hm("2025-08-13 11:30", tz = "Australia/Melbourne"),
+  
+  # National Accounts (quarterly) - back to 2022
+  "National Accounts", ymd_hm("2022-03-02 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2022-06-01 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2022-09-07 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2022-12-07 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2023-03-01 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2023-05-31 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2023-09-06 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2023-12-06 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2024-03-06 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2024-06-05 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2024-09-04 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2024-12-04 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-03-05 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-06-04 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2025-09-03 11:30", tz = "Australia/Melbourne"),
+  
+  # Labour Force (monthly) - back to 2022
+  "Labour Force", ymd_hm("2022-01-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-02-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-03-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-04-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-05-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-06-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-07-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-08-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-09-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-10-13 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-11-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2022-12-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-01-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-02-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-03-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-04-13 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-05-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-06-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-07-20 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-08-17 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-09-14 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-10-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-11-16 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2023-12-14 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2024-01-18 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2024-02-15 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2024-03-21 11:30", tz = "Australia/Melbourne"),
@@ -455,7 +559,50 @@ abs_releases <- tribble(
   "Labour Force", ymd_hm("2025-06-19 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-07-17 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2025-08-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne")
+  "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne"),
+  
+  # Retail Trade (monthly) - back to 2022
+  "Retail Trade", ymd_hm("2022-02-04 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-03-04 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-04-07 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-05-06 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-06-08 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-07-08 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-08-05 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-09-07 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-10-07 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-11-04 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2022-12-07 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-02-03 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-03-03 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-04-06 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-05-05 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-06-07 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-07-07 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-08-04 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-09-06 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-10-06 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-11-03 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2023-12-06 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-02-02 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-03-01 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-04-05 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-05-03 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-06-05 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-07-05 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-08-02 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-09-04 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-10-04 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-11-08 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2024-12-06 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2025-02-07 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2025-03-07 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2025-04-04 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2025-05-02 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2025-06-06 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2025-07-04 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2025-08-01 11:30", tz = "Australia/Melbourne"),
+  "Retail Trade", ymd_hm("2025-09-05 11:30", tz = "Australia/Melbourne")
 ) %>%
   mutate(release_date = as.Date(datetime))
 
@@ -493,9 +640,17 @@ analyze_rmse_around_events <- function(forecasts_df, event_dates, event_name, wi
       )
     
     # Compare before vs after for same horizon
-    comparison <- rmse_by_period %>%
-      pivot_wider(names_from = period, values_from = c(rmse, n)) %>%
-      filter(!is.na(rmse_before), !is.na(rmse_after)) %>%
+    # Split into before and after, then join
+    rmse_before <- rmse_by_period %>%
+      filter(period == "before") %>%
+      select(meeting_date, days_ahead, rmse_before = rmse, n_before = n)
+    
+    rmse_after <- rmse_by_period %>%
+      filter(period == "after") %>%
+      select(meeting_date, days_ahead, rmse_after = rmse, n_after = n)
+    
+    comparison <- rmse_before %>%
+      inner_join(rmse_after, by = c("meeting_date", "days_ahead")) %>%
       mutate(
         rmse_change = rmse_after - rmse_before,
         rmse_pct_change = (rmse_after - rmse_before) / rmse_before * 100,
