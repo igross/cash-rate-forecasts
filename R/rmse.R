@@ -534,6 +534,229 @@ if (nrow(overlap_comparison) > 0) {
 }
 
 # =============================================
+# 10. Run CPI Event Analysis
+# =============================================
+
+cat("\n\n")
+cat("="*60, "\n")
+cat("RUNNING CPI RELEASE EVENT ANALYSIS\n")
+cat("="*60, "\n\n")
+
+# Source the CPI event analysis script
+# Note: This assumes the cpi_event_analysis.R file exists
+# Alternatively, we can inline the code here
+
+# CPI Release dates
+cpi_releases <- tribble(
+  ~release_date,
+  "2022-01-26",
+  "2022-04-27",
+  "2022-07-27",
+  "2022-10-26",
+  "2023-01-25",
+  "2023-04-26",
+  "2023-07-26",
+  "2023-10-25",
+  "2024-01-31",
+  "2024-04-24",
+  "2024-07-31",
+  "2024-10-30",
+  "2025-01-29",
+  "2025-04-30",
+  "2025-07-30",
+  "2025-10-29"
+) %>%
+  mutate(release_date = as.Date(release_date))
+
+cat("=== CPI RELEASES ===\n")
+cat("Total CPI releases:", nrow(cpi_releases), "\n")
+cat("Date range:", format(min(cpi_releases$release_date), "%Y-%m-%d"), "to",
+    format(max(cpi_releases$release_date), "%Y-%m-%d"), "\n\n")
+
+# Analyze CPI releases
+window_days <- 5
+cat("=== ANALYZING CPI RELEASES (window =", window_days, "days) ===\n\n")
+
+all_comparisons <- list()
+
+for (i in 1:nrow(cpi_releases)) {
+  cpi_date <- cpi_releases$release_date[i]
+  
+  cat("CPI Release #", i, ":", format(cpi_date, "%Y-%m-%d"), "\n", sep = "")
+  
+  # Get forecasts made within window_days of this CPI release
+  forecasts_around_cpi <- daily_forecasts %>%
+    filter(
+      meeting_date > cpi_date,  # Only meetings after this CPI
+      abs(as.integer(forecast_date - cpi_date)) <= window_days  # Within window
+    ) %>%
+    mutate(
+      days_from_cpi = as.integer(forecast_date - cpi_date),
+      period = ifelse(days_from_cpi < 0, "before", "after")
+    ) %>%
+    filter(days_from_cpi != 0)  # Exclude exact CPI date
+  
+  forecasts_before <- forecasts_around_cpi %>% filter(period == "before")
+  forecasts_after <- forecasts_around_cpi %>% filter(period == "after")
+  
+  cat("  Forecasts before CPI:", nrow(forecasts_before), "\n")
+  cat("  Forecasts after CPI:", nrow(forecasts_after), "\n")
+  
+  if (nrow(forecasts_before) == 0 || nrow(forecasts_after) == 0) {
+    cat("  Insufficient data for comparison\n\n")
+    next
+  }
+  
+  # Calculate RMSE for each period
+  combined <- bind_rows(forecasts_before, forecasts_after) %>%
+    mutate(squared_error = (forecast_rate - actual_rate)^2)
+  
+  rmse_by_group <- combined %>%
+    group_by(period, meeting_date, days_ahead) %>%
+    summarise(
+      n = n(),
+      rmse = sqrt(mean(squared_error, na.rm = TRUE)),
+      mean_forecast = mean(forecast_rate),
+      .groups = "drop"
+    )
+  
+  # Match before and after
+  rmse_before <- rmse_by_group %>%
+    filter(period == "before") %>%
+    select(meeting_date, days_ahead, rmse_before = rmse, n_before = n, 
+           forecast_before = mean_forecast)
+  
+  rmse_after <- rmse_by_group %>%
+    filter(period == "after") %>%
+    select(meeting_date, days_ahead, rmse_after = rmse, n_after = n,
+           forecast_after = mean_forecast)
+  
+  comparison <- rmse_before %>%
+    inner_join(rmse_after, by = c("meeting_date", "days_ahead")) %>%
+    mutate(
+      cpi_date = cpi_date,
+      rmse_change = rmse_after - rmse_before,
+      rmse_pct_change = (rmse_after - rmse_before) / rmse_before * 100,
+      forecast_change = forecast_after - forecast_before
+    )
+  
+  cat("  Valid comparisons:", nrow(comparison), "\n\n")
+  
+  if (nrow(comparison) > 0) {
+    all_comparisons[[i]] <- comparison
+  }
+}
+
+# Analyze results
+if (length(all_comparisons) == 0) {
+  cat("⚠ NO COMPARISONS FOUND FOR CPI ANALYSIS\n\n")
+} else {
+  cpi_analysis <- bind_rows(all_comparisons)
+  
+  cat("=== CPI ANALYSIS RESULTS ===\n")
+  cat("Total comparisons:", nrow(cpi_analysis), "\n")
+  cat("CPI releases with data:", length(unique(cpi_analysis$cpi_date)), "\n")
+  cat("Meetings analyzed:", length(unique(cpi_analysis$meeting_date)), "\n\n")
+  
+  # Summary statistics
+  summary_stats <- cpi_analysis %>%
+    summarise(
+      n_comparisons = n(),
+      mean_rmse_change = mean(rmse_change, na.rm = TRUE),
+      median_rmse_change = median(rmse_change, na.rm = TRUE),
+      pct_improved = mean(rmse_change < 0, na.rm = TRUE) * 100,
+      mean_pct_change = mean(rmse_pct_change, na.rm = TRUE),
+      sd_pct_change = sd(rmse_pct_change, na.rm = TRUE)
+  )
+  
+  cat("Summary Statistics:\n")
+  print(summary_stats)
+  
+  cat("\nInterpretation:\n")
+  if (summary_stats$mean_rmse_change < 0) {
+    cat("✓ RMSE decreased on average after CPI releases (forecasts improved)\n")
+  } else {
+    cat("✗ RMSE increased on average after CPI releases (forecasts worse)\n")
+  }
+  
+  cat("- Average change:", round(summary_stats$mean_rmse_change, 4), "percentage points\n")
+  cat("- Percentage of cases that improved:", round(summary_stats$pct_improved, 1), "%\n\n")
+  
+  # Statistical test
+  cat("=== STATISTICAL TEST ===\n")
+  t_test_result <- t.test(cpi_analysis$rmse_change, alternative = "less")
+  
+  cat("Null hypothesis: Mean RMSE change >= 0 (no improvement)\n")
+  cat("Alternative: Mean RMSE change < 0 (improvement)\n\n")
+  cat("t-statistic:", round(t_test_result$statistic, 3), "\n")
+  cat("p-value:", format.pval(t_test_result$p.value, digits = 3), "\n")
+  cat("95% CI upper bound:", round(t_test_result$conf.int[2], 4), "\n\n")
+  
+  if (t_test_result$p.value < 0.05) {
+    cat("✓ SIGNIFICANT: RMSE significantly decreases after CPI releases (p < 0.05)\n")
+  } else {
+    cat("✗ NOT SIGNIFICANT: No significant change in RMSE after CPI releases\n")
+  }
+  
+  # Save results
+  write_csv(cpi_analysis, "combined_data/cpi_event_analysis.csv")
+  cat("\n✓ Saved CPI analysis: combined_data/cpi_event_analysis.csv\n")
+  
+  # Visualizations
+  if (requireNamespace("ggplot2", quietly = TRUE)) {
+    
+    # Histogram
+    hist_plot <- ggplot(cpi_analysis, aes(x = rmse_pct_change)) +
+      geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
+      geom_vline(xintercept = 0, color = "red", linetype = "dashed", linewidth = 1) +
+      geom_vline(xintercept = median(cpi_analysis$rmse_pct_change), 
+                 color = "darkgreen", linetype = "solid", linewidth = 1) +
+      labs(
+        title = "RMSE Change After CPI Releases",
+        subtitle = paste0("Negative = Improvement | Median = ", 
+                         round(median(cpi_analysis$rmse_pct_change), 2), "%"),
+        x = "RMSE Change (%)",
+        y = "Count"
+      ) +
+      theme_bw() +
+      theme(plot.title = element_text(face = "bold", size = 14))
+    
+    ggsave("combined_data/cpi_rmse_changes_histogram.png",
+           plot = hist_plot, width = 10, height = 6, dpi = 300)
+    cat("✓ Saved histogram: combined_data/cpi_rmse_changes_histogram.png\n")
+    
+    # Before vs After boxplot
+    before_after_data <- cpi_analysis %>%
+      select(cpi_date, meeting_date, days_ahead, rmse_before, rmse_after) %>%
+      pivot_longer(cols = c(rmse_before, rmse_after), 
+                   names_to = "period", values_to = "rmse") %>%
+      mutate(period = ifelse(period == "rmse_before", "Before CPI", "After CPI"))
+    
+    box_plot <- ggplot(before_after_data, aes(x = period, y = rmse, fill = period)) +
+      geom_boxplot(alpha = 0.7, outlier.alpha = 0.5) +
+      scale_fill_manual(values = c("Before CPI" = "lightcoral", "After CPI" = "lightgreen")) +
+      labs(
+        title = "Forecast RMSE: Before vs After CPI Releases",
+        subtitle = paste0("Based on ", nrow(cpi_analysis), " comparisons across ", 
+                         length(unique(cpi_analysis$cpi_date)), " CPI releases"),
+        x = "",
+        y = "RMSE (percentage points)"
+      ) +
+      theme_bw() +
+      theme(
+        plot.title = element_text(face = "bold", size = 14),
+        legend.position = "none"
+      )
+    
+    ggsave("combined_data/cpi_rmse_before_after_boxplot.png",
+           plot = box_plot, width = 10, height = 6, dpi = 300)
+    cat("✓ Saved boxplot: combined_data/cpi_rmse_before_after_boxplot.png\n")
+  }
+}
+
+cat("\n=== RMSE CALCULATION AND CPI ANALYSIS COMPLETE ===\n")
+
+# =============================================
 # 10. Analyze RMSE Changes Around Key Events
 # =============================================
 
