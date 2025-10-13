@@ -163,102 +163,132 @@ print(daily_rmse %>% select(days_ahead, n_forecasts, rmse) %>% head(20))
 # 5. Create Three Smoothed Versions
 # =============================================
 
-cat("\n=== CREATING THREE SMOOTHED RMSE SERIES ===\n")
+cat("\n=== CALCULATING DAILY-QUARTERLY ADJUSTMENT RATIO ===\n")
+
+# Find overlapping horizons where we have both daily and quarterly data
+overlap_data <- daily_rmse %>%
+  inner_join(
+    quarterly_rmse %>% select(days_ahead, rmse_quarterly = rmse),
+    by = "days_ahead"
+  ) %>%
+  mutate(
+    ratio = rmse_daily / rmse_quarterly
+  ) %>%
+  select(days_ahead, rmse_daily, rmse_quarterly, ratio)
+
+cat("Found", nrow(overlap_data), "overlapping horizons\n")
+
+if (nrow(overlap_data) > 0) {
+  cat("\nSample of overlapping data:\n")
+  print(head(overlap_data, 10))
+  
+  # Fit linear model: ratio ~ days_ahead
+  ratio_model <- lm(ratio ~ days_ahead, data = overlap_data)
+  
+  cat("\n=== LINEAR RATIO MODEL ===\n")
+  cat("Model: ratio = ", coef(ratio_model)[1], " + ", coef(ratio_model)[2], " * days_ahead\n", sep = "")
+  cat("R-squared:", summary(ratio_model)$r.squared, "\n")
+  
+  # Extract coefficients
+  intercept <- coef(ratio_model)[1]
+  slope <- coef(ratio_model)[2]
+} else {
+  cat("⚠ No overlapping horizons found. Using ratio = 1 (no adjustment)\n")
+  intercept <- 1
+  slope <- 0
+}
+
+# =============================================
+# 6. Create Adjusted RMSE Series (Daily Frequency, Adjusted Toward Quarterly)
+# =============================================
+
+cat("\n=== CREATING ADJUSTED RMSE SERIES ===\n")
 
 # Get all horizons we need to cover
 min_horizon <- 1
 max_horizon <- max(quarterly_rmse$days_ahead)
 all_horizons <- seq(min_horizon, max_horizon, by = 1)
 
-# Quarterly horizons (anchor points)
-quarterly_horizons <- c(91, 183, 274, 365, 456, 548, 639, 730, 821, 913, 1004, 1095, 
-                        1186, 1278, 1369, 1460, 1551, 1643, 1734, 1825, 1916, 2008, 
-                        2099, 2190, 2281, 2373, 2464, 2555, 2646, 2738, 2829, 2920, 
-                        3011, 3103, 3194, 3285, 3376, 3468, 3559, 3650)
-quarterly_horizons <- quarterly_horizons[quarterly_horizons %in% quarterly_rmse$days_ahead]
-
-# Base data for all three methods
-rmse_base <- tibble(days_ahead = all_horizons) %>%
+# METHOD 1: Linear Interpolation of Quarterly (baseline)
+cat("\n1. Linear Interpolation of Quarterly (baseline)...\n")
+quarterly_interpolated <- tibble(days_ahead = all_horizons) %>%
   left_join(
-    quarterly_rmse %>% 
-      filter(days_ahead %in% quarterly_horizons) %>%
-      select(days_ahead, rmse_quarterly = rmse),
+    quarterly_rmse %>% select(days_ahead, rmse_quarterly = rmse),
     by = "days_ahead"
   ) %>%
+  mutate(
+    rmse_linear = na.approx(rmse_quarterly, x = days_ahead, na.rm = FALSE, rule = 2)
+  )
+
+# METHOD 2: LOESS Smoothing of Quarterly
+cat("2. LOESS Smoothing of Quarterly (span = 0.3)...\n")
+loess_model <- loess(rmse ~ days_ahead, data = quarterly_rmse, span = 0.3)
+quarterly_loess <- tibble(days_ahead = all_horizons) %>%
+  mutate(
+    rmse_loess = predict(loess_model, newdata = data.frame(days_ahead = days_ahead))
+  )
+
+# METHOD 3: Ratio-Adjusted to Match Quarterly (FINAL APPROACH)
+cat("3. Adjusting Daily toward Quarterly using linear ratio...\n")
+cat("   Using linear ratio model: ratio = ", round(intercept, 4), " + ", 
+    round(slope, 6), " * days_ahead\n", sep = "")
+
+# Start with linearly interpolated quarterly RMSE as the target
+# For days where we have daily data, adjust it toward quarterly using the inverse ratio
+quarterly_adjusted <- quarterly_interpolated %>%
+  left_join(quarterly_loess, by = "days_ahead") %>%
   left_join(
     daily_rmse %>% select(days_ahead, rmse_daily = rmse),
     by = "days_ahead"
   ) %>%
   mutate(
-    rmse_combined = coalesce(rmse_quarterly, rmse_daily)
-  )
-
-# METHOD 1: Linear Interpolation
-cat("\n1. Linear Interpolation...\n")
-rmse_linear <- rmse_base %>%
-  mutate(
-    rmse_linear = na.approx(rmse_combined, x = days_ahead, na.rm = FALSE, rule = 2)
-  )
-
-# METHOD 2: LOESS Smoothing (span = 0.3)
-cat("2. LOESS Smoothing (span = 0.3)...\n")
-# Get non-NA data for LOESS
-loess_data <- rmse_base %>%
-  filter(!is.na(rmse_combined))
-
-loess_model <- loess(rmse_combined ~ days_ahead, data = loess_data, span = 0.3)
-rmse_loess <- rmse_base %>%
-  mutate(
-    rmse_loess = predict(loess_model, newdata = data.frame(days_ahead = days_ahead))
-  )
-
-# METHOD 3: Natural Cubic Spline (RECOMMENDED)
-cat("3. Natural Cubic Spline...\n")
-# Get non-NA data for spline
-spline_data <- rmse_base %>%
-  filter(!is.na(rmse_combined))
-
-# Fit natural cubic spline with appropriate degrees of freedom
-# Using df based on data complexity (roughly 1 df per 100 days)
-df_spline <- min(round(nrow(spline_data) / 100), 20)
-cat("   Using", df_spline, "degrees of freedom\n")
-
-spline_model <- smooth.spline(
-  x = spline_data$days_ahead,
-  y = spline_data$rmse_combined,
-  df = df_spline
-)
-
-rmse_spline <- rmse_base %>%
-  mutate(
-    rmse_spline = predict(spline_model, x = days_ahead)$y
+    # Calculate adjustment ratio for each day
+    adjustment_ratio = intercept + slope * days_ahead,
+    
+    # Where we have daily data, adjust it toward quarterly by dividing by the ratio
+    # This gives us daily-frequency data that's adjusted toward quarterly levels
+    rmse_daily_adjusted = if_else(
+      !is.na(rmse_daily),
+      rmse_daily / adjustment_ratio,  # Adjust daily down to quarterly level
+      NA_real_
+    ),
+    
+    # Final combined: use adjusted daily where available, quarterly interpolation elsewhere
+    rmse_combined = coalesce(rmse_daily_adjusted, rmse_linear)
   )
 
 # Combine all three methods
-rmse_all_methods <- rmse_linear %>%
-  left_join(
-    rmse_loess %>% select(days_ahead, rmse_loess),
-    by = "days_ahead"
-  ) %>%
-  left_join(
-    rmse_spline %>% select(days_ahead, rmse_spline),
-    by = "days_ahead"
-  )
+rmse_all_methods <- quarterly_adjusted %>%
+  select(days_ahead, rmse_linear, rmse_loess, rmse_daily, rmse_daily_adjusted, 
+         rmse_combined, adjustment_ratio)
 
 # =============================================
-# 6. Create Final Output (Spline Method)
+# 7. Create Final Output (Adjusted Toward Quarterly)
 # =============================================
 
-cat("\n=== CREATING FINAL OUTPUT (SPLINE METHOD) ===\n")
+cat("\n=== CREATING FINAL OUTPUT (ADJUSTED TOWARD QUARTERLY) ===\n")
 
-rmse_days <- rmse_spline %>%
-  select(days_to_meeting = days_ahead, finalrmse = rmse_spline)
+rmse_days <- quarterly_adjusted %>%
+  select(days_to_meeting = days_ahead, finalrmse = rmse_combined)
 
 cat("Total horizons:", nrow(rmse_days), "\n")
 cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n\n")
 
 cat("Sample of final output:\n")
 print(head(rmse_days, 10))
+
+cat("\nComparison at key horizons:\n")
+adjustment_sample <- quarterly_adjusted %>%
+  filter(days_ahead %in% c(1, 7, 14, 30, 60, 91, 120, 183, 274, 365)) %>%
+  select(days_ahead, adjustment_ratio, rmse_linear, rmse_daily, rmse_daily_adjusted, rmse_combined)
+print(adjustment_sample)
+
+cat("\nExplanation:\n")
+cat("- rmse_linear = Quarterly RMSE (interpolated to daily frequency)\n")
+cat("- rmse_daily = Raw daily RMSE (where available)\n")
+cat("- adjustment_ratio = Daily/Quarterly ratio as f(days)\n")
+cat("- rmse_daily_adjusted = rmse_daily / adjustment_ratio (daily adjusted DOWN to quarterly level)\n")
+cat("- rmse_combined (final) = adjusted daily where available, else quarterly interpolated\n")
 
 # =============================================
 # 7. Save Final Output
@@ -271,15 +301,27 @@ cat("\n✓ Saved final output to: combined_data/rmse_new.RData\n")
 write_csv(rmse_days, "combined_data/rmse_new.csv")
 cat("✓ Saved CSV to: combined_data/rmse_new.csv\n")
 
+# Save the adjustment details for inspection
+write_csv(quarterly_adjusted, "combined_data/rmse_adjustment_details.csv")
+cat("✓ Saved adjustment details to: combined_data/rmse_adjustment_details.csv\n")
+
+# Save the ratio model summary
+ratio_summary <- tibble(
+  parameter = c("intercept", "slope", "r_squared"),
+  value = c(intercept, slope, ifelse(exists("ratio_model"), summary(ratio_model)$r.squared, NA))
+)
+write_csv(ratio_summary, "combined_data/rmse_ratio_model.csv")
+cat("✓ Saved ratio model to: combined_data/rmse_ratio_model.csv\n")
+
 # =============================================
 # 8. Comparison Visualization (All 3 Methods)
 # =============================================
 
 cat("\n=== CREATING COMPARISON PLOTS ===\n")
 
-# Plot 1: All three methods overlaid
+# Plot 1: All three methods overlaid with ratio visualization
 comparison_data <- rmse_all_methods %>%
-  select(days_ahead, rmse_linear, rmse_loess, rmse_spline) %>%
+  select(days_ahead, rmse_linear, rmse_loess, rmse_combined) %>%
   pivot_longer(
     cols = -days_ahead,
     names_to = "method",
@@ -288,48 +330,47 @@ comparison_data <- rmse_all_methods %>%
   filter(!is.na(rmse)) %>%
   mutate(
     method = recode(method,
-      "rmse_linear" = "Linear Interpolation",
-      "rmse_loess" = "LOESS (span=0.3)",
-      "rmse_spline" = "Natural Cubic Spline"
+      "rmse_linear" = "Linear Interpolation (Quarterly)",
+      "rmse_loess" = "LOESS (Quarterly)",
+      "rmse_combined" = "Daily Adjusted to Quarterly (Final)"
     )
   )
 
 # Add original data points
-original_data <- rmse_base %>%
-  filter(!is.na(rmse_quarterly) | !is.na(rmse_daily)) %>%
-  mutate(
-    point_type = case_when(
-      !is.na(rmse_quarterly) ~ "Quarterly Anchor",
-      !is.na(rmse_daily) ~ "Daily Data",
-      TRUE ~ "Other"
-    )
-  )
+original_quarterly <- quarterly_rmse %>%
+  mutate(point_type = "Quarterly Data")
+
+original_daily <- daily_rmse %>%
+  mutate(point_type = "Daily Data")
 
 comparison_plot <- ggplot() +
   # Smoothed lines
   geom_line(data = comparison_data, 
             aes(x = days_ahead, y = rmse, color = method, linetype = method),
             linewidth = 1) +
-  # Original data points
-  geom_point(data = original_data %>% filter(point_type == "Quarterly Anchor"),
-             aes(x = days_ahead, y = rmse_quarterly),
+  # Quarterly data points
+  geom_point(data = original_quarterly,
+             aes(x = days_ahead, y = rmse),
              color = "red", size = 3, shape = 18, alpha = 0.7) +
-  geom_point(data = original_data %>% filter(point_type == "Daily Data"),
-             aes(x = days_ahead, y = rmse_daily),
+  # Daily data points (showing original, before adjustment)
+  geom_point(data = original_daily,
+             aes(x = days_ahead, y = rmse),
              color = "gray30", size = 1, alpha = 0.3) +
   scale_color_manual(values = c(
-    "Linear Interpolation" = "#e41a1c",
-    "LOESS (span=0.3)" = "#377eb8",
-    "Natural Cubic Spline" = "#4daf4a"
+    "Linear Interpolation (Quarterly)" = "#e41a1c",
+    "LOESS (Quarterly)" = "#377eb8",
+    "Daily Adjusted to Quarterly (Final)" = "#4daf4a"
   )) +
   scale_linetype_manual(values = c(
-    "Linear Interpolation" = "dashed",
-    "LOESS (span=0.3)" = "dotted",
-    "Natural Cubic Spline" = "solid"
+    "Linear Interpolation (Quarterly)" = "dashed",
+    "LOESS (Quarterly)" = "dotted",
+    "Daily Adjusted to Quarterly (Final)" = "solid"
   )) +
   labs(
     title = "RMSE Smoothing Methods Comparison",
-    subtitle = "Red diamonds = Quarterly anchors | Gray dots = Daily data | Final output uses Spline",
+    subtitle = paste0("Red diamonds = Quarterly data | Gray dots = Raw daily (unadjusted) | ",
+                     "Final adjusts daily toward quarterly: daily ÷ [", round(intercept, 3), " + ", 
+                     round(slope, 5), " × days]"),
     x = "Days to Meeting",
     y = "RMSE (percentage points)",
     color = "Smoothing Method",
@@ -338,6 +379,7 @@ comparison_plot <- ggplot() +
   theme_bw() +
   theme(
     plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 9),
     legend.position = "bottom",
     legend.direction = "vertical"
   )
@@ -346,32 +388,56 @@ ggsave("combined_data/rmse_methods_comparison.png",
        plot = comparison_plot, width = 12, height = 8, dpi = 300)
 cat("✓ Saved: combined_data/rmse_methods_comparison.png\n")
 
+# Plot 2: Adjustment ratio visualization
+adjustment_plot <- ggplot() +
+  geom_line(data = quarterly_adjusted,
+            aes(x = days_ahead, y = adjustment_ratio),
+            color = "#4daf4a", linewidth = 1.5) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red", alpha = 0.5) +
+  geom_point(data = overlap_data,
+             aes(x = days_ahead, y = ratio),
+             color = "steelblue", size = 3, alpha = 0.7) +
+  labs(
+    title = "Daily/Quarterly RMSE Ratio (Used for Adjustment)",
+    subtitle = paste0("Linear model: ratio = ", round(intercept, 4), " + ", 
+                     round(slope, 6), " × days_ahead | Daily is divided by this ratio to match quarterly"),
+    x = "Days to Meeting",
+    y = "Ratio (Daily/Quarterly)",
+    caption = "Red dashed line = no adjustment (ratio = 1) | Blue points = actual ratios at overlap"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14)
+  )
+
+ggsave("combined_data/rmse_adjustment_ratio.png",
+       plot = adjustment_plot, width = 12, height = 7, dpi = 300)
+cat("✓ Saved: combined_data/rmse_adjustment_ratio.png\n")
+
 # Plot 2: Zoomed comparison (first 180 days)
 zoom_plot <- ggplot() +
   geom_line(data = comparison_data %>% filter(days_ahead <= 180), 
             aes(x = days_ahead, y = rmse, color = method, linetype = method),
             linewidth = 1.2) +
-  geom_point(data = original_data %>% 
-               filter(days_ahead <= 180, point_type == "Quarterly Anchor"),
-             aes(x = days_ahead, y = rmse_quarterly),
+  geom_point(data = original_quarterly %>% filter(days_ahead <= 180),
+             aes(x = days_ahead, y = rmse),
              color = "red", size = 4, shape = 18) +
-  geom_point(data = original_data %>% 
-               filter(days_ahead <= 180, point_type == "Daily Data"),
-             aes(x = days_ahead, y = rmse_daily),
+  geom_point(data = original_daily %>% filter(days_ahead <= 180),
+             aes(x = days_ahead, y = rmse),
              color = "gray30", size = 1.5, alpha = 0.5) +
   scale_color_manual(values = c(
-    "Linear Interpolation" = "#e41a1c",
-    "LOESS (span=0.3)" = "#377eb8",
-    "Natural Cubic Spline" = "#4daf4a"
+    "Linear Interpolation (Quarterly)" = "#e41a1c",
+    "LOESS (Quarterly)" = "#377eb8",
+    "Daily Adjusted to Quarterly (Final)" = "#4daf4a"
   )) +
   scale_linetype_manual(values = c(
-    "Linear Interpolation" = "dashed",
-    "LOESS (span=0.3)" = "dotted",
-    "Natural Cubic Spline" = "solid"
+    "Linear Interpolation (Quarterly)" = "dashed",
+    "LOESS (Quarterly)" = "dotted",
+    "Daily Adjusted to Quarterly (Final)" = "solid"
   )) +
   labs(
     title = "RMSE Smoothing Methods: First 180 Days (Zoomed)",
-    subtitle = "Comparing linear, LOESS, and spline approaches",
+    subtitle = "Daily data adjusted downward to match quarterly baseline",
     x = "Days to Meeting",
     y = "RMSE (percentage points)",
     color = "Smoothing Method",
@@ -387,20 +453,20 @@ ggsave("combined_data/rmse_methods_comparison_zoom.png",
        plot = zoom_plot, width = 12, height = 7, dpi = 300)
 cat("✓ Saved: combined_data/rmse_methods_comparison_zoom.png\n")
 
-# Plot 3: Final spline output with confidence
+# Plot 3: Final ratio-adjusted output
 final_plot <- ggplot() +
   geom_line(data = rmse_days, 
             aes(x = days_to_meeting, y = finalrmse),
             color = "#4daf4a", linewidth = 1.5) +
-  geom_point(data = original_data %>% filter(point_type == "Quarterly Anchor"),
-             aes(x = days_ahead, y = rmse_quarterly),
+  geom_point(data = original_quarterly,
+             aes(x = days_ahead, y = rmse),
              color = "red", size = 4, shape = 18, alpha = 0.8) +
-  geom_point(data = original_data %>% filter(point_type == "Daily Data"),
-             aes(x = days_ahead, y = rmse_daily),
+  geom_point(data = original_daily,
+             aes(x = days_ahead, y = rmse),
              color = "gray30", size = 1, alpha = 0.3) +
   labs(
-    title = "Final RMSE by Forecast Horizon (Natural Cubic Spline)",
-    subtitle = "This is the rmse_new.RData output | Red diamonds = Quarterly anchors | Gray = Daily data",
+    title = "Final RMSE by Forecast Horizon (Daily Adjusted to Quarterly)",
+    subtitle = paste0("This is the rmse_new.RData output | Daily frequency, adjusted toward quarterly baseline"),
     x = "Days to Meeting",
     y = "RMSE (percentage points)"
   ) +
@@ -409,9 +475,135 @@ final_plot <- ggplot() +
     plot.title = element_text(face = "bold", size = 14)
   )
 
-ggsave("combined_data/rmse_final_spline.png",
+ggsave("combined_data/rmse_final_adjusted_to_quarterly.png",
        plot = final_plot, width = 12, height = 7, dpi = 300)
-cat("✓ Saved: combined_data/rmse_final_spline.png\n")
+cat("✓ Saved: combined_data/rmse_final_adjusted_to_quarterly.png\n")
+
+# Plot 4: Comprehensive view - Raw Daily, Smoothed Daily, Quarterly, Final
+cat("\n=== CREATING COMPREHENSIVE COMPARISON PLOT ===\n")
+
+# Prepare smoothed daily RMSE using LOESS
+daily_rmse_extended <- daily_rmse %>%
+  arrange(days_ahead)
+
+# Create LOESS model for daily data
+if (nrow(daily_rmse_extended) > 10) {
+  daily_loess <- loess(rmse ~ days_ahead, data = daily_rmse_extended, span = 0.3)
+  
+  # Predict for all daily horizons
+  daily_horizons <- seq(min(daily_rmse_extended$days_ahead), 
+                        max(daily_rmse_extended$days_ahead), 
+                        by = 1)
+  
+  daily_smoothed <- tibble(
+    days_ahead = daily_horizons,
+    rmse_smoothed = predict(daily_loess, newdata = data.frame(days_ahead = daily_horizons))
+  )
+} else {
+  daily_smoothed <- tibble(days_ahead = integer(), rmse_smoothed = numeric())
+}
+
+comprehensive_plot <- ggplot() +
+  # Raw daily RMSE (light, in background)
+  geom_point(data = daily_rmse,
+             aes(x = days_ahead, y = rmse, color = "Raw Daily"),
+             size = 1.5, alpha = 0.3) +
+  # Smoothed daily RMSE
+  geom_line(data = daily_smoothed,
+            aes(x = days_ahead, y = rmse_smoothed, color = "Smoothed Daily"),
+            linewidth = 1, alpha = 0.7) +
+  # Quarterly RMSE
+  geom_line(data = quarterly_rmse,
+            aes(x = days_ahead, y = rmse, color = "Quarterly"),
+            linewidth = 1.2) +
+  geom_point(data = quarterly_rmse,
+             aes(x = days_ahead, y = rmse, color = "Quarterly"),
+             size = 3, shape = 18) +
+  # Final interpolated RMSE (spline)
+  geom_line(data = rmse_days,
+            aes(x = days_to_meeting, y = finalrmse, color = "Final (Spline)"),
+            linewidth = 1.5) +
+  scale_color_manual(
+    name = "RMSE Series",
+    values = c(
+      "Raw Daily" = "gray60",
+      "Smoothed Daily" = "steelblue",
+      "Quarterly" = "darkred",
+      "Final (Spline)" = "#4daf4a"
+    ),
+    breaks = c("Raw Daily", "Smoothed Daily", "Quarterly", "Final (Spline)")
+  ) +
+  labs(
+    title = "Comprehensive RMSE Comparison: Raw Daily, Smoothed Daily, Quarterly, and Final",
+    subtitle = "Final (green) uses spline interpolation anchored to quarterly data with daily fills",
+    x = "Days to Meeting",
+    y = "RMSE (percentage points)"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    plot.subtitle = element_text(size = 10),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold")
+  ) +
+  guides(color = guide_legend(override.aes = list(
+    linewidth = c(0, 1.5, 1.5, 2),
+    size = c(3, NA, 4, NA),
+    alpha = c(0.5, 0.8, 1, 1)
+  )))
+
+ggsave("combined_data/rmse_comprehensive_comparison.png",
+       plot = comprehensive_plot, width = 14, height = 8, dpi = 300)
+cat("✓ Saved: combined_data/rmse_comprehensive_comparison.png\n")
+
+# Also create a zoomed version for short horizons
+comprehensive_zoom_plot <- ggplot() +
+  geom_point(data = daily_rmse %>% filter(days_ahead <= 180),
+             aes(x = days_ahead, y = rmse, color = "Raw Daily"),
+             size = 2, alpha = 0.4) +
+  geom_line(data = daily_smoothed %>% filter(days_ahead <= 180),
+            aes(x = days_ahead, y = rmse_smoothed, color = "Smoothed Daily"),
+            linewidth = 1.2, alpha = 0.8) +
+  geom_line(data = quarterly_rmse %>% filter(days_ahead <= 180),
+            aes(x = days_ahead, y = rmse, color = "Quarterly"),
+            linewidth = 1.3) +
+  geom_point(data = quarterly_rmse %>% filter(days_ahead <= 180),
+             aes(x = days_ahead, y = rmse, color = "Quarterly"),
+             size = 4, shape = 18) +
+  geom_line(data = rmse_days %>% filter(days_to_meeting <= 180),
+            aes(x = days_to_meeting, y = finalrmse, color = "Final (Spline)"),
+            linewidth = 1.8) +
+  scale_color_manual(
+    name = "RMSE Series",
+    values = c(
+      "Raw Daily" = "gray60",
+      "Smoothed Daily" = "steelblue",
+      "Quarterly" = "darkred",
+      "Final (Spline)" = "#4daf4a"
+    ),
+    breaks = c("Raw Daily", "Smoothed Daily", "Quarterly", "Final (Spline)")
+  ) +
+  labs(
+    title = "RMSE Comparison: First 180 Days (Zoomed)",
+    subtitle = "Detailed view of raw daily volatility vs smoothed outputs",
+    x = "Days to Meeting",
+    y = "RMSE (percentage points)"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(face = "bold", size = 13),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold")
+  ) +
+  guides(color = guide_legend(override.aes = list(
+    linewidth = c(0, 1.5, 1.5, 2),
+    size = c(3, NA, 4, NA),
+    alpha = c(0.5, 0.8, 1, 1)
+  )))
+
+ggsave("combined_data/rmse_comprehensive_comparison_zoom.png",
+       plot = comprehensive_zoom_plot, width = 14, height = 8, dpi = 300)
+cat("✓ Saved: combined_data/rmse_comprehensive_comparison_zoom.png\n")
 
 # =============================================
 # 9. Summary Statistics
