@@ -496,6 +496,7 @@ top3_df <- all_estimates_buckets %>%
                  "+25 bp hike", "+50 bp hike", "+75 bp hike")
     )
   ) %>%
+  filter(!is.na(move)) %>%  # ADD THIS LINE
   select(-diff_center)
 
 # Set x-axis limits for line chart
