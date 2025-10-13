@@ -172,9 +172,9 @@ overlap_data <- daily_rmse %>%
     by = "days_ahead"
   ) %>%
   mutate(
-    ratio = rmse_daily / rmse_quarterly
+    ratio = rmse / rmse_quarterly  # Changed from rmse_daily
   ) %>%
-  select(days_ahead, rmse_daily, rmse_quarterly, ratio)
+  select(days_ahead, rmse_daily = rmse, rmse_quarterly, ratio)  
 
 cat("Found", nrow(overlap_data), "overlapping horizons\n")
 
