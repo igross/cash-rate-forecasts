@@ -1002,9 +1002,9 @@ ggplot2::geom_line(
         if (length(outcome_position) > 0) {
           ggplot2::geom_hline(
             yintercept = outcome_position,
-            color = "black",
-            linewidth = 1.2,
-            linetype = "solid"
+            color = "purple",
+            linewidth = 0.85,
+            linetype = "dotted"
           )
         }
       }} +
