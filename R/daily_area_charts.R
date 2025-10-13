@@ -945,6 +945,17 @@ percentile_lines <- percentile_lines %>%
     )
     
     date_labels <- function(x) format(x, "%b-%Y")
+
+    percentile_lines <- percentile_lines %>%
+  dplyr::mutate(
+    line_type_25 = "25th percentile",
+    line_type_50 = "50th percentile (median)",
+    line_type_75 = "75th percentile"
+  )
+
+# For actual rate line
+actual_rate_line <- actual_rate_line %>%
+  dplyr::mutate(line_type = "Actual cash rate")
     
     # Create heatmap with sharper gradient in 0-30% range
     heatmap_mt <- ggplot2::ggplot(
@@ -962,7 +973,7 @@ percentile_lines <- percentile_lines %>%
       ) +
       ggplot2::geom_line(
   data = percentile_lines,
-  aes(x = scrape_date, y = p25_pos),
+  aes(x = scrape_date, y = p25_pos, color = "25th percentile"),
   color = "#0e610e",
   linewidth = 0.25,
   linetype = "dashed",
@@ -970,7 +981,7 @@ percentile_lines <- percentile_lines %>%
 ) +
 ggplot2::geom_line(
   data = percentile_lines,
-  aes(x = scrape_date, y = p50_pos),
+  aes(x = scrape_date, y = p50_pos, color = "Median"),
   color = "#0e610e",
   linewidth = 0.5,
   linetype = "dashed",
@@ -978,7 +989,7 @@ ggplot2::geom_line(
 ) +
 ggplot2::geom_line(
   data = percentile_lines,
-  aes(x = scrape_date, y = p75_pos),
+  aes(x = scrape_date, y = p75_pos, color = "75th percentile"),
   color = "#0e610e",
   linewidth = 0.25,
   linetype = "dashed",
@@ -988,7 +999,7 @@ ggplot2::geom_line(
       {if(nrow(actual_rate_line) > 0)
         ggplot2::geom_line(
           data = actual_rate_line,
-          aes(x = date, y = rate_position),
+          aes(x = date, y = rate_position, color = "Actual cash rate"),
           color = "#0066CC",
           linewidth = 1.0,
           linetype = "solid",
@@ -1001,7 +1012,7 @@ ggplot2::geom_line(
         outcome_position <- which(levels(df_mt_heat$move) == actual_outcome_label)
         if (length(outcome_position) > 0) {
           ggplot2::geom_hline(
-            yintercept = outcome_position,
+            aes(yintercept = outcome_position, color = "Actual outcome"),
             color = "purple",
             linewidth = 0.85,
             linetype = "dotted"
@@ -1028,13 +1039,8 @@ ggplot2::geom_line(
         expand = c(0, 0)
       ) +
       ggplot2::labs(
-        title = paste("Cash Rate Probability Heatmap for Meeting on", fmt_date(meeting_date_proper)),
-        subtitle = if(!is.null(actual_outcome)) {
-          paste0("Quartiles (green) | Actual cash rate (blue) | Actual outcome: **", 
-                 sprintf("%.2f%%", actual_outcome), "** (black line)")
-        } else {
-          "Quartiles (green dashed) | Actual cash rate (blue solid)"
-        },
+        title = paste("Cash Rate Probabilities for Meeting on", fmt_date(meeting_date_proper)),
+        
         x = "Date",
         y = "Cash Rate"
       ) +
