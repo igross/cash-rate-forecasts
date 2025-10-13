@@ -9,20 +9,36 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(tidyr)
   library(plotly)
-  library(readrba)   # for read_rba()
+  library(readrba)
   library(scales)
   library(ggpattern)
   library(ggtext)
+  library(zoo)  # Added for na.locf
 })
+
+# =============================================
+# 1b) Create required directories
+# =============================================
+required_dirs <- c(
+  "docs/meetings",
+  "docs/meetings/csv",
+  "combined_data"
+)
+
+for (dir_path in required_dirs) {
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+    cat("Created directory:", dir_path, "\n")
+  }
+}
 
 # =============================================
 # 2) Load data & RMSE lookup
 # =============================================
-cash_rate <- readRDS("combined_data/all_data.Rds")    # columns: date, cash_rate, scrape_time
-load("combined_data/rmse_days.RData")                 # object rmse_days: days_to_meeting ↦ finalrmse
+cash_rate <- readRDS("combined_data/all_data.Rds")
+load("combined_data/rmse_days.RData")
 
-# *** KEY CHANGE: Consolidate to daily level ***
-# Take the MAXIMUM (latest) scrape of each day for each expiry date
+# Consolidate to daily level
 cash_rate_daily <- cash_rate %>%
   mutate(scrape_date = as.Date(scrape_time)) %>%
   group_by(scrape_date, date) %>%
@@ -36,11 +52,9 @@ cat("  Daily rows:", nrow(cash_rate_daily), "\n")
 cat("  Unique dates:", length(unique(cash_rate_daily$scrape_date)), "\n")
 
 blend_weight <- function(days_to_meeting) {
-  # Linear blend from 0 to 1 over last 30 days
   pmax(0, pmin(1, 1 - days_to_meeting / 30))
 }
 
-# 1. grab the most-recent published value only
 latest_rt <- read_rba(series_id = "FIRMMCRTD") |>
              slice_max(date, n = 1, with_ties = FALSE) |>
              pull(value)
@@ -53,30 +67,25 @@ cash_rate_daily$cash_rate <- cash_rate_daily$cash_rate + spread
 # =============================================
 meeting_schedule <- tibble(
   meeting_date = as.Date(c(
-    # 2022 meetings
     "2022-02-01","2022-03-01","2022-04-05","2022-05-03",
     "2022-06-07","2022-07-05","2022-08-02","2022-09-06",
     "2022-10-04","2022-11-01","2022-12-06",
-    # 2023 meetings
     "2023-02-07","2023-03-07","2023-04-04","2023-05-02",
     "2023-06-06","2023-07-04","2023-08-01","2023-09-05",
     "2023-10-03","2023-11-07","2023-12-05",
-    # 2024 meetings
     "2024-02-06","2024-03-19","2024-05-07","2024-06-18",
     "2024-08-06","2024-09-24","2024-11-05","2024-12-10",
-    # 2025 meetings
     "2025-02-18","2025-04-01","2025-05-20",
     "2025-07-08","2025-08-12","2025-09-30","2025-11-04","2025-12-09",
-    # 2026 meetings (second day of each two-day meeting)
     "2026-02-03","2026-03-17","2026-05-05","2026-06-16",
-    "2026-08-11" ,"2026-09-29","2026-11-03","2026-12-08"
+    "2026-08-11","2026-09-29","2026-11-03","2026-12-08"
   ))
 ) %>% 
   mutate(
     expiry = if_else(
-      day(meeting_date) >= days_in_month(meeting_date) - 1,   # last 1‑2 days
-      ceiling_date(meeting_date, "month"),                    # → next month
-      floor_date(meeting_date,  "month")                      # otherwise same
+      day(meeting_date) >= days_in_month(meeting_date) - 1,
+      ceiling_date(meeting_date, "month"),
+      floor_date(meeting_date, "month")
     )
   ) %>% 
   select(expiry, meeting_date)
@@ -86,94 +95,20 @@ meeting_schedule <- tibble(
 # =============================================
 abs_releases <- tribble(
   ~dataset, ~datetime,
-  
-  # CPI (quarterly releases at 11:30 AM AEST)
   "CPI", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
   "CPI", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
   "CPI", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
   "CPI", ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-01-28 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
-  
-  # CPI Indicator (monthly releases)
   "CPI Indicator", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
   "CPI Indicator", ymd_hm("2025-02-26 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-03-26 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-05-28 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-06-25 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-08-27 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-09-24 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-11-26 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2025-12-31 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-02-25 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-03-25 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-05-27 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-06-24 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-08-26 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-09-30 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-11-25 11:30", tz = "Australia/Melbourne"),
-  "CPI Indicator", ymd_hm("2026-12-30 11:30", tz = "Australia/Melbourne"),
-  
-  # WPI (quarterly releases)
   "WPI", ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2025-05-14 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2025-08-13 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2025-11-12 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2026-02-18 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2026-05-13 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2026-08-12 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2026-11-11 11:30", tz = "Australia/Melbourne"),
-  
-  # National Accounts (quarterly releases)
-  "National Accounts", ymd_hm("2025-03-05 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2025-06-04 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2025-09-03 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2025-12-03 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2026-03-04 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2026-06-03 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2026-09-02 11:30", tz = "Australia/Melbourne"),
-  "National Accounts", ymd_hm("2026-12-02 11:30", tz = "Australia/Melbourne"),
-  
-  # Labour Force (monthly releases)
-  "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-02-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-03-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-04-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-05-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-06-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-07-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-08-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-10-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-11-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-12-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-01-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-02-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-03-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-04-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-05-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-06-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-07-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-08-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-09-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-10-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-11-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne")
+  "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne")
 )
 
 # =============================================
-# 4) Identify last meeting, collect scrapes
+# 4) Process data and create visualizations
 # =============================================
-last_meeting   <- max(meeting_schedule$meeting_date[
-                        meeting_schedule$meeting_date < Sys.Date()])
-
+last_meeting <- max(meeting_schedule$meeting_date[meeting_schedule$meeting_date < Sys.Date()])
 print(last_meeting)
 
 current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
@@ -181,23 +116,18 @@ current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
   pull(value)
 
 initial_rt <- latest_rt
-
-# *** CHANGED: Use daily dates instead of times ***
 all_dates <- sort(unique(cash_rate_daily$scrape_date))
 
 cat("Total available daily scrapes:", length(all_dates), "\n")
 cat("Date range:", min(all_dates), "to", max(all_dates), "\n")
 
-# Use ALL available dates (no filtering)
 scrapes_daily <- all_dates
 
-# MAKE AREA DATA
+# Create area data
 rba_historical <- read_rba(series_id = "FIRMMCRTD") %>%
   arrange(date)
 
 all_list_area <- map(all_dates, function(scr_date) {
-  
-  # Get the rate that was current at this scrape date
   historical_rate <- rba_historical %>%
     filter(date <= scr_date) %>%
     slice_max(date, n = 1, with_ties = FALSE) %>%
@@ -205,22 +135,17 @@ all_list_area <- map(all_dates, function(scr_date) {
   
   initial_rt_at_scrape <- if(length(historical_rate) > 0) historical_rate else latest_rt
   
-  # Get rates for this date
   df_rates <- cash_rate_daily %>% 
     filter(scrape_date == scr_date) %>%
-    select(
-      expiry        = date,
-      forecast_rate = cash_rate,
-      scrape_date
-    )
+    select(expiry = date, forecast_rate = cash_rate, scrape_date)
   
   df <- meeting_schedule %>%
     distinct(expiry, meeting_date) %>%
     mutate(scrape_date = scr_date) %>%
     left_join(df_rates, by = "expiry") %>%
-    arrange(expiry)
+    arrange(expiry) %>%
+    filter(!is.na(forecast_rate))
   
-  df <- df %>% filter(!is.na(forecast_rate))
   if (nrow(df) == 0) return(NULL)
   
   prev_implied <- NA_real_
@@ -228,7 +153,6 @@ all_list_area <- map(all_dates, function(scr_date) {
   
   for (i in seq_len(nrow(df))) {
     row <- df[i, ]
-    
     rt_in <- if (is.na(prev_implied)) initial_rt_at_scrape else prev_implied
     
     r_tp1 <- if (row$meeting_date < row$expiry) {
@@ -240,16 +164,14 @@ all_list_area <- map(all_dates, function(scr_date) {
     }
     
     out[[i]] <- tibble(
-      scrape_date     = scr_date,
-      meeting_date    = row$meeting_date,
-      implied_mean    = r_tp1,
+      scrape_date = scr_date,
+      meeting_date = row$meeting_date,
+      implied_mean = r_tp1,
       days_to_meeting = as.integer(row$meeting_date - scr_date),
-      previous_rate   = rt_in
+      previous_rate = rt_in
     )
-    
     prev_implied <- r_tp1
   }
-  
   bind_rows(out)
 })
 
@@ -261,27 +183,23 @@ all_estimates_area <- all_list_area %>%
   rename(stdev = finalrmse)
 
 max_rmse <- suppressWarnings(max(rmse_days$finalrmse, na.rm = TRUE))
-if (!is.finite(max_rmse)) {
-  stop("No finite RMSE values found in rmse_days$finalrmse")
-}
+if (!is.finite(max_rmse)) stop("No finite RMSE values found")
 
 bad_sd <- !is.finite(all_estimates_area$stdev) | is.na(all_estimates_area$stdev) | all_estimates_area$stdev <= 0
-n_bad  <- sum(bad_sd, na.rm = TRUE)
+n_bad <- sum(bad_sd, na.rm = TRUE)
 
 if (n_bad > 0) {
   message(sprintf("Replacing %d missing/invalid stdev(s) with max RMSE = %.4f", n_bad, max_rmse))
   all_estimates_area$stdev[bad_sd] <- max_rmse
 }
 
-# Extended range bucketing (±300 bp range in 25 bp steps)
+# Extended range bucketing
 bp_span <- 300L
 step_bp <- 25L
-
 sd_fallback <- suppressWarnings(stats::median(all_estimates_area$stdev[is.finite(all_estimates_area$stdev)], na.rm = TRUE))
 if (!is.finite(sd_fallback) || sd_fallback <= 0) sd_fallback <- 0.01
 
 current_center_ext <- current_rate
-
 bucket_min <- 0.1
 bucket_max <- 6.1
 bucket_centers_ext <- seq(bucket_min, bucket_max, by = 0.25)
@@ -289,12 +207,11 @@ half_width_ext <- 0.125
 
 cat("Creating extended buckets for", nrow(all_estimates_area), "estimate rows\n")
 
-# Compute bucketed probabilities
 bucket_list_ext <- vector("list", nrow(all_estimates_area))
 for (i in seq_len(nrow(all_estimates_area))) {
-  mu_i    <- all_estimates_area$implied_mean[i]
+  mu_i <- all_estimates_area$implied_mean[i]
   sigma_i <- all_estimates_area$stdev[i]
-  d_i     <- all_estimates_area$days_to_meeting[i]
+  d_i <- all_estimates_area$days_to_meeting[i]
 
   if (!is.finite(mu_i)) next
   if (!is.finite(sigma_i) || sigma_i <= 0) sigma_i <- sd_fallback
@@ -328,13 +245,13 @@ for (i in seq_len(nrow(all_estimates_area))) {
   v <- blend * l_vec + (1 - blend) * p_vec
 
   bucket_list_ext[[i]] <- tibble::tibble(
-    scrape_date     = all_estimates_area$scrape_date[i],
-    meeting_date    = all_estimates_area$meeting_date[i],
-    implied_mean    = mu_i,
-    stdev           = sigma_i,
+    scrape_date = all_estimates_area$scrape_date[i],
+    meeting_date = all_estimates_area$meeting_date[i],
+    implied_mean = mu_i,
+    stdev = sigma_i,
     days_to_meeting = d_i,
-    bucket          = bucket_centers_ext,
-    probability     = v
+    bucket = bucket_centers_ext,
+    probability = v
   )
 }
 
@@ -349,9 +266,7 @@ rate_levels <- sort(unique(all_estimates_buckets_ext$bucket))
 rate_labels <- sprintf("%.2f%%", rate_levels)
 
 all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
-  dplyr::mutate(
-    move = factor(move, levels = rate_labels)
-  )
+  dplyr::mutate(move = factor(move, levels = rate_labels))
 
 future_meetings_all <- meeting_schedule %>%
   dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
@@ -359,55 +274,12 @@ future_meetings_all <- meeting_schedule %>%
 
 cat("Future meetings found:", length(future_meetings_all), "\n")
 
-# Helper functions
 fmt_date <- function(x) format(as.Date(x), "%d %B %Y")
 fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
 
-# Create fill map
-all_rates <- sort(unique(all_estimates_buckets_ext$bucket))
-fill_map <- setNames(character(length(all_rates)), sprintf("%.2f%%", all_rates))
-
-for (i in seq_along(all_rates)) {
-  rate <- all_rates[i]
-  diff_from_current <- rate - current_rate
-  
-  if (abs(diff_from_current) < 0.01) {
-    fill_map[i] <- "#BFBFBF"
-  } else if (diff_from_current < 0) {
-    bp_below <- abs(diff_from_current) * 100
-    if (bp_below >= 125) {
-      fill_map[i] <- "#000080"
-    } else if (bp_below >= 100) {
-      fill_map[i] <- "#0033A0"
-    } else if (bp_below >= 75) {
-      fill_map[i] <- "#004B8E"
-    } else if (bp_below >= 50) {
-      fill_map[i] <- "#1A5CB0"
-    } else {
-      fill_map[i] <- "#5FA4D4"
-    }
-  } else {
-    bp_above <- diff_from_current * 100
-    if (bp_above >= 125) {
-      fill_map[i] <- "#800000"
-    } else if (bp_above >= 100) {
-      fill_map[i] <- "#A00000"
-    } else if (bp_above >= 75) {
-      fill_map[i] <- "#B50000"
-    } else if (bp_above >= 49) {
-      fill_map[i] <- "#C71010"
-    } else {
-      fill_map[i] <- "#E07C7C"
-    }
-  }
-}
-
 # =============================================
-# KEY MODIFICATION: Dynamic center rate based on meeting timing
+# AREA PLOTS WITH DYNAMIC CENTER RATE
 # =============================================
-
-# This section replaces the fill_map creation in the original code
-# Move it inside the loop so it can be recalculated for each meeting
 
 for (mt in future_meetings_all) {
   cat("\n=== Processing meeting:", as.character(as.Date(mt)), "===\n")
@@ -426,11 +298,8 @@ for (mt in future_meetings_all) {
   
   df_mt <- df_mt %>%
     dplyr::filter(
-      !is.na(scrape_date),
-      !is.na(probability),
-      is.finite(probability),
-      probability >= 0,
-      !is.na(move)
+      !is.na(scrape_date), !is.na(probability),
+      is.finite(probability), probability >= 0, !is.na(move)
     ) %>%
     dplyr::mutate(
       probability = pmin(probability, 1.0),
@@ -440,23 +309,19 @@ for (mt in future_meetings_all) {
   if (nrow(df_mt) == 0) next
   
   meeting_date_proper <- as.Date(mt) - days(1)
-  
   start_xlim_mt <- min(df_mt$scrape_date, na.rm = TRUE)
-  end_xlim_mt   <- meeting_date_proper
+  end_xlim_mt <- meeting_date_proper
   
   available_moves <- unique(df_mt$move[!is.na(df_mt$move)])
   valid_move_levels <- rate_labels[rate_labels %in% available_moves]
   
   df_mt <- df_mt %>%
     dplyr::filter(move %in% valid_move_levels) %>%
-    dplyr::mutate(
-      move = factor(move, levels = rev(valid_move_levels))
-    ) %>%
+    dplyr::mutate(move = factor(move, levels = rev(valid_move_levels))) %>%
     dplyr::filter(!is.na(move))
   
   if (nrow(df_mt) == 0) next
   
-  # Check for actual outcome
   actual_outcome <- NULL
   is_past_meeting <- meeting_date_proper < Sys.Date()
   
@@ -471,16 +336,10 @@ for (mt in future_meetings_all) {
     }
   }
   
-  # =============================================
-  # DYNAMIC CENTER RATE: Use actual outcome for past meetings, current rate for future
-  # =============================================
   center_rate <- if (!is.null(actual_outcome)) actual_outcome else current_rate
-  
   cat("Center rate for this meeting:", center_rate, "%\n")
   
-  # =============================================
-  # CREATE FILL MAP DYNAMICALLY FOR THIS MEETING
-  # =============================================
+  # Create fill map dynamically
   all_rates <- sort(unique(all_estimates_buckets_ext$bucket))
   fill_map <- setNames(character(length(all_rates)), sprintf("%.2f%%", all_rates))
   
@@ -492,34 +351,19 @@ for (mt in future_meetings_all) {
       fill_map[i] <- "#BFBFBF"
     } else if (diff_from_center < 0) {
       bp_below <- abs(diff_from_center) * 100
-      if (bp_below >= 125) {
-        fill_map[i] <- "#000080"
-      } else if (bp_below >= 100) {
-        fill_map[i] <- "#0033A0"
-      } else if (bp_below >= 75) {
-        fill_map[i] <- "#004B8E"
-      } else if (bp_below >= 50) {
-        fill_map[i] <- "#1A5CB0"
-      } else {
-        fill_map[i] <- "#5FA4D4"
-      }
+      fill_map[i] <- if (bp_below >= 125) "#000080" else
+                     if (bp_below >= 100) "#0033A0" else
+                     if (bp_below >= 75) "#004B8E" else
+                     if (bp_below >= 50) "#1A5CB0" else "#5FA4D4"
     } else {
       bp_above <- diff_from_center * 100
-      if (bp_above >= 125) {
-        fill_map[i] <- "#800000"
-      } else if (bp_above >= 100) {
-        fill_map[i] <- "#A00000"
-      } else if (bp_above >= 75) {
-        fill_map[i] <- "#B50000"
-      } else if (bp_above >= 49) {
-        fill_map[i] <- "#C71010"
-      } else {
-        fill_map[i] <- "#E07C7C"
-      }
+      fill_map[i] <- if (bp_above >= 125) "#800000" else
+                     if (bp_above >= 100) "#A00000" else
+                     if (bp_above >= 75) "#B50000" else
+                     if (bp_above >= 49) "#C71010" else "#E07C7C"
     }
   }
   
-  # Legend setup (centered on the meeting-specific center rate)
   legend_min <- center_rate - 1.50
   legend_max <- center_rate + 1.50
   legend_rates <- all_rates[all_rates >= legend_min & all_rates <= legend_max]
@@ -528,7 +372,6 @@ for (mt in future_meetings_all) {
   }
   legend_breaks <- sprintf("%.2f%%", legend_rates)
   
-  # Prepare highlight data for actual outcome
   df_mt_highlight <- NULL
   if (!is.null(actual_outcome)) {
     actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
@@ -548,46 +391,30 @@ for (mt in future_meetings_all) {
     }
   }
   
-  # RBA meetings in range
   rba_meetings_in_range <- meeting_schedule %>%
-    dplyr::filter(
-      meeting_date > start_xlim_mt,
-      meeting_date < meeting_date_proper
-    )
+    dplyr::filter(meeting_date > start_xlim_mt, meeting_date < meeting_date_proper)
   
-  # ABS data releases in range
   abs_releases_in_range <- abs_releases %>%
     dplyr::mutate(release_date = as.Date(datetime)) %>%
-    dplyr::filter(
-      release_date > start_xlim_mt,
-      release_date < meeting_date_proper
-    )
+    dplyr::filter(release_date > start_xlim_mt, release_date < meeting_date_proper)
   
   filename <- paste0("docs/meetings/daily_area_", fmt_file(meeting_date_proper), ".png")
   
   tryCatch({
     start_month <- lubridate::floor_date(start_xlim_mt, "month")
     end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
-    
-    breaks_vec <- seq.Date(
-      from = start_month,
-      to = end_month,
-      by = "month"
-    )
-    
+    breaks_vec <- seq.Date(from = start_month, to = end_month, by = "month")
     date_labels <- function(x) format(x, "%b-%Y")
     
-    area_mt <- ggplot2::ggplot(
-      df_mt,
-      ggplot2::aes(x = scrape_date, y = probability, fill = move)
-    ) +
-      ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA) +
-      {if(!is.null(actual_outcome) && !is.null(df_mt_highlight) && nrow(df_mt_highlight) > 0) {
+    area_mt <- ggplot2::ggplot(df_mt, ggplot2::aes(x = scrape_date, y = probability, fill = move)) +
+      ggplot2::geom_area(position = "stack", alpha = 0.95, colour = NA)
+    
+    # Add highlight pattern for actual outcome if it exists
+    if (!is.null(actual_outcome) && !is.null(df_mt_highlight) && nrow(df_mt_highlight) > 0) {
+      area_mt <- area_mt +
         ggpattern::geom_ribbon_pattern(
           data = df_mt_highlight,
-          aes(x = scrape_date, 
-              ymin = lower_bound,
-              ymax = cumulative_prob),
+          aes(x = scrape_date, ymin = lower_bound, ymax = cumulative_prob),
           pattern = "stripe",
           pattern_fill = "gold",
           pattern_color = "gold",
@@ -597,16 +424,26 @@ for (mt in future_meetings_all) {
           fill = "gold",
           alpha = 0.3,
           color = NA,
-          inherit.aes = FALSE)
-      }} +
+          inherit.aes = FALSE
+        )
+    }
+    
+    area_mt <- area_mt +
       ggplot2::geom_hline(yintercept = 0.5, linetype = "dashed", 
-                         color = "grey40", linewidth = 0.7, alpha = 0.8) +
-      {if(nrow(rba_meetings_in_range) > 0) 
-        ggplot2::geom_vline(data = rba_meetings_in_range,
-                           aes(xintercept = as.numeric(meeting_date)),
-                           linetype = "solid", color = "white", 
-                           linewidth = 0.6, alpha = 0.6)
-      } +
+                         color = "grey40", linewidth = 0.7, alpha = 0.8)
+    
+    # Add RBA meeting lines if they exist
+    if (nrow(rba_meetings_in_range) > 0) {
+      area_mt <- area_mt +
+        ggplot2::geom_vline(
+          data = rba_meetings_in_range,
+          aes(xintercept = as.numeric(meeting_date)),
+          linetype = "solid", color = "white", 
+          linewidth = 0.6, alpha = 0.6
+        )
+    }
+    
+    area_mt <- area_mt +
       ggplot2::scale_fill_manual(
         values = fill_map,
         breaks = legend_breaks,
@@ -647,18 +484,10 @@ for (mt in future_meetings_all) {
         legend.title = ggplot2::element_blank()
       )
     
-temp_filename <- paste0(filename, ".tmp")
+    temp_filename <- paste0(filename, ".tmp")
+    ggplot2::ggsave(filename = temp_filename, plot = area_mt, width = 12, height = 5, dpi = 300, device = "png")
     
-    ggplot2::ggsave(
-      filename = temp_filename,
-      plot = area_mt,
-      width = 12,
-      height = 5,
-      dpi = 300,
-      device = "png"
-    )
-    
- if (file.exists(temp_filename)) {
+    if (file.exists(temp_filename)) {
       file.rename(temp_filename, filename)
       cat("✓ Saved from temp file:", filename, "\n")
     } else {
@@ -669,7 +498,8 @@ temp_filename <- paste0(filename, ".tmp")
     cat("✗ Error:", e$message, "\n")
   })
 }
-# *** CHANGED: CSV exports with 'daily' prefix ***
+
+# CSV exports
 for (mt in future_meetings_all) {
   df_mt_csv <- all_estimates_buckets_ext %>%
     dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
@@ -677,18 +507,8 @@ for (mt in future_meetings_all) {
     dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
     tidyr::complete(scrape_date, move, fill = list(probability = 0)) %>%
     dplyr::arrange(scrape_date, diff_bps) %>%
-    dplyr::mutate(
-      meeting_date = as.Date(mt),
-      bucket_rate = bucket
-    ) %>%
-    dplyr::select(
-      meeting_date,
-      scrape_date,
-      move,
-      diff_bps,
-      bucket_rate,
-      probability
-    )
+    dplyr::mutate(meeting_date = as.Date(mt), bucket_rate = bucket) %>%
+    dplyr::select(meeting_date, scrape_date, move, diff_bps, bucket_rate, probability)
   
   if (nrow(df_mt_csv) == 0) next
   
@@ -709,18 +529,8 @@ combined_csv <- all_estimates_buckets_ext %>%
   dplyr::group_by(meeting_date, scrape_date, move, diff_bps, bucket) %>%
   dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
   dplyr::arrange(meeting_date, scrape_date, diff_bps) %>%
-  dplyr::mutate(
-    meeting_date = as.Date(meeting_date),
-    bucket_rate = bucket
-  ) %>%
-  dplyr::select(
-    meeting_date,
-    scrape_date,
-    move,
-    diff_bps,
-    bucket_rate,
-    probability
-  )
+  dplyr::mutate(meeting_date = as.Date(meeting_date), bucket_rate = bucket) %>%
+  dplyr::select(meeting_date, scrape_date, move, diff_bps, bucket_rate, probability)
 
 if (nrow(combined_csv) > 0) {
   tryCatch({
@@ -731,12 +541,8 @@ if (nrow(combined_csv) > 0) {
   })
 }
 
-cat("\nDaily analysis completed successfully!\n")
-
-
 # =============================================
 # HEATMAP-STYLE VISUALIZATIONS
-# Note: Requires library(zoo) for na.locf
 # =============================================
 cat("\n=== Creating heatmap visualizations ===\n")
 
@@ -750,24 +556,18 @@ for (mt in future_meetings_all) {
     dplyr::arrange(scrape_date, move)
   
   if (nrow(df_mt_heat) == 0) {
-    
     cat("Skipping - no data for meeting\n")
     next 
   }
   
-  # Get the bucket value for each move level
   bucket_lookup <- all_estimates_buckets_ext %>%
     dplyr::select(move, bucket) %>%
     dplyr::distinct()
   
-  # Filter and clean data
   df_mt_heat <- df_mt_heat %>%
     dplyr::filter(
-      !is.na(scrape_date),
-      !is.na(probability),
-      is.finite(probability),
-      probability >= 0,
-      !is.na(move)
+      !is.na(scrape_date), !is.na(probability),
+      is.finite(probability), probability >= 0, !is.na(move)
     ) %>%
     dplyr::mutate(
       probability = pmin(probability, 1.0),
@@ -777,34 +577,22 @@ for (mt in future_meetings_all) {
   if (nrow(df_mt_heat) == 0) next
   
   meeting_date_proper <- as.Date(mt) - days(1)
-  
   start_xlim_mt <- min(df_mt_heat$scrape_date, na.rm = TRUE)
-  end_xlim_mt   <- meeting_date_proper
+  end_xlim_mt <- meeting_date_proper
   
   available_moves <- unique(df_mt_heat$move[!is.na(df_mt_heat$move)])
   valid_move_levels <- rate_labels[rate_labels %in% available_moves]
   
   df_mt_heat <- df_mt_heat %>%
     dplyr::filter(move %in% valid_move_levels) %>%
-    dplyr::mutate(
-      move = factor(move, levels = valid_move_levels)  # Ascending order for heatmap
-    ) %>%
+    dplyr::mutate(move = factor(move, levels = valid_move_levels)) %>%
     dplyr::filter(!is.na(move))
   
   if (nrow(df_mt_heat) == 0) next
   
-  # =============================================
-  # FORWARD FILL MISSING DAYS (NO INTERPOLATION)
-  # =============================================
+  # Forward fill missing days
+  all_dates_seq <- seq.Date(from = start_xlim_mt, to = end_xlim_mt, by = "day")
   
-  # Create complete date sequence
-  all_dates_seq <- seq.Date(
-    from = start_xlim_mt,
-    to = end_xlim_mt,
-    by = "day"
-  )
-  
-  # Create complete grid with bucket
   complete_grid <- expand.grid(
     scrape_date = all_dates_seq,
     move = valid_move_levels,
@@ -813,26 +601,22 @@ for (mt in future_meetings_all) {
     dplyr::mutate(move = factor(move, levels = valid_move_levels)) %>%
     dplyr::left_join(bucket_lookup, by = "move")
   
-  # Join with existing data
   df_mt_heat <- complete_grid %>%
     dplyr::left_join(
       df_mt_heat %>% dplyr::select(scrape_date, move, probability),
       by = c("scrape_date", "move")
     )
   
-  # Get the last date with actual data for each rate bucket
   last_data_dates <- df_mt_heat %>%
     dplyr::filter(!is.na(probability)) %>%
     dplyr::group_by(move) %>%
     dplyr::summarise(last_date = max(scrape_date), .groups = "drop")
   
-  # Forward fill missing values ONLY up to the last date with data
   df_mt_heat <- df_mt_heat %>%
     dplyr::left_join(last_data_dates, by = "move") %>%
     dplyr::group_by(move) %>%
     dplyr::arrange(scrape_date) %>%
     dplyr::mutate(
-      # Only fill if we're on or before the last data date
       probability = ifelse(scrape_date <= last_date,
                           zoo::na.locf(probability, na.rm = FALSE),
                           NA_real_)
@@ -850,60 +634,39 @@ for (mt in future_meetings_all) {
     dplyr::select(-first_non_na) %>%
     dplyr::ungroup()
   
-  # =============================================
-  # CALCULATE PERCENTILE LINES
-  # =============================================
-  
-  # Calculate percentiles for each date (only where we have data)
-percentile_lines <- df_mt_heat %>%
-  dplyr::filter(!is.na(probability)) %>%
-  dplyr::arrange(scrape_date, move) %>%
-  dplyr::group_by(scrape_date) %>%
-  dplyr::mutate(
-    cumulative_prob = cumsum(probability),
-    bucket_numeric = bucket  # Use the actual bucket rate value instead
-  ) %>%
-  dplyr::summarise(
-    p25 = approx(cumulative_prob, bucket_numeric, xout = 0.25, rule = 2)$y,
-    p50 = approx(cumulative_prob, bucket_numeric, xout = 0.50, rule = 2)$y,
-    p75 = approx(cumulative_prob, bucket_numeric, xout = 0.75, rule = 2)$y,
-    .groups = "drop"
-  )
-
-# After calculating percentile_lines, convert to y-axis positions
-percentile_lines <- percentile_lines %>%
-  dplyr::mutate(
-    p25_pos = sapply(p25, function(val) {
-      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-    }),
-    p50_pos = sapply(p50, function(val) {
-      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-    }),
-    p75_pos = sapply(p75, function(val) {
-      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-    })
-  )
-  
-  # =============================================
-  # PREPARE ACTUAL CASH RATE LINE
-  # =============================================
-  
-  # Get historical cash rate for this date range
-  actual_rate_line <- rba_historical %>%
-    dplyr::filter(
-      date >= start_xlim_mt,
-      date <= end_xlim_mt
+  # Calculate percentile lines
+  percentile_lines <- df_mt_heat %>%
+    dplyr::filter(!is.na(probability)) %>%
+    dplyr::arrange(scrape_date, move) %>%
+    dplyr::group_by(scrape_date) %>%
+    dplyr::mutate(
+      cumulative_prob = cumsum(probability),
+      bucket_numeric = bucket
+    ) %>%
+    dplyr::summarise(
+      p25 = approx(cumulative_prob, bucket_numeric, xout = 0.25, rule = 2)$y,
+      p50 = approx(cumulative_prob, bucket_numeric, xout = 0.50, rule = 2)$y,
+      p75 = approx(cumulative_prob, bucket_numeric, xout = 0.75, rule = 2)$y,
+      .groups = "drop"
     ) %>%
     dplyr::mutate(
-      rate_label = sprintf("%.2f%%", value)
+      p25_pos = sapply(p25, function(val) {
+        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+      }),
+      p50_pos = sapply(p50, function(val) {
+        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+      }),
+      p75_pos = sapply(p75, function(val) {
+        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+      })
     )
   
-  # Convert rate values to factor positions for plotting
-  # Find the nearest factor level for each actual rate
-  actual_rate_line <- actual_rate_line %>%
+  # Prepare actual cash rate line
+  actual_rate_line <- rba_historical %>%
+    dplyr::filter(date >= start_xlim_mt, date <= end_xlim_mt) %>%
+    dplyr::mutate(rate_label = sprintf("%.2f%%", value)) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(
-      # Find closest rate level
       closest_level = valid_move_levels[which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - value))],
       rate_position = which(levels(df_mt_heat$move) == closest_level)
     ) %>%
@@ -927,41 +690,18 @@ percentile_lines <- percentile_lines %>%
   
   # RBA meetings in range
   rba_meetings_in_range <- meeting_schedule %>%
-    dplyr::filter(
-      meeting_date > start_xlim_mt,
-      meeting_date < meeting_date_proper
-    )
+    dplyr::filter(meeting_date > start_xlim_mt, meeting_date < meeting_date_proper)
   
   filename <- paste0("docs/meetings/daily_heatmap_", fmt_file(meeting_date_proper), ".png")
   
   tryCatch({
     start_month <- lubridate::floor_date(start_xlim_mt, "month")
     end_month <- lubridate::ceiling_date(end_xlim_mt, "month")
-    
-    breaks_vec <- seq.Date(
-      from = start_month,
-      to = end_month,
-      by = "month"
-    )
-    
+    breaks_vec <- seq.Date(from = start_month, to = end_month, by = "month")
     date_labels <- function(x) format(x, "%b-%Y")
-
-    percentile_lines <- percentile_lines %>%
-  dplyr::mutate(
-    line_type_25 = "25th percentile",
-    line_type_50 = "50th percentile (median)",
-    line_type_75 = "75th percentile"
-  )
-
-# For actual rate line
-actual_rate_line <- actual_rate_line %>%
-  dplyr::mutate(line_type = "Actual cash rate")
     
-    # Create heatmap with sharper gradient in 0-30% range
-    heatmap_mt <- ggplot2::ggplot(
-      df_mt_heat,
-      ggplot2::aes(x = scrape_date, y = move, fill = probability)
-    ) +
+    # Create base heatmap
+    heatmap_mt <- ggplot2::ggplot(df_mt_heat, ggplot2::aes(x = scrape_date, y = move, fill = probability)) +
       ggplot2::geom_tile() +
       ggplot2::scale_fill_gradientn(
         colors = c("white", "#FFE4B5", "#FFA500", "#FF8C00", "#FF4500", "#8B0000"),
@@ -970,56 +710,68 @@ actual_rate_line <- actual_rate_line %>%
         labels = scales::percent_format(accuracy = 1),
         na.value = "transparent",
         name = "Probability"
-      ) +
-      ggplot2::geom_line(
-  data = percentile_lines,
-  aes(x = scrape_date, y = p25_pos, color = "25th percentile"),
-  color = "#0e610e",
-  linewidth = 0.25,
-  linetype = "dashed",
-  inherit.aes = FALSE
-) +
-ggplot2::geom_line(
-  data = percentile_lines,
-  aes(x = scrape_date, y = p50_pos, color = "Median"),
-  color = "#0e610e",
-  linewidth = 0.5,
-  linetype = "dashed",
-  inherit.aes = FALSE
-) +
-ggplot2::geom_line(
-  data = percentile_lines,
-  aes(x = scrape_date, y = p75_pos, color = "75th percentile"),
-  color = "#0e610e",
-  linewidth = 0.25,
-  linetype = "dashed",
-  inherit.aes = FALSE
-)
-      # Add actual cash rate line
-      {if(nrow(actual_rate_line) > 0)
+      )
+    
+    # Add percentile lines
+    if (nrow(percentile_lines) > 0) {
+      heatmap_mt <- heatmap_mt +
+        ggplot2::geom_line(
+          data = percentile_lines,
+          aes(x = scrape_date, y = p25_pos),
+          color = "#0e610e",
+          linewidth = 0.25,
+          linetype = "dashed",
+          inherit.aes = FALSE
+        ) +
+        ggplot2::geom_line(
+          data = percentile_lines,
+          aes(x = scrape_date, y = p50_pos),
+          color = "#0e610e",
+          linewidth = 0.5,
+          linetype = "dashed",
+          inherit.aes = FALSE
+        ) +
+        ggplot2::geom_line(
+          data = percentile_lines,
+          aes(x = scrape_date, y = p75_pos),
+          color = "#0e610e",
+          linewidth = 0.25,
+          linetype = "dashed",
+          inherit.aes = FALSE
+        )
+    }
+    
+    # Add actual cash rate line
+    if (nrow(actual_rate_line) > 0) {
+      heatmap_mt <- heatmap_mt +
         ggplot2::geom_line(
           data = actual_rate_line,
-          aes(x = date, y = rate_position, color = "Actual cash rate"),
+          aes(x = date, y = rate_position),
           color = "#0066CC",
           linewidth = 1.0,
           linetype = "solid",
           inherit.aes = FALSE
         )
-      } +
-      {if(!is.null(actual_outcome)) {
-        actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
-        # Find the position of the actual outcome in the factor levels
-        outcome_position <- which(levels(df_mt_heat$move) == actual_outcome_label)
-        if (length(outcome_position) > 0) {
+    }
+    
+    # Add actual outcome line
+    if (!is.null(actual_outcome)) {
+      actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
+      outcome_position <- which(levels(df_mt_heat$move) == actual_outcome_label)
+      if (length(outcome_position) > 0) {
+        heatmap_mt <- heatmap_mt +
           ggplot2::geom_hline(
-            aes(yintercept = outcome_position, color = "Actual outcome"),
+            yintercept = outcome_position,
             color = "purple",
             linewidth = 0.85,
             linetype = "dotted"
           )
-        }
-      }} +
-      {if(nrow(rba_meetings_in_range) > 0) 
+      }
+    }
+    
+    # Add RBA meeting lines
+    if (nrow(rba_meetings_in_range) > 0) {
+      heatmap_mt <- heatmap_mt +
         ggplot2::geom_vline(
           data = rba_meetings_in_range,
           aes(xintercept = as.numeric(meeting_date)),
@@ -1028,19 +780,19 @@ ggplot2::geom_line(
           linewidth = 0.5,
           alpha = 0.7
         )
-      } +
+    }
+    
+    # Add scales and theme
+    heatmap_mt <- heatmap_mt +
       ggplot2::scale_x_date(
         limits = c(start_xlim_mt, end_xlim_mt),
         breaks = breaks_vec,
         labels = date_labels,
         expand = c(0, 0)
       ) +
-      ggplot2::scale_y_discrete(
-        expand = c(0, 0)
-      ) +
+      ggplot2::scale_y_discrete(expand = c(0, 0)) +
       ggplot2::labs(
         title = paste("Cash Rate Probabilities for Meeting on", fmt_date(meeting_date_proper)),
-        
         x = "Date",
         y = "Cash Rate"
       ) +
@@ -1057,15 +809,7 @@ ggplot2::geom_line(
       )
     
     temp_filename <- paste0(filename, ".tmp")
-    
-    ggplot2::ggsave(
-      filename = temp_filename,
-      plot = heatmap_mt,
-      width = 12,
-      height = 8,
-      dpi = 300,
-      device = "png"
-    )
+    ggplot2::ggsave(filename = temp_filename, plot = heatmap_mt, width = 12, height = 8, dpi = 300, device = "png")
     
     if (file.exists(temp_filename)) {
       file.rename(temp_filename, filename)
@@ -1080,3 +824,4 @@ ggplot2::geom_line(
 }
 
 cat("\nHeatmap visualizations completed!\n")
+cat("\nDaily analysis completed successfully!\n")
