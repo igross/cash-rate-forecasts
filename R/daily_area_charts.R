@@ -780,7 +780,7 @@ percentile_lines <- all_estimates_area %>%
         name = "Lines",
         values = c(
           "Actual Cash Rate" = "#0066CC",
-          "Actual Outcome" = "purple",
+          "Actual Outcome" = "black",
           "RBA Meetings" = "grey30"
         ),
         breaks = c("Contemporaneous Cash Rate", "Cash Rate Decision", "RBA Meetings")
