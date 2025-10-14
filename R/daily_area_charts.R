@@ -716,21 +716,21 @@ percentile_lines <- all_estimates_area %>%
         ggplot2::geom_line(
           data = percentile_lines,
           aes(x = scrape_date, y = p25_pos, linetype = "25th Percentile"),
-          color = "#0e610e",
+          color = "#4B0082",
           linewidth = 0.25,
           inherit.aes = FALSE
         ) +
         ggplot2::geom_line(
           data = percentile_lines,
           aes(x = scrape_date, y = p50_pos, linetype = "Median (50th)"),
-          color = "#0e610e",
+          color = "#4B0082",
           linewidth = 0.5,
           inherit.aes = FALSE
         ) +
         ggplot2::geom_line(
           data = percentile_lines,
           aes(x = scrape_date, y = p75_pos, linetype = "75th Percentile"),
-          color = "#0e610e",
+          color = "#4B0082",
           linewidth = 0.25,
           inherit.aes = FALSE
         )
@@ -783,7 +783,7 @@ percentile_lines <- all_estimates_area %>%
           "Actual Outcome" = "purple",
           "RBA Meetings" = "grey30"
         ),
-        breaks = c("Actual Cash Rate", "Actual Outcome", "RBA Meetings")
+        breaks = c("Contemporaneous Cash Rate", "Cash Rate Decision", "RBA Meetings")
       ) +
       ggplot2::scale_linetype_manual(
         name = "Percentiles",
