@@ -44,6 +44,23 @@ cash_rate$cash_rate <- cash_rate$cash_rate + spread
 # Create output directory structure
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
+now_melb <- now(tzone = "Australia/Melbourne")
+today_melb <- as.Date(now_melb)
+cutoff <- ymd_hm(paste0(today_melb, " 15:00"), tz = "Australia/Melbourne")
+
+next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
+                    now_melb < cutoff) {
+  today_melb
+} else {
+  meeting_schedule %>%
+    filter(meeting_date > today_melb) %>%
+    slice_min(meeting_date) %>%
+    pull(meeting_date)
+}
+
+print(paste("Next meeting:", next_meeting))
+
+
 # ------------------------------------------------------------------------------
 # 3. HELPER FUNCTIONS
 # ------------------------------------------------------------------------------
@@ -315,7 +332,7 @@ if (n_bad > 0) {
 }
 
 # Display sample of estimates
-all_estimates %>% tail(100) %>% print(n = Inf, width = Inf)
+all_estimates  %>% filter(meeting_date == next_meeting) tail(100) %>% print(n = Inf, width = Inf)
 
 # ------------------------------------------------------------------------------
 # 9. CALCULATE PROBABILITIES FOR EACH RATE BUCKET
@@ -441,26 +458,7 @@ for (mt in future_meetings) {
   )
 }
 
-# ------------------------------------------------------------------------------
-# 11. DETERMINE NEXT MEETING (ACCOUNTING FOR SAME-DAY TIMING)
-# ------------------------------------------------------------------------------
 
-# If today is a meeting day, show it until 3:00 PM, then roll to next meeting
-now_melb <- now(tzone = "Australia/Melbourne")
-today_melb <- as.Date(now_melb)
-cutoff <- ymd_hm(paste0(today_melb, " 15:00"), tz = "Australia/Melbourne")
-
-next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
-                    now_melb < cutoff) {
-  today_melb
-} else {
-  meeting_schedule %>%
-    filter(meeting_date > today_melb) %>%
-    slice_min(meeting_date) %>%
-    pull(meeting_date)
-}
-
-print(paste("Next meeting:", next_meeting))
 
 # ------------------------------------------------------------------------------
 # 12. PREPARE DATA FOR LINE CHART (TOP 3-4 OUTCOMES)
