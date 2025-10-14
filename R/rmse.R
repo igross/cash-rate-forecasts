@@ -273,7 +273,8 @@ rmse_days <- daily_rmse %>%
     finalrmse = predict(
       loess(finalrmse_0 ~ days_to_meeting, data = ., span = 0.75)
     )
-  )
+  ) %>%
+  select(days_to_meeting, finalrmse)
 
 cat("Total horizons:", nrow(rmse_days), "\n")
 cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n\n")
