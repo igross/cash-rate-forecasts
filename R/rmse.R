@@ -268,7 +268,7 @@ rmse_days <- daily_rmse %>%
   mutate(
     finalrmse_0 = rmse / constant_ratio
   ) %>%
-  select(days_to_meeting = days_ahead, finalrmse) %>%
+  select(days_to_meeting = days_ahead, finalrmse_0) %>%
   mutate(
     finalrmse = predict(
       loess(finalrmse_0 ~ days_to_meeting, data = ., span = 0.75)
