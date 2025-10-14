@@ -579,3 +579,313 @@ percentile_lines <- all_estimates_area %>%
 
 cat("\nHeatmap visualizations completed!\n")
 cat("\nDaily analysis completed successfully!\n")
+
+
+
+# =============================================
+# INTERACTIVE PLOTLY HEATMAP VISUALIZATIONS
+# =============================================
+cat("\n=== Creating interactive heatmap visualizations ===\n")
+
+for (mt in future_meetings_all) {
+  cat("\n=== Processing interactive heatmap for meeting:", as.character(as.Date(mt)), "===\n")
+  
+  df_mt_heat <- all_estimates_buckets_ext %>%
+    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+    dplyr::group_by(scrape_date, move, bucket) %>%
+    dplyr::summarise(probability = sum(probability, na.rm = TRUE), .groups = "drop") %>%
+    dplyr::arrange(scrape_date, move)
+  
+  if (nrow(df_mt_heat) == 0) {
+    cat("Skipping - no data for meeting\n")
+    next 
+  }
+  
+  bucket_lookup <- all_estimates_buckets_ext %>%
+    dplyr::select(move, bucket) %>%
+    dplyr::distinct()
+  
+  df_mt_heat <- df_mt_heat %>%
+    dplyr::filter(
+      !is.na(scrape_date), !is.na(probability),
+      is.finite(probability), probability >= 0, !is.na(move)
+    ) %>%
+    dplyr::mutate(
+      probability = pmin(probability, 1.0),
+      probability = pmax(probability, 0.0)
+    )
+  
+  if (nrow(df_mt_heat) == 0) next
+  
+  meeting_date_proper <- as.Date(mt) - days(1)
+  start_xlim_mt <- min(df_mt_heat$scrape_date, na.rm = TRUE)
+  end_xlim_mt <- meeting_date_proper
+  
+  available_moves <- unique(df_mt_heat$move[!is.na(df_mt_heat$move)])
+  valid_move_levels <- rate_labels[rate_labels %in% available_moves]
+  
+  df_mt_heat <- df_mt_heat %>%
+    dplyr::filter(move %in% valid_move_levels) %>%
+    dplyr::mutate(move = factor(move, levels = valid_move_levels)) %>%
+    dplyr::filter(!is.na(move))
+  
+  if (nrow(df_mt_heat) == 0) next
+  
+  # Forward fill missing days
+  all_dates_seq <- seq.Date(from = start_xlim_mt, to = end_xlim_mt, by = "day")
+  
+  complete_grid <- expand.grid(
+    scrape_date = all_dates_seq,
+    move = valid_move_levels,
+    stringsAsFactors = FALSE
+  ) %>%
+    dplyr::mutate(move = factor(move, levels = valid_move_levels)) %>%
+    dplyr::left_join(bucket_lookup, by = "move")
+  
+  df_mt_heat <- complete_grid %>%
+    dplyr::left_join(
+      df_mt_heat %>% dplyr::select(scrape_date, move, probability),
+      by = c("scrape_date", "move")
+    )
+  
+  last_data_dates <- df_mt_heat %>%
+    dplyr::filter(!is.na(probability)) %>%
+    dplyr::group_by(move) %>%
+    dplyr::summarise(last_date = max(scrape_date), .groups = "drop")
+  
+  df_mt_heat <- df_mt_heat %>%
+    dplyr::left_join(last_data_dates, by = "move") %>%
+    dplyr::group_by(move) %>%
+    dplyr::arrange(scrape_date) %>%
+    dplyr::mutate(
+      probability = ifelse(scrape_date <= last_date,
+                          zoo::na.locf(probability, na.rm = FALSE),
+                          NA_real_)
+    ) %>%
+    dplyr::select(-last_date) %>%
+    dplyr::ungroup()
+  
+  # Fill any remaining NAs at the start with 0
+  df_mt_heat <- df_mt_heat %>%
+    dplyr::group_by(move) %>%
+    dplyr::mutate(
+      first_non_na = min(scrape_date[!is.na(probability)], na.rm = TRUE),
+      probability = ifelse(is.na(probability) & scrape_date < first_non_na, 0, probability)
+    ) %>%
+    dplyr::select(-first_non_na) %>%
+    dplyr::ungroup()
+  
+  # Calculate percentile lines
+  percentile_lines <- all_estimates_area %>%
+    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+    dplyr::filter(!is.na(implied_mean), !is.na(stdev), stdev > 0) %>%
+    dplyr::mutate(
+      p25 = qnorm(0.25, mean = implied_mean, sd = stdev),
+      p50 = implied_mean,
+      p75 = qnorm(0.75, mean = implied_mean, sd = stdev)
+    ) %>%
+    dplyr::select(scrape_date, p25, p50, p75) %>%
+    dplyr::distinct()
+  
+  # Prepare actual cash rate line
+  actual_rate_line <- rba_historical %>%
+    dplyr::filter(date >= start_xlim_mt, date <= end_xlim_mt) %>%
+    dplyr::mutate(rate_label = sprintf("%.2f%%", value)) %>%
+    dplyr::select(date, value)
+  
+  # Check for actual outcome
+  actual_outcome <- NULL
+  is_past_meeting <- meeting_date_proper < Sys.Date()
+  
+  if (is_past_meeting) {
+    actual_outcome_data <- rba_historical %>%
+      dplyr::filter(date > meeting_date_proper + 2) %>%
+      dplyr::slice_min(date, n = 1, with_ties = FALSE)
+    
+    if (nrow(actual_outcome_data) > 0) {
+      actual_outcome <- actual_outcome_data$value
+      cat("Actual outcome for interactive heatmap:", actual_outcome, "%\n")
+    }
+  }
+  
+  # RBA meetings in range
+  rba_meetings_in_range <- meeting_schedule %>%
+    dplyr::filter(meeting_date > start_xlim_mt, meeting_date < meeting_date_proper)
+  
+  # Prepare data for Plotly (pivot wider for heatmap)
+  heat_matrix <- df_mt_heat %>%
+    tidyr::pivot_wider(
+      id_cols = scrape_date,
+      names_from = move,
+      values_from = probability
+    ) %>%
+    dplyr::arrange(scrape_date)
+  
+  dates <- heat_matrix$scrape_date
+  heat_matrix <- heat_matrix %>% dplyr::select(-scrape_date)
+  
+  # Create custom hover text with date, rate, and probability
+  hover_text <- matrix("", nrow = nrow(heat_matrix), ncol = ncol(heat_matrix))
+  for (i in seq_len(nrow(heat_matrix))) {
+    for (j in seq_len(ncol(heat_matrix))) {
+      prob_val <- heat_matrix[i, j]
+      if (!is.na(prob_val)) {
+        hover_text[i, j] <- paste0(
+          "Date: ", format(dates[i], "%d %b %Y"), "<br>",
+          "Cash Rate: ", colnames(heat_matrix)[j], "<br>",
+          "Probability: ", sprintf("%.1f%%", prob_val * 100)
+        )
+      }
+    }
+  }
+  
+  # Create the interactive heatmap
+  filename_html <- paste0("docs/meetings/daily_heatmap_", fmt_file(meeting_date_proper), ".html")
+  
+  tryCatch({
+    fig <- plotly::plot_ly(
+      x = dates,
+      y = colnames(heat_matrix),
+      z = t(as.matrix(heat_matrix)),
+      type = "heatmap",
+      colorscale = list(
+        c(0.00, "#FFFACD"),
+        c(0.15, "#FFD700"),
+        c(0.30, "#FFA500"),
+        c(0.45, "#FF6347"),
+        c(0.60, "#FF1493"),
+        c(0.75, "#8B008B"),
+        c(0.90, "#4B0082"),
+        c(1.00, "#2E0854")
+      ),
+      zmin = 0,
+      zmax = 1,
+      hoverinfo = "text",
+      text = t(hover_text),
+      colorbar = list(
+        title = "Probability",
+        tickformat = ".0%",
+        len = 0.8
+      )
+    )
+    
+    # Add percentile lines
+    if (nrow(percentile_lines) > 0) {
+      fig <- fig %>%
+        plotly::add_trace(
+          x = percentile_lines$scrape_date,
+          y = percentile_lines$p25,
+          type = "scatter",
+          mode = "lines",
+          name = "25th Percentile",
+          line = list(color = "#4B0082", width = 1, dash = "dash"),
+          hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
+                                "25th Percentile: %{y:.2f}%<extra></extra>")
+        ) %>%
+        plotly::add_trace(
+          x = percentile_lines$scrape_date,
+          y = percentile_lines$p50,
+          type = "scatter",
+          mode = "lines",
+          name = "Median (50th)",
+          line = list(color = "#4B0082", width = 2),
+          hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
+                                "Median: %{y:.2f}%<extra></extra>")
+        ) %>%
+        plotly::add_trace(
+          x = percentile_lines$scrape_date,
+          y = percentile_lines$p75,
+          type = "scatter",
+          mode = "lines",
+          name = "75th Percentile",
+          line = list(color = "#4B0082", width = 1, dash = "dash"),
+          hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
+                                "75th Percentile: %{y:.2f}%<extra></extra>")
+        )
+    }
+    
+    # Add actual cash rate line
+    if (nrow(actual_rate_line) > 0) {
+      fig <- fig %>%
+        plotly::add_trace(
+          x = actual_rate_line$date,
+          y = actual_rate_line$value,
+          type = "scatter",
+          mode = "lines",
+          name = "Actual Cash Rate",
+          line = list(color = "#0066CC", width = 2),
+          hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
+                                "Actual Rate: %{y:.2f}%<extra></extra>")
+        )
+    }
+    
+    # Add actual outcome line
+    if (!is.null(actual_outcome)) {
+      fig <- fig %>%
+        plotly::add_trace(
+          x = c(start_xlim_mt, end_xlim_mt),
+          y = c(actual_outcome, actual_outcome),
+          type = "scatter",
+          mode = "lines",
+          name = "Actual Outcome",
+          line = list(color = "black", width = 2, dash = "dot"),
+          hovertemplate = paste0("Actual Outcome: ", sprintf("%.2f%%", actual_outcome), "<extra></extra>")
+        )
+    }
+    
+    # Add RBA meeting lines
+    if (nrow(rba_meetings_in_range) > 0) {
+      for (i in seq_len(nrow(rba_meetings_in_range))) {
+        mtg_date <- rba_meetings_in_range$meeting_date[i]
+        y_range <- range(as.numeric(gsub("%", "", colnames(heat_matrix))))
+        
+        fig <- fig %>%
+          plotly::add_trace(
+            x = c(mtg_date, mtg_date),
+            y = y_range,
+            type = "scatter",
+            mode = "lines",
+            name = if(i == 1) "RBA Meetings" else NA,
+            showlegend = (i == 1),
+            line = list(color = "grey30", width = 1, dash = "dash"),
+            hovertemplate = paste0("RBA Meeting: ", format(mtg_date, "%d %b %Y"), "<extra></extra>")
+          )
+      }
+    }
+    
+    # Update layout
+    fig <- fig %>%
+      plotly::layout(
+        title = list(
+          text = paste("Cash Rate Probabilities for Meeting on", fmt_date(meeting_date_proper)),
+          font = list(size = 16)
+        ),
+        xaxis = list(
+          title = "Date",
+          tickformat = "%b-%Y",
+          dtick = "M1"
+        ),
+        yaxis = list(
+          title = "Cash Rate (%)",
+          type = "category"
+        ),
+        hovermode = "closest",
+        plot_bgcolor = "#FFFFFF",
+        paper_bgcolor = "#FFFFFF"
+      )
+    
+    # Save the interactive plot
+    htmlwidgets::saveWidget(
+      plotly::as_widget(fig),
+      file = filename_html,
+      selfcontained = TRUE
+    )
+    
+    cat("✓ Saved interactive heatmap:", filename_html, "\n")
+    
+  }, error = function(e) {
+    cat("✗ Error creating interactive heatmap:", e$message, "\n")
+  })
+}
+
+cat("\nInteractive heatmap visualizations completed!\n")
