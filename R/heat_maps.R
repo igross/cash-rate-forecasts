@@ -581,9 +581,8 @@ cat("\nHeatmap visualizations completed!\n")
 cat("\nDaily analysis completed successfully!\n")
 
 
-
 # =============================================
-# INTERACTIVE PLOTLY HEATMAP VISUALIZATIONS
+# INTERACTIVE PLOTLY HEATMAP VISUALIZATIONS - FIXED
 # =============================================
 cat("\n=== Creating interactive heatmap visualizations ===\n")
 
@@ -612,7 +611,9 @@ for (mt in future_meetings_all) {
     ) %>%
     dplyr::mutate(
       probability = pmin(probability, 1.0),
-      probability = pmax(probability, 0.0)
+      probability = pmax(probability, 0.0),
+      # Make probabilities < 0.01 transparent (NA)
+      probability = ifelse(probability < 0.01, NA_real_, probability)
     )
   
   if (nrow(df_mt_heat) == 0) next
@@ -665,12 +666,13 @@ for (mt in future_meetings_all) {
     dplyr::select(-last_date) %>%
     dplyr::ungroup()
   
-  # Fill any remaining NAs at the start with 0
+  # Fill any remaining NAs at the start with 0, then apply < 0.01 filter
   df_mt_heat <- df_mt_heat %>%
     dplyr::group_by(move) %>%
     dplyr::mutate(
       first_non_na = min(scrape_date[!is.na(probability)], na.rm = TRUE),
-      probability = ifelse(is.na(probability) & scrape_date < first_non_na, 0, probability)
+      probability = ifelse(is.na(probability) & scrape_date < first_non_na, 0, probability),
+      probability = ifelse(probability < 0.01, NA_real_, probability)
     ) %>%
     dplyr::select(-first_non_na) %>%
     dplyr::ungroup()
@@ -687,14 +689,21 @@ for (mt in future_meetings_all) {
     dplyr::select(scrape_date, p25, p50, p75) %>%
     dplyr::distinct()
   
-  # Prepare actual cash rate line
+  # Prepare actual cash rate line - MAP TO CATEGORICAL Y-AXIS
   actual_rate_line <- rba_historical %>%
     dplyr::filter(date >= start_xlim_mt, date <= end_xlim_mt) %>%
-    dplyr::mutate(rate_label = sprintf("%.2f%%", value)) %>%
-    dplyr::select(date, value)
+    dplyr::mutate(
+      rate_label = sprintf("%.2f%%", value),
+      # Find the closest matching level from the heatmap y-axis
+      closest_level = sapply(value, function(v) {
+        valid_move_levels[which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - v))]
+      })
+    ) %>%
+    dplyr::select(date, value, closest_level)
   
   # Check for actual outcome
   actual_outcome <- NULL
+  actual_outcome_label <- NULL
   is_past_meeting <- meeting_date_proper < Sys.Date()
   
   if (is_past_meeting) {
@@ -704,6 +713,7 @@ for (mt in future_meetings_all) {
     
     if (nrow(actual_outcome_data) > 0) {
       actual_outcome <- actual_outcome_data$value
+      actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
       cat("Actual outcome for interactive heatmap:", actual_outcome, "%\n")
     }
   }
@@ -765,46 +775,50 @@ for (mt in future_meetings_all) {
       colorbar = list(
         title = "Probability",
         tickformat = ".0%",
-        len = 0.8
+        len = 0.6,
+        y = 0.5,
+        yanchor = "middle"
       )
     )
     
-
-    
-    # Add actual cash rate line
+    # Add actual cash rate line - using categorical y values
     if (nrow(actual_rate_line) > 0) {
       fig <- fig %>%
         plotly::add_trace(
           x = actual_rate_line$date,
-          y = actual_rate_line$value,
+          y = actual_rate_line$closest_level,  # Use categorical labels
           type = "scatter",
           mode = "lines",
           name = "Actual Cash Rate",
           line = list(color = "#0066CC", width = 2),
+          yaxis = "y",  # Use same y-axis as heatmap
           hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
-                                "Actual Rate: %{y:.2f}%<extra></extra>")
+                                "Actual Rate: ", sprintf("%.2f%%", actual_rate_line$value), 
+                                "<extra></extra>")
         )
     }
     
-    # Add actual outcome line
-    if (!is.null(actual_outcome)) {
+    # Add actual outcome line - using categorical y value
+    if (!is.null(actual_outcome_label)) {
       fig <- fig %>%
         plotly::add_trace(
           x = c(start_xlim_mt, end_xlim_mt),
-          y = c(actual_outcome, actual_outcome),
+          y = c(actual_outcome_label, actual_outcome_label),  # Use categorical label
           type = "scatter",
           mode = "lines",
           name = "Actual Outcome",
           line = list(color = "black", width = 2, dash = "dot"),
-          hovertemplate = paste0("Actual Outcome: ", sprintf("%.2f%%", actual_outcome), "<extra></extra>")
+          yaxis = "y",  # Use same y-axis as heatmap
+          hovertemplate = paste0("Actual Outcome: ", actual_outcome_label, "<extra></extra>")
         )
     }
     
     # Add RBA meeting lines
     if (nrow(rba_meetings_in_range) > 0) {
+      y_range <- c(colnames(heat_matrix)[1], colnames(heat_matrix)[length(colnames(heat_matrix))])
+      
       for (i in seq_len(nrow(rba_meetings_in_range))) {
         mtg_date <- rba_meetings_in_range$meeting_date[i]
-        y_range <- range(as.numeric(gsub("%", "", colnames(heat_matrix))))
         
         fig <- fig %>%
           plotly::add_trace(
@@ -815,12 +829,13 @@ for (mt in future_meetings_all) {
             name = if(i == 1) "RBA Meetings" else NA,
             showlegend = (i == 1),
             line = list(color = "grey30", width = 1, dash = "dash"),
+            yaxis = "y",  # Use same y-axis as heatmap
             hovertemplate = paste0("RBA Meeting: ", format(mtg_date, "%d %b %Y"), "<extra></extra>")
           )
       }
     }
     
-    # Update layout
+    # Update layout - fix legend positioning
     fig <- fig %>%
       plotly::layout(
         title = list(
@@ -838,7 +853,18 @@ for (mt in future_meetings_all) {
         ),
         hovermode = "closest",
         plot_bgcolor = "#FFFFFF",
-        paper_bgcolor = "#FFFFFF"
+        paper_bgcolor = "#FFFFFF",
+        legend = list(
+          orientation = "v",
+          yanchor = "top",
+          y = 0.99,
+          xanchor = "left",
+          x = 1.15,
+          bgcolor = "rgba(255, 255, 255, 0.8)",
+          bordercolor = "rgba(0, 0, 0, 0.2)",
+          borderwidth = 1
+        ),
+        margin = list(r = 200)  # Add right margin for legend
       )
     
     # Save the interactive plot
