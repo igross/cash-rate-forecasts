@@ -635,31 +635,29 @@ for (mt in future_meetings_all) {
     dplyr::ungroup()
   
   # Calculate percentile lines
-  percentile_lines <- df_mt_heat %>%
-    dplyr::filter(!is.na(probability)) %>%
-    dplyr::arrange(scrape_date, move) %>%
-    dplyr::group_by(scrape_date) %>%
-    dplyr::mutate(
-      cumulative_prob = cumsum(probability),
-      bucket_numeric = bucket
-    ) %>%
-    dplyr::summarise(
-      p25 = approx(cumulative_prob, bucket_numeric, xout = 0.25, rule = 2)$y,
-      p50 = approx(cumulative_prob, bucket_numeric, xout = 0.50, rule = 2)$y,
-      p75 = approx(cumulative_prob, bucket_numeric, xout = 0.75, rule = 2)$y,
-      .groups = "drop"
-    ) %>%
-    dplyr::mutate(
-      p25_pos = sapply(p25, function(val) {
-        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-      }),
-      p50_pos = sapply(p50, function(val) {
-        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-      }),
-      p75_pos = sapply(p75, function(val) {
-        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-      })
-    )
+percentile_lines <- all_estimates_area %>%
+  dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+  dplyr::filter(!is.na(implied_mean), !is.na(stdev), stdev > 0) %>%
+  dplyr::mutate(
+    # Calculate percentiles using normal distribution
+    p25 = qnorm(0.25, mean = implied_mean, sd = stdev),
+    p50 = implied_mean,  # Median equals mean for normal distribution
+    p75 = qnorm(0.75, mean = implied_mean, sd = stdev)
+  ) %>%
+  dplyr::select(scrape_date, p25, p50, p75) %>%
+  dplyr::distinct() %>%
+  dplyr::mutate(
+    # Convert actual rates to positions in the factor levels
+    p25_pos = sapply(p25, function(val) {
+      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+    }),
+    p50_pos = sapply(p50, function(val) {
+      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+    }),
+    p75_pos = sapply(p75, function(val) {
+      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+    })
+  )
   
   # Prepare actual cash rate line
   actual_rate_line <- rba_historical %>%
