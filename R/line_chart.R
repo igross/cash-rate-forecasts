@@ -32,6 +32,8 @@ cash_rate <- readRDS("combined_data/all_data.Rds")
 # Load RMSE lookup table (days_to_meeting → forecast error)
 load("combined_data/rmse_new.RData")
 
+print(rmse_days$finalrmse,n=30)
+
 # Configuration parameters
 spread <- 0.00  # Spread adjustment for cash rate
 override <- 3.60  # Manual override for current rate (if needed)
