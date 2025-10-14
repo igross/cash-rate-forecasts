@@ -279,7 +279,7 @@ cat("Total horizons:", nrow(rmse_days), "\n")
 cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n\n")
 
 cat("Sample of final output:\n")
-print(head(rmse_days, 30))
+print(rmse_days, 30)
 
 
 # =============================================
