@@ -703,7 +703,7 @@ percentile_lines <- all_estimates_area %>%
       ggplot2::geom_tile() +
       ggplot2::scale_fill_gradientn(
         colors = c("#FFFACD", "#FFD700", "#FFA500", "#FF6347", "#FF1493", "#8B008B", "#4B0082", "#2E0854"),
-        values = c(0, 0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.0),
+        values = c(0.01, 0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.0),
         limits = c(0, 1),
         labels = scales::percent_format(accuracy = 1),
         na.value = "transparent",
