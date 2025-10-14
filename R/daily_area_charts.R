@@ -699,11 +699,11 @@ percentile_lines <- all_estimates_area %>%
     date_labels <- function(x) format(x, "%b-%Y")
     
     # Create base heatmap
-    heatmap_mt <- ggplot2::ggplot(df_mt_heat, ggplot2::aes(x = scrape_date, y = move, fill = probability)) +
+    heatmap_mt <-ggplot2::ggplot(df_mt_heat, ggplot2::aes(x = scrape_date, y = move, fill = probability)) +
       ggplot2::geom_tile() +
       ggplot2::scale_fill_gradientn(
-        colors = c("white", "#FFE4B5", "#FFA500", "#FF8C00", "#FF4500", "#8B0000"),
-        values = c(0, 0.10, 0.30, 0.50, 0.70, 1.0),
+        colors = c("#FFFACD", "#FFD700", "#FFA500", "#FF6347", "#FF1493", "#8B008B", "#4B0082", "#2E0854"),
+        values = c(0, 0.15, 0.30, 0.45, 0.60, 0.75, 0.90, 1.0),
         limits = c(0, 1),
         labels = scales::percent_format(accuracy = 1),
         na.value = "transparent",
@@ -716,7 +716,7 @@ percentile_lines <- all_estimates_area %>%
         ggplot2::geom_line(
           data = percentile_lines,
           aes(x = scrape_date, y = p25_pos),
-          color = "#0e610e",
+          color = "#8B0000",
           linewidth = 0.25,
           linetype = "dashed",
           inherit.aes = FALSE
@@ -724,7 +724,7 @@ percentile_lines <- all_estimates_area %>%
         ggplot2::geom_line(
           data = percentile_lines,
           aes(x = scrape_date, y = p50_pos),
-          color = "#0e610e",
+          color = "#8B0000",
           linewidth = 0.5,
           linetype = "dashed",
           inherit.aes = FALSE
@@ -732,7 +732,7 @@ percentile_lines <- all_estimates_area %>%
         ggplot2::geom_line(
           data = percentile_lines,
           aes(x = scrape_date, y = p75_pos),
-          color = "#0e610e",
+          color = "#8B0000",
           linewidth = 0.25,
           linetype = "dashed",
           inherit.aes = FALSE
