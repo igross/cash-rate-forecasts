@@ -698,8 +698,8 @@ percentile_lines <- all_estimates_area %>%
     breaks_vec <- seq.Date(from = start_month, to = end_month, by = "month")
     date_labels <- function(x) format(x, "%b-%Y")
     
-    # Create base heatmap
-    heatmap_mt <-ggplot2::ggplot(df_mt_heat, ggplot2::aes(x = scrape_date, y = move, fill = probability)) +
+# Create base heatmap with rainbow colors (light yellow to dark purple)
+    heatmap_mt <- ggplot2::ggplot(df_mt_heat, ggplot2::aes(x = scrape_date, y = move, fill = probability)) +
       ggplot2::geom_tile() +
       ggplot2::scale_fill_gradientn(
         colors = c("#FFFACD", "#FFD700", "#FFA500", "#FF6347", "#FF1493", "#8B008B", "#4B0082", "#2E0854"),
@@ -710,75 +710,94 @@ percentile_lines <- all_estimates_area %>%
         name = "Probability"
       )
     
-    # Add percentile lines
+    # Add percentile lines with legend entries
     if (nrow(percentile_lines) > 0) {
       heatmap_mt <- heatmap_mt +
         ggplot2::geom_line(
           data = percentile_lines,
-          aes(x = scrape_date, y = p25_pos),
-          color = "#8B0000",
+          aes(x = scrape_date, y = p25_pos, linetype = "25th Percentile"),
+          color = "#0e610e",
           linewidth = 0.25,
-          linetype = "dashed",
           inherit.aes = FALSE
         ) +
         ggplot2::geom_line(
           data = percentile_lines,
-          aes(x = scrape_date, y = p50_pos),
-          color = "#8B0000",
+          aes(x = scrape_date, y = p50_pos, linetype = "Median (50th)"),
+          color = "#0e610e",
           linewidth = 0.5,
-          linetype = "dashed",
           inherit.aes = FALSE
         ) +
         ggplot2::geom_line(
           data = percentile_lines,
-          aes(x = scrape_date, y = p75_pos),
-          color = "#8B0000",
+          aes(x = scrape_date, y = p75_pos, linetype = "75th Percentile"),
+          color = "#0e610e",
           linewidth = 0.25,
-          linetype = "dashed",
           inherit.aes = FALSE
         )
     }
     
-    # Add actual cash rate line
+    # Add actual cash rate line with legend entry
     if (nrow(actual_rate_line) > 0) {
       heatmap_mt <- heatmap_mt +
         ggplot2::geom_line(
           data = actual_rate_line,
-          aes(x = date, y = rate_position),
-          color = "#0066CC",
+          aes(x = date, y = rate_position, color = "Actual Cash Rate"),
           linewidth = 1.0,
           linetype = "solid",
           inherit.aes = FALSE
         )
     }
     
-    # Add actual outcome line
+    # Add actual outcome line with legend entry
     if (!is.null(actual_outcome)) {
       actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
       outcome_position <- which(levels(df_mt_heat$move) == actual_outcome_label)
       if (length(outcome_position) > 0) {
         heatmap_mt <- heatmap_mt +
           ggplot2::geom_hline(
-            yintercept = outcome_position,
-            color = "purple",
+            aes(yintercept = outcome_position, color = "Actual Outcome"),
             linewidth = 0.85,
             linetype = "dotted"
           )
       }
     }
     
-    # Add RBA meeting lines
+    # Add RBA meeting lines with legend entry
     if (nrow(rba_meetings_in_range) > 0) {
       heatmap_mt <- heatmap_mt +
         ggplot2::geom_vline(
           data = rba_meetings_in_range,
-          aes(xintercept = as.numeric(meeting_date)),
+          aes(xintercept = as.numeric(meeting_date), color = "RBA Meetings"),
           linetype = "dashed",
-          color = "grey30",
           linewidth = 0.5,
           alpha = 0.7
         )
     }
+    
+    # Add manual color and linetype scales for legend
+    heatmap_mt <- heatmap_mt +
+      ggplot2::scale_color_manual(
+        name = "Lines",
+        values = c(
+          "Actual Cash Rate" = "#0066CC",
+          "Actual Outcome" = "purple",
+          "RBA Meetings" = "grey30"
+        ),
+        breaks = c("Actual Cash Rate", "Actual Outcome", "RBA Meetings")
+      ) +
+      ggplot2::scale_linetype_manual(
+        name = "Percentiles",
+        values = c(
+          "25th Percentile" = "dashed",
+          "Median (50th)" = "dashed",
+          "75th Percentile" = "dashed"
+        )
+      ) +
+      ggplot2::guides(
+        fill = ggplot2::guide_colorbar(order = 1),
+        color = ggplot2::guide_legend(order = 2, override.aes = list(linewidth = 1)),
+        linetype = ggplot2::guide_legend(order = 3, override.aes = list(color = "#0e610e", linewidth = 0.5))
+      )
     
     # Add scales and theme
     heatmap_mt <- heatmap_mt +
