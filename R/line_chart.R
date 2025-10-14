@@ -464,6 +464,8 @@ print(paste("Next meeting:", next_meeting))
 # 12. PREPARE DATA FOR LINE CHART (TOP 3-4 OUTCOMES)
 # ------------------------------------------------------------------------------
 
+print(all_estimates_buckets %>% filter(meeting_date == next_meeting))
+
 # Identify the 3-4 most probable outcomes for the next meeting
 top3_buckets <- all_estimates_buckets %>% 
   filter(meeting_date == next_meeting) %>%
@@ -471,6 +473,7 @@ top3_buckets <- all_estimates_buckets %>%
   summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
   slice_max(order_by = probability, n = 4, with_ties = FALSE) %>% 
   pull(bucket)
+
 
 # Filter data to these top outcomes and create descriptive labels
 top3_df <- all_estimates_buckets %>%
