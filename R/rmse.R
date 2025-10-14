@@ -264,11 +264,16 @@ rmse_all_methods <- quarterly_adjusted %>%
 cat("\n=== CREATING FINAL RMSE BASED ON DAILY, SCALED BY CONSTANT RATIO ===\n")
 
 # Scale daily RMSE by constant ratio (up to quarterly level)
-rmse_days <- daily_rmse %>%
+rmse_days <- daily_rmse %>% 
   mutate(
-    finalrmse = rmse / constant_ratio
+    finalrmse_0 = rmse / constant_ratio
   ) %>%
-  select(days_to_meeting = days_ahead, finalrmse)
+  select(days_to_meeting = days_ahead, finalrmse) %>%
+  mutate(
+    finalrmse = predict(
+      loess(finalrmse_0 ~ days_to_meeting, data = ., span = 0.75)
+    )
+  )
 
 cat("Total horizons:", nrow(rmse_days), "\n")
 cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n\n")
