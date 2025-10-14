@@ -1,4 +1,165 @@
 # =============================================
+# Calculate and Interpolate RMSE from Both Data Sources
+# Using Spline Smoothing for Final Output
+# =============================================
+
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(readr)
+library(ggplot2)
+library(zoo)
+
+# =============================================
+# 1. Load Quarterly Forecast Data
+# =============================================
+
+quarterly_file <- "combined_data/f17_rmse.csv"
+
+quarterly_data_raw <- read_csv(quarterly_file, col_types = cols())
+
+cat("Quarterly data dimensions:", nrow(quarterly_data_raw), "x", ncol(quarterly_data_raw), "\n")
+
+# Transform from wide to long format
+quarterly_data <- quarterly_data_raw %>%
+  rename(forecast_date = 1, actual_rate = Actual) %>%
+  mutate(forecast_date = dmy(forecast_date)) %>%
+  pivot_longer(
+    cols = -c(forecast_date, actual_rate),
+    names_to = "horizon",
+    values_to = "forecast_rate"
+  ) %>%
+  mutate(
+    days_ahead = as.integer(gsub("days", "", horizon))
+  ) %>%
+  filter(!is.na(forecast_rate), !is.na(actual_rate), !is.na(days_ahead))
+
+cat("Quarterly forecasts: ", nrow(quarterly_data), "rows\n")
+cat("Date range:", format(min(quarterly_data$forecast_date), "%Y-%m-%d"), "to", 
+    format(max(quarterly_data$forecast_date), "%Y-%m-%d"), "\n")
+cat("Horizon range:", min(quarterly_data$days_ahead, na.rm = TRUE), "to", 
+    max(quarterly_data$days_ahead, na.rm = TRUE), "days\n\n")
+
+# =============================================
+# 2. Load Daily Forecast Data
+# =============================================
+
+cash_rate <- readRDS("combined_data/all_data.Rds")
+
+# Fix timezone: convert from UTC to Australia/Melbourne
+cash_rate <- cash_rate %>%
+  mutate(
+    scrape_time = with_tz(scrape_time, "Australia/Melbourne")
+  )
+
+cat("Updated scrape_time timezone to:", attr(cash_rate$scrape_time, "tzone"), "\n")
+
+# Meeting schedule
+meeting_schedule <- tibble(
+  meeting_date = as.Date(c(
+    "2024-02-06", "2024-03-19", "2024-05-07", "2024-06-18",
+    "2024-08-06", "2024-09-24", "2024-11-05", "2024-12-10",
+    "2025-02-18", "2025-04-01", "2025-05-20", "2025-07-08",
+    "2025-08-12", "2025-09-30", "2025-11-04", "2025-12-09"
+  ))
+) %>% 
+  mutate(
+    expiry = if_else(
+      day(meeting_date) >= days_in_month(meeting_date) - 1,
+      ceiling_date(meeting_date, "month"),
+      floor_date(meeting_date, "month")
+    )
+  )
+
+# Load actual RBA cash rate outcomes
+library(readrba)
+rba_actual <- read_rba(series_id = "FIRMMCRTD") %>%
+  arrange(date)
+
+meeting_outcomes <- meeting_schedule %>%
+  rowwise() %>%
+  mutate(
+    actual_rate = {
+      outcome_data <- rba_actual %>%
+        filter(date > meeting_date) %>%
+        slice_min(date, n = 1, with_ties = FALSE)
+      if (nrow(outcome_data) > 0) outcome_data$value else NA_real_
+    }
+  ) %>%
+  ungroup() %>%
+  filter(!is.na(actual_rate))
+
+# Prepare daily forecasts
+daily_forecasts <- cash_rate %>%
+  inner_join(meeting_schedule, by = c("date" = "expiry")) %>%
+  inner_join(
+    meeting_outcomes %>% select(meeting_date, actual_rate),
+    by = "meeting_date"
+  ) %>%
+  mutate(
+    forecast_date = as.Date(scrape_time),
+    days_ahead = as.integer(meeting_date - forecast_date),
+    forecast_rate = cash_rate,
+    day_of_week = lubridate::wday(forecast_date, week_start = 1)
+  ) %>%
+  # Remove weekends (Saturday = 6, Sunday = 7)
+  filter(day_of_week %in% 1:5) %>%
+  # Keep only one forecast per day per meeting
+  arrange(meeting_date, forecast_date, desc(scrape_time)) %>%
+  group_by(meeting_date, forecast_date) %>%
+  slice(1) %>%
+  ungroup() %>%
+  filter(days_ahead > 0) %>%
+  select(forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate)
+
+cat("\n=== DAILY FORECASTS (CLEANED) ===\n")
+cat("Total rows:", nrow(daily_forecasts), "\n")
+cat("Date range:", format(min(daily_forecasts$forecast_date), "%Y-%m-%d"), "to", 
+    format(max(daily_forecasts$forecast_date), "%Y-%m-%d"), "\n\n")
+
+# =============================================
+# 3. Calculate RMSE for Quarterly Forecasts
+# =============================================
+
+quarterly_rmse <- quarterly_data %>%
+  mutate(
+    forecast_error = forecast_rate - actual_rate,
+    squared_error = forecast_error^2
+  ) %>%
+  group_by(days_ahead) %>%
+  summarise(
+    n_forecasts = n(),
+    rmse = sqrt(mean(squared_error, na.rm = TRUE)),
+    .groups = "drop"
+  ) %>%
+  arrange(days_ahead) %>%
+  mutate(source = "quarterly")
+
+cat("=== QUARTERLY RMSE ===\n")
+print(quarterly_rmse %>% select(days_ahead, n_forecasts, rmse), n = 20)
+
+# =============================================
+# 4. Calculate RMSE for Daily Forecasts
+# =============================================
+
+daily_rmse <- daily_forecasts %>%
+  mutate(
+    forecast_error = forecast_rate - actual_rate,
+    squared_error = forecast_error^2
+  ) %>%
+  group_by(days_ahead) %>%
+  summarise(
+    n_forecasts = n(),
+    rmse = sqrt(mean(squared_error, na.rm = TRUE)),
+    .groups = "drop"
+  ) %>%
+  arrange(days_ahead) %>%
+  mutate(source = "daily")
+
+cat("\n=== DAILY RMSE (sample) ===\n")
+print(daily_rmse %>% select(days_ahead, n_forecasts, rmse) %>% head(20))
+
+# =============================================
 # SECTION 5: Create Adjusted RMSE Using CONSTANT Ratio
 # =============================================
 
