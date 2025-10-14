@@ -29,10 +29,10 @@ analytics_snippet <- sprintf('
 # Ensure target directory exists
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-# Find meeting PNGs
-png_basenames <- list.files(
+# Find meeting HTMLs (interactive heatmaps)
+html_basenames <- list.files(
   "docs/meetings",
-  pattern = "^daily_area_\\d{4}-\\d{2}-\\d{2}\\.png$",
+  pattern = "^daily_heatmap_\\d{4}-\\d{2}-\\d{2}\\.html$",
   full.names = FALSE
 )
 
@@ -43,8 +43,8 @@ current_date <- Sys.Date()
 future_cards <- character(0)
 past_cards <- character(0)
 
-if (length(png_basenames) > 0) {
-  dates_chr <- str_match(png_basenames, "daily_area_(\\d{4}-\\d{2}-\\d{2})\\.png")[, 2]
+if (length(html_basenames) > 0) {
+  dates_chr <- str_match(html_basenames, "daily_heatmap_(\\d{4}-\\d{2}-\\d{2})\\.html")[, 2]
   dates_obj <- as.Date(dates_chr, format = "%Y-%m-%d")
   
   # Separate future and past
@@ -53,30 +53,50 @@ if (length(png_basenames) > 0) {
   
   # Sort future meetings (earliest first)
   if (any(future_idx)) {
-    future_files <- png_basenames[future_idx]
+    future_files <- html_basenames[future_idx]
     future_dates <- dates_obj[future_idx]
     future_ord <- order(future_dates, decreasing = FALSE, na.last = TRUE)
     future_files <- future_files[future_ord]
+    future_dates <- future_dates[future_ord]
     
     future_cards <- vapply(
-      file.path("meetings", future_files),
-      function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" class="expandable" />\n</div>', 
-                             file, file),
+      seq_along(future_files),
+      function(i) {
+        file <- file.path("meetings", future_files[i])
+        date_label <- format(future_dates[i], "%d %B %Y")
+        sprintf(
+          '<div class="chart-card">
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: %s</h3>
+  <iframe src="%s" class="chart-iframe" frameborder="0"></iframe>
+</div>', 
+          date_label, file
+        )
+      },
       character(1)
     )
   }
   
   # Sort past meetings (most recent first)
   if (any(past_idx)) {
-    past_files <- png_basenames[past_idx]
+    past_files <- html_basenames[past_idx]
     past_dates <- dates_obj[past_idx]
     past_ord <- order(past_dates, decreasing = TRUE, na.last = TRUE)
     past_files <- past_files[past_ord]
+    past_dates <- past_dates[past_ord]
     
     past_cards <- vapply(
-      file.path("meetings", past_files),
-      function(file) sprintf('<div class="chart-card">\n  <img src="%s" alt="%s" loading="lazy" class="expandable" />\n</div>', 
-                             file, file),
+      seq_along(past_files),
+      function(i) {
+        file <- file.path("meetings", past_files[i])
+        date_label <- format(past_dates[i], "%d %B %Y")
+        sprintf(
+          '<div class="chart-card">
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: %s</h3>
+  <iframe src="%s" class="chart-iframe" frameborder="0"></iframe>
+</div>', 
+          date_label, file
+        )
+      },
       character(1)
     )
   }
@@ -170,7 +190,7 @@ html <- sprintf('
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(900px, 1fr));
       gap: 30px;
       padding: 10px;
       max-width: 2200px;
@@ -183,9 +203,11 @@ html <- sprintf('
       padding: 18px;
       text-align: center;
     }
-    .chart-card img {
+    .chart-iframe {
       width: 100%%;
+      height: 600px;
       border-radius: 6px;
+      background: white;
     }
     .expandable {
       cursor: pointer;
@@ -231,16 +253,22 @@ html <- sprintf('
       color: #bbb;
     }
     
-    @media (max-width: 1024px) {
+    @media (max-width: 1400px) {
       .grid {
-        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-        max-width: 1400px;
+        grid-template-columns: repeat(auto-fill, minmax(700px, 1fr));
+        max-width: 1600px;
+      }
+      .chart-iframe {
+        height: 550px;
       }
     }
     @media (max-width: 768px) {
       .grid {
         grid-template-columns: 1fr;
         max-width: 95vw;
+      }
+      .chart-iframe {
+        height: 500px;
       }
       .lightbox-close {
         top: 10px;
