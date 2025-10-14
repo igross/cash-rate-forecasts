@@ -261,10 +261,14 @@ rmse_all_methods <- quarterly_adjusted %>%
 # 7. Create Final Output (Adjusted Toward Quarterly)
 # =============================================
 
-cat("\n=== CREATING FINAL OUTPUT (ADJUSTED TOWARD QUARTERLY) ===\n")
+cat("\n=== CREATING FINAL RMSE BASED ON DAILY, SCALED BY CONSTANT RATIO ===\n")
 
-rmse_days <- quarterly_adjusted %>%
-  select(days_to_meeting = days_ahead, finalrmse = rmse_combined)
+# Scale daily RMSE by constant ratio (up to quarterly level)
+rmse_days <- daily_rmse %>%
+  mutate(
+    finalrmse = rmse / constant_ratio
+  ) %>%
+  select(days_to_meeting = days_ahead, finalrmse)
 
 cat("Total horizons:", nrow(rmse_days), "\n")
 cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n\n")
@@ -272,18 +276,6 @@ cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meetin
 cat("Sample of final output:\n")
 print(head(rmse_days, 10))
 
-cat("\nComparison at key horizons:\n")
-adjustment_sample <- quarterly_adjusted %>%
-  filter(days_ahead %in% c(1, 7, 14, 30, 60, 91, 120, 183, 274, 365)) %>%
-  select(days_ahead, adjustment_ratio, rmse_linear, rmse_daily, rmse_daily_adjusted, rmse_combined)
-print(adjustment_sample)
-
-cat("\nExplanation:\n")
-cat("- adjustment_ratio = CONSTANT", round(constant_ratio, 4), "(mean of daily/quarterly ratios)\n")
-cat("- rmse_linear = Quarterly RMSE (interpolated to daily frequency)\n")
-cat("- rmse_daily = Raw daily RMSE (where available)\n")
-cat("- rmse_daily_adjusted = rmse_daily /", round(constant_ratio, 4), "(daily adjusted UP to quarterly level)\n")
-cat("- rmse_combined (final) = adjusted daily where available, else quarterly interpolated\n")
 
 # =============================================
 # 8. Save Final Output
