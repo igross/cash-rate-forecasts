@@ -21,7 +21,7 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(900px, 1fr));
       gap: 30px;
       padding: 10px;
       max-width: 2200px;
@@ -34,9 +34,11 @@
       padding: 18px;
       text-align: center;
     }
-    .chart-card img {
+    .chart-iframe {
       width: 100%;
+      height: 600px;
       border-radius: 6px;
+      background: white;
     }
     .expandable {
       cursor: pointer;
@@ -82,16 +84,22 @@
       color: #bbb;
     }
     
-    @media (max-width: 1024px) {
+    @media (max-width: 1400px) {
       .grid {
-        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-        max-width: 1400px;
+        grid-template-columns: repeat(auto-fill, minmax(700px, 1fr));
+        max-width: 1600px;
+      }
+      .chart-iframe {
+        height: 550px;
       }
     }
     @media (max-width: 768px) {
       .grid {
         grid-template-columns: 1fr;
         max-width: 95vw;
+      }
+      .chart-iframe {
+        height: 500px;
       }
       .lightbox-close {
         top: 10px;
@@ -140,135 +148,178 @@
 
   <h1>Cash Rate Target Probabilities By RBA Meeting</h1>
 <div class="grid"> <div class="chart-card">
-  <img src="meetings/daily_area_2025-11-03.png" alt="meetings/daily_area_2025-11-03.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 03 November 2025</h3>
+  <iframe src="meetings/daily_heatmap_2025-11-03.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2025-12-08.png" alt="meetings/daily_area_2025-12-08.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 08 December 2025</h3>
+  <iframe src="meetings/daily_heatmap_2025-12-08.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2026-02-02.png" alt="meetings/daily_area_2026-02-02.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 02 February 2026</h3>
+  <iframe src="meetings/daily_heatmap_2026-02-02.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2026-03-16.png" alt="meetings/daily_area_2026-03-16.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 16 March 2026</h3>
+  <iframe src="meetings/daily_heatmap_2026-03-16.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2026-05-04.png" alt="meetings/daily_area_2026-05-04.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 04 May 2026</h3>
+  <iframe src="meetings/daily_heatmap_2026-05-04.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2026-06-15.png" alt="meetings/daily_area_2026-06-15.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 15 June 2026</h3>
+  <iframe src="meetings/daily_heatmap_2026-06-15.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2026-08-10.png" alt="meetings/daily_area_2026-08-10.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 10 August 2026</h3>
+  <iframe src="meetings/daily_heatmap_2026-08-10.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2026-09-28.png" alt="meetings/daily_area_2026-09-28.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 28 September 2026</h3>
+  <iframe src="meetings/daily_heatmap_2026-09-28.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2026-11-02.png" alt="meetings/daily_area_2026-11-02.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 02 November 2026</h3>
+  <iframe src="meetings/daily_heatmap_2026-11-02.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2026-12-07.png" alt="meetings/daily_area_2026-12-07.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 07 December 2026</h3>
+  <iframe src="meetings/daily_heatmap_2026-12-07.html" class="chart-iframe" frameborder="0"></iframe>
 </div> </div>
   
   <h1 style="margin-top:60px; text-align:center;">Previous Meetings</h1>
 <div class="grid"> <div class="chart-card">
-  <img src="meetings/daily_area_2025-09-29.png" alt="meetings/daily_area_2025-09-29.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 29 September 2025</h3>
+  <iframe src="meetings/daily_heatmap_2025-09-29.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2025-08-11.png" alt="meetings/daily_area_2025-08-11.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 11 August 2025</h3>
+  <iframe src="meetings/daily_heatmap_2025-08-11.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2025-07-07.png" alt="meetings/daily_area_2025-07-07.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 07 July 2025</h3>
+  <iframe src="meetings/daily_heatmap_2025-07-07.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2025-05-19.png" alt="meetings/daily_area_2025-05-19.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 19 May 2025</h3>
+  <iframe src="meetings/daily_heatmap_2025-05-19.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2025-03-31.png" alt="meetings/daily_area_2025-03-31.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 31 March 2025</h3>
+  <iframe src="meetings/daily_heatmap_2025-03-31.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2025-02-17.png" alt="meetings/daily_area_2025-02-17.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 17 February 2025</h3>
+  <iframe src="meetings/daily_heatmap_2025-02-17.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2024-12-09.png" alt="meetings/daily_area_2024-12-09.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 09 December 2024</h3>
+  <iframe src="meetings/daily_heatmap_2024-12-09.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2024-11-04.png" alt="meetings/daily_area_2024-11-04.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 04 November 2024</h3>
+  <iframe src="meetings/daily_heatmap_2024-11-04.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2024-09-23.png" alt="meetings/daily_area_2024-09-23.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 23 September 2024</h3>
+  <iframe src="meetings/daily_heatmap_2024-09-23.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2024-08-05.png" alt="meetings/daily_area_2024-08-05.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 05 August 2024</h3>
+  <iframe src="meetings/daily_heatmap_2024-08-05.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2024-06-17.png" alt="meetings/daily_area_2024-06-17.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 17 June 2024</h3>
+  <iframe src="meetings/daily_heatmap_2024-06-17.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2024-05-06.png" alt="meetings/daily_area_2024-05-06.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 06 May 2024</h3>
+  <iframe src="meetings/daily_heatmap_2024-05-06.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2024-03-18.png" alt="meetings/daily_area_2024-03-18.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 18 March 2024</h3>
+  <iframe src="meetings/daily_heatmap_2024-03-18.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2024-02-05.png" alt="meetings/daily_area_2024-02-05.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 05 February 2024</h3>
+  <iframe src="meetings/daily_heatmap_2024-02-05.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-12-04.png" alt="meetings/daily_area_2023-12-04.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 04 December 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-12-04.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-11-06.png" alt="meetings/daily_area_2023-11-06.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 06 November 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-11-06.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-10-02.png" alt="meetings/daily_area_2023-10-02.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 02 October 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-10-02.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-09-04.png" alt="meetings/daily_area_2023-09-04.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 04 September 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-09-04.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-07-31.png" alt="meetings/daily_area_2023-07-31.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 31 July 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-07-31.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-07-03.png" alt="meetings/daily_area_2023-07-03.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 03 July 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-07-03.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-06-05.png" alt="meetings/daily_area_2023-06-05.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 05 June 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-06-05.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-05-01.png" alt="meetings/daily_area_2023-05-01.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 01 May 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-05-01.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-04-03.png" alt="meetings/daily_area_2023-04-03.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 03 April 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-04-03.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-03-06.png" alt="meetings/daily_area_2023-03-06.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 06 March 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-03-06.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2023-02-06.png" alt="meetings/daily_area_2023-02-06.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 06 February 2023</h3>
+  <iframe src="meetings/daily_heatmap_2023-02-06.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2022-12-05.png" alt="meetings/daily_area_2022-12-05.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 05 December 2022</h3>
+  <iframe src="meetings/daily_heatmap_2022-12-05.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2022-10-31.png" alt="meetings/daily_area_2022-10-31.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 31 October 2022</h3>
+  <iframe src="meetings/daily_heatmap_2022-10-31.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2022-10-03.png" alt="meetings/daily_area_2022-10-03.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 03 October 2022</h3>
+  <iframe src="meetings/daily_heatmap_2022-10-03.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2022-09-05.png" alt="meetings/daily_area_2022-09-05.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 05 September 2022</h3>
+  <iframe src="meetings/daily_heatmap_2022-09-05.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2022-08-01.png" alt="meetings/daily_area_2022-08-01.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 01 August 2022</h3>
+  <iframe src="meetings/daily_heatmap_2022-08-01.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2022-07-04.png" alt="meetings/daily_area_2022-07-04.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 04 July 2022</h3>
+  <iframe src="meetings/daily_heatmap_2022-07-04.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2022-06-06.png" alt="meetings/daily_area_2022-06-06.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 06 June 2022</h3>
+  <iframe src="meetings/daily_heatmap_2022-06-06.html" class="chart-iframe" frameborder="0"></iframe>
 </div>
 <div class="chart-card">
-  <img src="meetings/daily_area_2022-05-02.png" alt="meetings/daily_area_2022-05-02.png" loading="lazy" class="expandable" />
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: 02 May 2022</h3>
+  <iframe src="meetings/daily_heatmap_2022-05-02.html" class="chart-iframe" frameborder="0"></iframe>
 </div> </div>
 
   
