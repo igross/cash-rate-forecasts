@@ -769,40 +769,7 @@ for (mt in future_meetings_all) {
       )
     )
     
-    # Add percentile lines
-    if (nrow(percentile_lines) > 0) {
-      fig <- fig %>%
-        plotly::add_trace(
-          x = percentile_lines$scrape_date,
-          y = percentile_lines$p25,
-          type = "scatter",
-          mode = "lines",
-          name = "25th Percentile",
-          line = list(color = "#4B0082", width = 1, dash = "dash"),
-          hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
-                                "25th Percentile: %{y:.2f}%<extra></extra>")
-        ) %>%
-        plotly::add_trace(
-          x = percentile_lines$scrape_date,
-          y = percentile_lines$p50,
-          type = "scatter",
-          mode = "lines",
-          name = "Median (50th)",
-          line = list(color = "#4B0082", width = 2),
-          hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
-                                "Median: %{y:.2f}%<extra></extra>")
-        ) %>%
-        plotly::add_trace(
-          x = percentile_lines$scrape_date,
-          y = percentile_lines$p75,
-          type = "scatter",
-          mode = "lines",
-          name = "75th Percentile",
-          line = list(color = "#4B0082", width = 1, dash = "dash"),
-          hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
-                                "75th Percentile: %{y:.2f}%<extra></extra>")
-        )
-    }
+
     
     # Add actual cash rate line
     if (nrow(actual_rate_line) > 0) {
