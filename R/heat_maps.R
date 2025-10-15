@@ -323,6 +323,12 @@ fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
 
 # Replace the static heatmap section (starting around line 300) with this:
 
+# =============================================
+# FIXED STATIC HEATMAP VISUALIZATIONS
+# =============================================
+
+# Replace the static heatmap section (starting around line 300) with this:
+
 for (mt in future_meetings_all) {
   cat("\n=== Processing heatmap for meeting:", as.character(as.Date(mt)), "===\n")
   
@@ -808,9 +814,7 @@ for (mt in future_meetings_all) {
           name = "Actual Cash Rate",
           line = list(color = "#0066CC", width = 2),
           yaxis = "y",
-          hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
-                                "Actual Rate: ", sprintf("%.2f%%", actual_rate_line$value), 
-                                "<extra></extra>")
+          hoverinfo = "skip"
         )
     }
     
@@ -825,7 +829,7 @@ for (mt in future_meetings_all) {
           name = "Actual Outcome",
           line = list(color = "black", width = 2, dash = "dot"),
           yaxis = "y",
-          hovertemplate = paste0("Actual Outcome: ", actual_outcome_label, "<extra></extra>")
+          hoverinfo = "skip"
         )
     }
     
@@ -844,9 +848,9 @@ for (mt in future_meetings_all) {
             mode = "lines",
             name = if(i == 1) "RBA Meetings" else NA,
             showlegend = (i == 1),
-            line = list(color = "black", width = 1, dash = "dash"),  # Changed to black
+            line = list(color = "black", width = 1, dash = "dash"),
             yaxis = "y",
-            hovertemplate = paste0("RBA Meeting: ", format(mtg_date, "%d %b %Y"), "<extra></extra>")
+            hoverinfo = "skip"
           )
       }
     }
