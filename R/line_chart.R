@@ -332,7 +332,7 @@ if (n_bad > 0) {
 }
 
 # Display sample of estimates
-all_estimates  %>% filter(meeting_date == next_meeting) tail(100) %>% print(n = Inf, width = Inf)
+all_estimates %>% filter(meeting_date == next_meeting) %>% tail(100) %>% print(n = Inf, width = Inf)
 
 # ------------------------------------------------------------------------------
 # 9. CALCULATE PROBABILITIES FOR EACH RATE BUCKET
