@@ -258,13 +258,13 @@ rmse_all_methods <- quarterly_adjusted %>%
          rmse_combined, adjustment_ratio)
 
 # =============================================
-# 7. Create Final Output (Adjusted Toward Quarterly)
+# 7. Create Final Output (Adjusted Toward Quarterly) - WITH GAP FILLING
 # =============================================
 
 cat("\n=== CREATING FINAL RMSE BASED ON DAILY, SCALED BY CONSTANT RATIO ===\n")
 
 # Scale daily RMSE by constant ratio (up to quarterly level)
-rmse_days <- daily_rmse %>% 
+rmse_days_raw <- daily_rmse %>% 
   mutate(
     finalrmse_0 = rmse / constant_ratio * 0.7
   ) %>%
@@ -276,12 +276,39 @@ rmse_days <- daily_rmse %>%
   ) %>%
   select(days_to_meeting, finalrmse)
 
-cat("Total horizons:", nrow(rmse_days), "\n")
-cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n\n")
+cat("Raw data horizons:", nrow(rmse_days_raw), "\n")
+cat("Range:", min(rmse_days_raw$days_to_meeting), "to", max(rmse_days_raw$days_to_meeting), "days\n")
+
+# Check for gaps
+all_days <- seq(min(rmse_days_raw$days_to_meeting), 
+                max(rmse_days_raw$days_to_meeting), 
+                by = 1)
+missing_days <- setdiff(all_days, rmse_days_raw$days_to_meeting)
+
+if (length(missing_days) > 0) {
+  cat("\n⚠ Found", length(missing_days), "missing days in sequence\n")
+  cat("Missing days sample:", head(missing_days, 20), "\n")
+  cat("Filling gaps with linear interpolation...\n")
+  
+  # Create complete sequence and interpolate
+  rmse_days <- tibble(days_to_meeting = all_days) %>%
+    left_join(rmse_days_raw, by = "days_to_meeting") %>%
+    mutate(
+      finalrmse = zoo::na.approx(finalrmse, x = days_to_meeting, na.rm = FALSE, rule = 2)
+    )
+  
+  cat("✓ All gaps filled\n")
+} else {
+  cat("\n✓ No gaps found - sequence is complete\n")
+  rmse_days <- rmse_days_raw
+}
+
+cat("\nFinal horizons:", nrow(rmse_days), "\n")
+cat("Range:", min(rmse_days$days_to_meeting), "to", max(rmse_days$days_to_meeting), "days\n")
+cat("Sequence check:", all(diff(rmse_days$days_to_meeting) == 1), "\n\n")
 
 cat("Sample of final output:\n")
 print(rmse_days, 30)
-
 
 # =============================================
 # 8. Save Final Output
