@@ -285,9 +285,10 @@ fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
 
 
 # =============================================
-# HEATMAP-STYLE VISUALIZATIONS
+# FIXED STATIC HEATMAP VISUALIZATIONS
 # =============================================
-cat("\n=== Creating heatmap visualizations ===\n")
+
+# Replace the static heatmap section (starting around line 300) with this:
 
 for (mt in future_meetings_all) {
   cat("\n=== Processing heatmap for meeting:", as.character(as.Date(mt)), "===\n")
@@ -378,29 +379,27 @@ for (mt in future_meetings_all) {
     dplyr::ungroup()
   
   # Calculate percentile lines
-percentile_lines <- all_estimates_area %>%
-  dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
-  dplyr::filter(!is.na(implied_mean), !is.na(stdev), stdev > 0) %>%
-  dplyr::mutate(
-    # Calculate percentiles using normal distribution
-    p25 = qnorm(0.25, mean = implied_mean, sd = stdev),
-    p50 = implied_mean,  # Median equals mean for normal distribution
-    p75 = qnorm(0.75, mean = implied_mean, sd = stdev)
-  ) %>%
-  dplyr::select(scrape_date, p25, p50, p75) %>%
-  dplyr::distinct() %>%
-  dplyr::mutate(
-    # Convert actual rates to positions in the factor levels
-    p25_pos = sapply(p25, function(val) {
-      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-    }),
-    p50_pos = sapply(p50, function(val) {
-      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-    }),
-    p75_pos = sapply(p75, function(val) {
-      which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
-    })
-  )
+  percentile_lines <- all_estimates_area %>%
+    dplyr::filter(as.Date(meeting_date) == as.Date(mt)) %>%
+    dplyr::filter(!is.na(implied_mean), !is.na(stdev), stdev > 0) %>%
+    dplyr::mutate(
+      p25 = qnorm(0.25, mean = implied_mean, sd = stdev),
+      p50 = implied_mean,
+      p75 = qnorm(0.75, mean = implied_mean, sd = stdev)
+    ) %>%
+    dplyr::select(scrape_date, p25, p50, p75) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(
+      p25_pos = sapply(p25, function(val) {
+        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+      }),
+      p50_pos = sapply(p50, function(val) {
+        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+      }),
+      p75_pos = sapply(p75, function(val) {
+        which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))
+      })
+    )
   
   # Prepare actual cash rate line
   actual_rate_line <- rba_historical %>%
@@ -441,7 +440,7 @@ percentile_lines <- all_estimates_area %>%
     breaks_vec <- seq.Date(from = start_month, to = end_month, by = "month")
     date_labels <- function(x) format(x, "%b-%Y")
     
-# Create base heatmap with rainbow colors (light yellow to dark purple)
+    # Create base heatmap with rainbow colors
     heatmap_mt <- ggplot2::ggplot(df_mt_heat, ggplot2::aes(x = scrape_date, y = move, fill = probability)) +
       ggplot2::geom_tile() +
       ggplot2::scale_fill_gradientn(
@@ -453,96 +452,78 @@ percentile_lines <- all_estimates_area %>%
         name = "Probability"
       )
     
-    # Add percentile lines with legend entries
+    # Add percentile lines WITHOUT aes mapping for legend
     if (nrow(percentile_lines) > 0) {
       heatmap_mt <- heatmap_mt +
         ggplot2::geom_line(
           data = percentile_lines,
-          aes(x = scrape_date, y = p25_pos, linetype = "25th Percentile"),
+          aes(x = scrape_date, y = p25_pos),
           color = "#4B0082",
           linewidth = 0.25,
+          linetype = "dashed",
           inherit.aes = FALSE
         ) +
         ggplot2::geom_line(
           data = percentile_lines,
-          aes(x = scrape_date, y = p50_pos, linetype = "Median (50th)"),
+          aes(x = scrape_date, y = p50_pos),
           color = "#4B0082",
           linewidth = 0.5,
+          linetype = "dashed",
           inherit.aes = FALSE
         ) +
         ggplot2::geom_line(
           data = percentile_lines,
-          aes(x = scrape_date, y = p75_pos, linetype = "75th Percentile"),
+          aes(x = scrape_date, y = p75_pos),
           color = "#4B0082",
           linewidth = 0.25,
+          linetype = "dashed",
           inherit.aes = FALSE
         )
     }
     
-    # Add actual cash rate line with legend entry
+    # Add actual cash rate line
     if (nrow(actual_rate_line) > 0) {
       heatmap_mt <- heatmap_mt +
         ggplot2::geom_line(
           data = actual_rate_line,
-          aes(x = date, y = rate_position, color = "Actual Cash Rate"),
+          aes(x = date, y = rate_position),
+          color = "#0066CC",
           linewidth = 1.0,
           linetype = "solid",
           inherit.aes = FALSE
         )
     }
     
-    # Add actual outcome line with legend entry
+    # Add actual outcome line
     if (!is.null(actual_outcome)) {
       actual_outcome_label <- sprintf("%.2f%%", actual_outcome)
       outcome_position <- which(levels(df_mt_heat$move) == actual_outcome_label)
       if (length(outcome_position) > 0) {
         heatmap_mt <- heatmap_mt +
           ggplot2::geom_hline(
-            aes(yintercept = outcome_position, color = "Actual Outcome"),
+            yintercept = outcome_position,
+            color = "black",
             linewidth = 0.85,
             linetype = "dotted"
           )
       }
     }
     
-    # Add RBA meeting lines with legend entry
+    # Add ALL RBA meeting lines in BLACK
     if (nrow(rba_meetings_in_range) > 0) {
-      heatmap_mt <- heatmap_mt +
-        ggplot2::geom_vline(
-          data = rba_meetings_in_range,
-          aes(xintercept = as.numeric(meeting_date), color = "RBA Meetings"),
-          linetype = "dashed",
-          linewidth = 0.5,
-          alpha = 0.7
-        )
+      for (i in seq_len(nrow(rba_meetings_in_range))) {
+        heatmap_mt <- heatmap_mt +
+          ggplot2::geom_vline(
+            xintercept = as.numeric(rba_meetings_in_range$meeting_date[i]),
+            color = "black",  # Changed to black
+            linetype = "dashed",
+            linewidth = 0.5,
+            alpha = 0.7
+          )
+      }
     }
     
-    # Add manual color and linetype scales for legend
-    heatmap_mt <- heatmap_mt +
-      ggplot2::scale_color_manual(
-        name = "Lines",
-        values = c(
-          "Actual Cash Rate" = "#0066CC",
-          "Actual Outcome" = "black",
-          "RBA Meetings" = "grey30"
-        ),
-        breaks = c("Contemporaneous Cash Rate", "Cash Rate Decision", "RBA Meetings")
-      ) +
-      ggplot2::scale_linetype_manual(
-        name = "Percentiles",
-        values = c(
-          "25th Percentile" = "dashed",
-          "Median (50th)" = "dashed",
-          "75th Percentile" = "dashed"
-        )
-      ) +
-      ggplot2::guides(
-        fill = ggplot2::guide_colorbar(order = 1),
-        color = ggplot2::guide_legend(order = 2, override.aes = list(linewidth = 1)),
-        linetype = ggplot2::guide_legend(order = 3, override.aes = list(color = "#0e610e", linewidth = 0.5))
-      )
-    
-    # Add scales and theme
+    # Add scales and theme with NO LEGEND BOXES
     heatmap_mt <- heatmap_mt +
       ggplot2::scale_x_date(
         limits = c(start_xlim_mt, end_xlim_mt),
@@ -564,6 +545,8 @@ percentile_lines <- all_estimates_area %>%
         axis.title.y = ggplot2::element_text(size = 14),
         plot.subtitle = ggplot2::element_text(size = 10),
         legend.position = "right",
+        legend.background = ggplot2::element_blank(),  # Remove legend box
+        legend.key = ggplot2::element_blank(),  # Remove legend key box
         panel.grid.major = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank()
       )
@@ -584,13 +567,11 @@ percentile_lines <- all_estimates_area %>%
 }
 
 cat("\nHeatmap visualizations completed!\n")
-cat("\nDaily analysis completed successfully!\n")
 
 
 # =============================================
-# INTERACTIVE PLOTLY HEATMAP VISUALIZATIONS - FIXED
+# FIXED INTERACTIVE PLOTLY HEATMAP VISUALIZATIONS
 # =============================================
-cat("\n=== Creating interactive heatmap visualizations ===\n")
 
 for (mt in future_meetings_all) {
   cat("\n=== Processing interactive heatmap for meeting:", as.character(as.Date(mt)), "===\n")
@@ -618,7 +599,6 @@ for (mt in future_meetings_all) {
     dplyr::mutate(
       probability = pmin(probability, 1.0),
       probability = pmax(probability, 0.0),
-      # Make probabilities < 0.01 transparent (NA)
       probability = ifelse(probability < 0.01, NA_real_, probability)
     )
   
@@ -672,7 +652,6 @@ for (mt in future_meetings_all) {
     dplyr::select(-last_date) %>%
     dplyr::ungroup()
   
-  # Fill any remaining NAs at the start with 0, then apply < 0.01 filter
   df_mt_heat <- df_mt_heat %>%
     dplyr::group_by(move) %>%
     dplyr::mutate(
@@ -695,12 +674,11 @@ for (mt in future_meetings_all) {
     dplyr::select(scrape_date, p25, p50, p75) %>%
     dplyr::distinct()
   
-  # Prepare actual cash rate line - MAP TO CATEGORICAL Y-AXIS
+  # Prepare actual cash rate line
   actual_rate_line <- rba_historical %>%
     dplyr::filter(date >= start_xlim_mt, date <= end_xlim_mt) %>%
     dplyr::mutate(
       rate_label = sprintf("%.2f%%", value),
-      # Find the closest matching level from the heatmap y-axis
       closest_level = sapply(value, function(v) {
         valid_move_levels[which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - v))]
       })
@@ -728,7 +706,7 @@ for (mt in future_meetings_all) {
   rba_meetings_in_range <- meeting_schedule %>%
     dplyr::filter(meeting_date > start_xlim_mt, meeting_date < meeting_date_proper)
   
-  # Prepare data for Plotly (pivot wider for heatmap)
+  # Prepare data for Plotly
   heat_matrix <- df_mt_heat %>%
     tidyr::pivot_wider(
       id_cols = scrape_date,
@@ -740,7 +718,7 @@ for (mt in future_meetings_all) {
   dates <- heat_matrix$scrape_date
   heat_matrix <- heat_matrix %>% dplyr::select(-scrape_date)
   
-  # Create custom hover text with date, rate, and probability
+  # Create custom hover text
   hover_text <- matrix("", nrow = nrow(heat_matrix), ncol = ncol(heat_matrix))
   for (i in seq_len(nrow(heat_matrix))) {
     for (j in seq_len(ncol(heat_matrix))) {
@@ -755,7 +733,6 @@ for (mt in future_meetings_all) {
     }
   }
   
-  # Create the interactive heatmap
   filename_html <- paste0("docs/meetings/daily_heatmap_", fmt_file(meeting_date_proper), ".html")
   
   tryCatch({
@@ -787,39 +764,39 @@ for (mt in future_meetings_all) {
       )
     )
     
-    # Add actual cash rate line - using categorical y values
+    # Add actual cash rate line
     if (nrow(actual_rate_line) > 0) {
       fig <- fig %>%
         plotly::add_trace(
           x = actual_rate_line$date,
-          y = actual_rate_line$closest_level,  # Use categorical labels
+          y = actual_rate_line$closest_level,
           type = "scatter",
           mode = "lines",
           name = "Actual Cash Rate",
           line = list(color = "#0066CC", width = 2),
-          yaxis = "y",  # Use same y-axis as heatmap
+          yaxis = "y",
           hovertemplate = paste0("Date: %{x|%d %b %Y}<br>",
                                 "Actual Rate: ", sprintf("%.2f%%", actual_rate_line$value), 
                                 "<extra></extra>")
         )
     }
     
-    # Add actual outcome line - using categorical y value
+    # Add actual outcome line
     if (!is.null(actual_outcome_label)) {
       fig <- fig %>%
         plotly::add_trace(
           x = c(start_xlim_mt, end_xlim_mt),
-          y = c(actual_outcome_label, actual_outcome_label),  # Use categorical label
+          y = c(actual_outcome_label, actual_outcome_label),
           type = "scatter",
           mode = "lines",
           name = "Actual Outcome",
           line = list(color = "black", width = 2, dash = "dot"),
-          yaxis = "y",  # Use same y-axis as heatmap
+          yaxis = "y",
           hovertemplate = paste0("Actual Outcome: ", actual_outcome_label, "<extra></extra>")
         )
     }
     
-    # Add RBA meeting lines
+    # Add ALL RBA meeting lines in BLACK
     if (nrow(rba_meetings_in_range) > 0) {
       y_range <- c(colnames(heat_matrix)[1], colnames(heat_matrix)[length(colnames(heat_matrix))])
       
@@ -834,14 +811,14 @@ for (mt in future_meetings_all) {
             mode = "lines",
             name = if(i == 1) "RBA Meetings" else NA,
             showlegend = (i == 1),
-            line = list(color = "grey30", width = 1, dash = "dash"),
-            yaxis = "y",  # Use same y-axis as heatmap
+            line = list(color = "black", width = 1, dash = "dash"),  # Changed to black
+            yaxis = "y",
             hovertemplate = paste0("RBA Meeting: ", format(mtg_date, "%d %b %Y"), "<extra></extra>")
           )
       }
     }
     
-    # Update layout - fix legend positioning
+    # Update layout with NO LEGEND BOXES
     fig <- fig %>%
       plotly::layout(
         title = list(
@@ -866,11 +843,11 @@ for (mt in future_meetings_all) {
           y = 0.99,
           xanchor = "left",
           x = 1.15,
-          bgcolor = "rgba(255, 255, 255, 0.8)",
-          bordercolor = "rgba(0, 0, 0, 0.2)",
-          borderwidth = 1
+          bgcolor = "rgba(255, 255, 255, 0)",  # Transparent background
+          bordercolor = "rgba(0, 0, 0, 0)",  # No border
+          borderwidth = 0  # No border width
         ),
-        margin = list(r = 200)  # Add right margin for legend
+        margin = list(r = 200)
       )
     
     # Save the interactive plot
