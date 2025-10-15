@@ -44,21 +44,7 @@ cash_rate$cash_rate <- cash_rate$cash_rate + spread
 # Create output directory structure
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-now_melb <- now(tzone = "Australia/Melbourne")
-today_melb <- as.Date(now_melb)
-cutoff <- ymd_hm(paste0(today_melb, " 15:00"), tz = "Australia/Melbourne")
 
-next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
-                    now_melb < cutoff) {
-  today_melb
-} else {
-  meeting_schedule %>%
-    filter(meeting_date > today_melb) %>%
-    slice_min(meeting_date) %>%
-    pull(meeting_date)
-}
-
-print(paste("Next meeting:", next_meeting))
 
 
 # ------------------------------------------------------------------------------
@@ -95,6 +81,22 @@ meeting_schedule <- tibble(
     )
   ) %>% 
   select(expiry, meeting_date)
+
+now_melb <- now(tzone = "Australia/Melbourne")
+today_melb <- as.Date(now_melb)
+cutoff <- ymd_hm(paste0(today_melb, " 15:00"), tz = "Australia/Melbourne")
+
+next_meeting <- if (today_melb %in% meeting_schedule$meeting_date &&
+                    now_melb < cutoff) {
+  today_melb
+} else {
+  meeting_schedule %>%
+    filter(meeting_date > today_melb) %>%
+    slice_min(meeting_date) %>%
+    pull(meeting_date)
+}
+
+print(paste("Next meeting:", next_meeting))
 
 # ------------------------------------------------------------------------------
 # 5. DEFINE ABS DATA RELEASE SCHEDULE
