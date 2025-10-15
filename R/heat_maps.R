@@ -856,36 +856,38 @@ for (mt in future_meetings_all) {
     }
     
     # Update layout with NO LEGEND BOXES
-    fig <- fig %>%
-      plotly::layout(
-        title = list(
-          text = paste("Cash Rate Probabilities for Meeting on", fmt_date(meeting_date_proper)),
-          font = list(size = 16)
-        ),
-        xaxis = list(
-          title = "Date",
-          tickformat = "%b-%Y",
-          dtick = "M1"
-        ),
-        yaxis = list(
-          title = "Cash Rate (%)",
-          type = "category"
-        ),
-        hovermode = "closest",
-        plot_bgcolor = "#FFFFFF",
-        paper_bgcolor = "#FFFFFF",
-        legend = list(
-          orientation = "v",
-          yanchor = "top",
-          y = 0.99,
-          xanchor = "left",
-          x = 1.15,
-          bgcolor = "rgba(255, 255, 255, 0)",  # Transparent background
-          bordercolor = "rgba(0, 0, 0, 0)",  # No border
-          borderwidth = 0  # No border width
-        ),
-        margin = list(r = 200)
-      )
+ I'll help you modify the Plotly section to place the legend inside the plot area. I'll modify the layout() function to adjust the legend positioning. Here's the updated code for the legend placement:
+r# Update layout with legend INSIDE the plot
+fig <- fig %>%
+  plotly::layout(
+    title = list(
+      text = paste("Cash Rate Probabilities for Meeting on", fmt_date(meeting_date_proper)),
+      font = list(size = 16)
+    ),
+    xaxis = list(
+      title = "Date",
+      tickformat = "%b-%Y",
+      dtick = "M1"
+    ),
+    yaxis = list(
+      title = "Cash Rate (%)",
+      type = "category"
+    ),
+    hovermode = "closest",
+    plot_bgcolor = "#FFFFFF",
+    paper_bgcolor = "#FFFFFF",
+    legend = list(
+      orientation = "v",
+      yanchor = "top",
+      y = 0.99,
+      xanchor = "left",
+      x = 0.02,  # Moved inside plot area from right side
+      bgcolor = "rgba(255, 255, 255, 0.7)",  # Slightly transparent white background
+      bordercolor = "rgba(0, 0, 0, 0.2)",  # Light border
+      borderwidth = 1  # Thin border
+    ),
+    margin = list(r = 20)  # Reduced right margin
+  )
     
     # Save the interactive plot
     htmlwidgets::saveWidget(
