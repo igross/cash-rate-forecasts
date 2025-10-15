@@ -856,9 +856,7 @@ for (mt in future_meetings_all) {
     }
     
     # Update layout with NO LEGEND BOXES
- I'll help you modify the Plotly section to place the legend inside the plot area. I'll modify the layout() function to adjust the legend positioning. Here's the updated code for the legend placement:
-r# Update layout with legend INSIDE the plot
-fig <- fig %>%
+  fig <- fig %>%
   plotly::layout(
     title = list(
       text = paste("Cash Rate Probabilities for Meeting on", fmt_date(meeting_date_proper)),
