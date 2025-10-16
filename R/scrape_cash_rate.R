@@ -5,61 +5,6 @@ library(jsonlite)
 library(lubridate)
 
 
-# Function to delete files based on multiple criteria
-delete_files_by_criteria <- function(
-    root_directory,
-    file_extensions = NULL,
-    prefix = NULL,
-    minutes_old = NULL,
-    dry_run = TRUE
-) {
-  
-  # Get all files recursively from all subdirectories
-  all_files <- list.files(
-    path = root_directory,
-    recursive = TRUE,      # This searches ALL subdirectories
-    full.names = TRUE,     # Returns full paths
-    include.dirs = FALSE,  # Files only, not directories
-    all.files = TRUE       # Include hidden files
-  )
-  
-  cat("Found", length(all_files), "total files across all subdirectories\n\n")
-  
-  deleted_files <- c()
-  
-  for (filepath in all_files) {
-    should_delete <- TRUE
-    filename <- basename(filepath)
-    
-
-    
-    # Check prefix
-    if (!is.null(prefix) && should_delete) {
-      if (!startsWith(filename, prefix)) {
-        should_delete <- FALSE
-      }
-    }
-    
-    
-    # Delete or log the file
-    if (should_delete) {
-      if (dry_run) {
-        cat("[DRY RUN] Would delete:", filepath, "\n")
-      } else {
-        tryCatch({
-          file.remove(filepath)
-          cat("Deleted:", filepath, "\n")
-        }, error = function(e) {
-          cat("Error deleting", filepath, ":", conditionMessage(e), "\n")
-        })
-      }
-      deleted_files <- c(deleted_files, filepath)
-    }
-  }
-  
-  return(deleted_files)
-}
-
 
 # Example usage
 # CONFIGURATION - Modify these values
