@@ -48,8 +48,8 @@ jobs:
       - name: Make line graph
         run: Rscript -e 'source(here::here("R", "line_chart.R"), echo = TRUE)'  
         
-#      - name: Make heatmaps graph
-#        run: Rscript -e 'source(here::here("R", "heat_maps.R"), echo = TRUE)'   
+      - name: Make heatmaps graph
+        run: Rscript -e 'source(here::here("R", "heat_maps.R"), echo = TRUE)'   
         
 #      - name: Make area graphs
 #        run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'  
