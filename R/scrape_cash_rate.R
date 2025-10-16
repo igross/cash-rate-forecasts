@@ -5,43 +5,6 @@ library(jsonlite)
 library(lubridate)
 
 
-
-# Example usage
-# CONFIGURATION - Modify these values
-GITHUB_DIR <- "docs/meetings"
-
-# Criteria for deletion
-FILE_TYPES <- c(".log", ".tmp", ".png")  # File extensions to delete
-FILE_PREFIX <- "daily"  # Files starting with this string
-MINUTES_OLD <- 10  # Delete files older than this many minutes
-
-# Safety: Start with dry_run=TRUE to see what would be deleted
-DRY_RUN <- TRUE
-
-cat("Searching in:", GITHUB_DIR, "\n")
-cat("File types:", paste(FILE_TYPES, collapse = ", "), "\n")
-cat("Prefix:", FILE_PREFIX, "\n")
-cat("Older than:", MINUTES_OLD, "minutes\n")
-cat("Dry run:", DRY_RUN, "\n")
-cat(strrep("-", 60), "\n")
-
-deleted <- delete_files_by_criteria(
-  root_directory = GITHUB_DIR,
-  file_extensions = FILE_TYPES,
-  prefix = FILE_PREFIX,
-  minutes_old = MINUTES_OLD,
-  dry_run = DRY_RUN
-)
-
-cat(strrep("-", 60), "\n")
-cat("Total files", 
-    if (DRY_RUN) "that would be deleted" else "deleted", 
-    ":", length(deleted), "\n")
-
-if (DRY_RUN) {
-  cat("\nTo actually delete files, set DRY_RUN <- FALSE\n")
-}
-
 json_url <- "https://asx.api.markitdigital.com/asx-research/1.0/derivatives/interest-rate/IB/futures?days=1&height=179&width=179"
 json_file <- tempfile()
 
