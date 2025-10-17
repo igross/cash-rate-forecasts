@@ -4,6 +4,16 @@ suppressPackageStartupMessages({
   library(stringr)
 })
 
+# Load probability summary if it exists
+probability_summary <- ""
+if (file.exists("docs/probability_summary.html")) {
+  probability_summary <- paste(readLines("docs/probability_summary.html"), collapse = "\n")
+  probability_summary <- sprintf('
+  <div style="max-width: 900px; margin: 20px auto; padding: 20px; background: #f0f7ff; border-left: 4px solid #0066cc; border-radius: 8px;">
+    %s
+  </div>', probability_summary)
+}
+
 intro_paragraph <- '
   <p style="max-width: 900px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
     This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia\'s cash rate,
@@ -287,6 +297,8 @@ html <- sprintf('
   %s
 
   %s
+
+  %s
   
   %s
 
@@ -322,21 +334,3 @@ html <- sprintf('
     lightbox.addEventListener("click", function(e) {
       if (e.target === lightbox) {
         lightbox.classList.remove("active");
-      }
-    });
-    
-    // Close the lightbox with Escape key
-    document.addEventListener("keydown", function(e) {
-      if (e.key === "Escape" && lightbox.classList.contains("active")) {
-        lightbox.classList.remove("active");
-      }
-    });
-  </script>
-
-</body>
-</html>
-', analytics_snippet, interactive_line_section, area_chart_section, future_meeting_section, past_meeting_section, intro_paragraph)
-
-# Write output
-writeLines(html, "docs/index.html")
-message("✅ index.html written with ", length(future_cards), " upcoming meeting charts and ", length(past_cards), " past meeting charts.")
