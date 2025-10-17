@@ -334,3 +334,29 @@ html <- sprintf('
     lightbox.addEventListener("click", function(e) {
       if (e.target === lightbox) {
         lightbox.classList.remove("active");
+      }
+    });
+    
+    // Close the lightbox with Escape key
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape" && lightbox.classList.contains("active")) {
+        lightbox.classList.remove("active");
+      }
+    });
+  </script>
+
+</body>
+</html>
+',
+  analytics_snippet,
+  probability_summary,
+  interactive_line_section,
+  area_chart_section,
+  future_meeting_section,
+  past_meeting_section,
+  intro_paragraph
+)
+
+# Write output
+writeLines(html, "docs/index.html")
+message("✅ index.html written with ", length(future_cards), " upcoming meeting charts and ", length(past_cards), " past meeting charts.")
