@@ -609,6 +609,26 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 
-# ==============================================================================
-# END OF SCRIPT
-# ==============================================================================
+# Get top 3 probabilities for latest scrape
+top3_summary <- top3_df %>%
+  filter(scrape_time == latest_scrape) %>%
+  group_by(move) %>%
+  summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(probability)) %>%
+  slice_head(n = 3)
+
+# Create HTML summary text
+html_summary <- sprintf(
+  '<p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333;">As of <strong>%s</strong>, the market-implied odds of the RBA making a <strong style="color: #0066cc;">%s</strong> are <strong style="color: #0066cc;">%.0f%%</strong>, a <strong style="color: #0066cc;">%s</strong> decision is <strong style="color: #0066cc;">%.0f%%</strong>, and a <strong style="color: #0066cc;">%s</strong> is <strong style="color: #0066cc;">%.0f%%</strong> at the next meeting on <strong>%s</strong>.</p>',
+  format(as.Date(latest_scrape + hours(10)), "%d %B %Y"),
+  tolower(top3_summary$move[1]), top3_summary$probability[1] * 100,
+  tolower(top3_summary$move[2]), top3_summary$probability[2] * 100,
+  tolower(top3_summary$move[3]), top3_summary$probability[3] * 100,
+  format(next_meeting, "%d %B %Y")
+)
+
+# Save HTML summary
+writeLines(html_summary, "docs/probability_summary.html")
+
+cat("\nProbability summary saved to: docs/probability_summary.html\n")
+cat(html_summary, "\n")
