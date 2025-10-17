@@ -18,11 +18,13 @@ new_data <- fromJSON(json_file) %>%
     date         = ymd(dateExpiry) %>% floor_date("month"),
     scrape_date  = ymd(datePreviousSettlement),
     scrape_time  = now(tzone = "Australia/Melbourne"),
-    # ← fallback: if priceLastTrade is NA, use pricePreviousSettlement
-    cash_rate    = 100 - coalesce(priceLastTrade, pricePreviousSettlement)
-  ) %>% 
-  filter(pricePreviousSettlement != 0) %>%   # keep this guard if you still
-  select(date, cash_rate, scrape_date, scrape_time)
+    # choose price based on which date is more recent (trade preferred if tied)
+    cash_rate    = if_else(
+      ymd(dateLastTrade) >= ymd(datePreviousSettlement),
+      100 - priceLastTrade,
+      100 - pricePreviousSettlement
+    )
+  )
 
 
 print(new_data)
