@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 # Load probability summary if it exists
 probability_summary <- ""
 if (file.exists("docs/probability_summary.html")) {
- # probability_summary <- paste(readLines("docs/probability_summary.html"), collapse = "\n")
+  probability_summary <- paste(readLines("docs/probability_summary.html"), collapse = "\n")
   probability_summary <- sprintf('
   <div style="max-width: 900px; margin: 20px auto; padding: 20px; background: #f0f7ff; border-left: 4px solid #0066cc; border-radius: 8px;">
     %s
