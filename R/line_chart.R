@@ -615,6 +615,19 @@ print(top3_df, n = 50)
 # 14. CREATE INTERACTIVE VERSION WITH PROPER VERTICAL LINES
 # ------------------------------------------------------------------------------
 
+relevant_releases <- abs_releases %>%
+  filter(datetime >= start_xlim & datetime <= end_xlim)
+
+# Check what releases are in range
+print("Date range for chart:")
+print(paste("Start:", start_xlim))
+print(paste("End:", end_xlim))
+
+print("\nRelevant releases:")
+print(relevant_releases)
+
+print("\nNumber of releases to add:", nrow(relevant_releases))
+
 # Define colors for ABS releases
 abs_colors <- c(
   "CPI" = "#FF6B6B",
