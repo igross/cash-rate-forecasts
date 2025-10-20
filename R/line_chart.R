@@ -514,6 +514,30 @@ if (nrow(top3_df) == 0) {
 start_xlim <- min(top3_df$scrape_time) + hours(10)
 end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(17)
 
+# ==============================================================================
+# Save summary data instead of HTML
+# ==============================================================================
+# Get top 3 probabilities for latest scrape
+top3_summary <- top3_df %>%
+  filter(scrape_time == latest_scrape) %>%
+  group_by(move) %>%
+  summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(probability)) %>%
+  slice_head(n = 3)
+
+# Create summary data object
+rba_summary_data <- list(
+  scrape_date = as.Date(latest_scrape + hours(10)),
+  next_meeting = next_meeting,
+  top3_moves = top3_summary$move,
+  top3_probabilities = top3_summary$probability
+)
+
+# Save as RDS file
+saveRDS(rba_summary_data, "docs/rba_summary_data.rds")
+cat("\nProbability summary data saved to: docs/rba_summary_data.rds\n")
+
+
 # ------------------------------------------------------------------------------
 # 13. CREATE LINE CHART SHOWING PROBABILITY EVOLUTION
 # ------------------------------------------------------------------------------
