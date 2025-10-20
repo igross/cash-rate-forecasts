@@ -612,10 +612,10 @@ ggsave(
 print(top3_df, n = 50)
 
 # ------------------------------------------------------------------------------
-# 14. CREATE INTERACTIVE VERSION
+# 14. CREATE INTERACTIVE VERSION WITH PROPER VERTICAL LINES
 # ------------------------------------------------------------------------------
 
-# Define colors for ABS releases (MUST be defined BEFORE use)
+# Define colors for ABS releases
 abs_colors <- c(
   "CPI" = "#FF6B6B",
   "CPI Indicator" = "#4ECDC4",
@@ -624,7 +624,7 @@ abs_colors <- c(
   "Labour Force" = "#AB47BC"
 )
 
-# Create base plot WITHOUT the geom_vline for interactive version
+# Create base plot WITHOUT any vertical lines
 line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
                                       y = probability,
                                       colour = move, 
@@ -682,30 +682,69 @@ interactive_line <- ggplotly(line_int_base, tooltip = "text") %>%
     showlegend = TRUE
   )
 
-# Add vertical lines for ABS data releases
-for (i in seq_len(nrow(abs_releases))) {
-  release <- abs_releases[i, ]
+# REDESIGNED APPROACH: Add vertical lines using layout shapes
+# This is more reliable than add_segments for datetime x-axes
+
+# Filter releases to only show those within the chart's date range
+relevant_releases <- abs_releases %>%
+  filter(datetime >= start_xlim & datetime <= end_xlim)
+
+# Create a list to track which datasets we've already added to the legend
+dataset_seen <- character(0)
+
+# Add vertical lines using shapes (more reliable for datetime axes)
+for (i in seq_len(nrow(relevant_releases))) {
+  release <- relevant_releases[i, ]
   
+  # Convert datetime to the format Plotly expects
+  x_pos <- format(release$datetime, "%Y-%m-%d %H:%M:%S")
+  
+  # Add vertical line as a shape
   interactive_line <- interactive_line %>%
-    add_segments(
-      x = as.numeric(release$datetime) * 1000,  # Convert to milliseconds for Plotly
-      xend = as.numeric(release$datetime) * 1000,
-      y = 0,
-      yend = 1,
+    add_trace(
+      x = c(release$datetime, release$datetime),
+      y = c(0, 1),
+      type = "scatter",
+      mode = "lines",
       line = list(
         color = abs_colors[release$dataset],
         dash = "dash",
-        width = 1.5
+        width = 2
       ),
-      opacity = 0.6,
       name = release$dataset,
       legendgroup = release$dataset,
-      showlegend = !duplicated(abs_releases$dataset)[i],  # Only show each dataset once in legend
+      showlegend = !(release$dataset %in% dataset_seen),
       hoverinfo = "text",
-      text = paste0(release$dataset, "<br>", format(release$datetime, "%d %b %Y, %H:%M")),
+      text = paste0(
+        "<b>", release$dataset, "</b><br>",
+        format(release$datetime, "%d %b %Y<br>%H:%M AEST")
+      ),
       inherit = FALSE
     )
+  
+  # Mark this dataset as seen
+  dataset_seen <- c(dataset_seen, release$dataset)
 }
+
+# Final layout adjustments
+interactive_line <- interactive_line %>%
+  layout(
+    xaxis = list(
+      title = "Forecast date",
+      tickangle = 45
+    ),
+    yaxis = list(
+      title = "Probability",
+      tickformat = ".0%"
+    ),
+    title = list(
+      text = paste0(
+        glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
+        "<br>",
+        "<sub>", glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"), "</sub>"
+      )
+    )
+  )
 
 # Save interactive HTML
 htmlwidgets::saveWidget(
@@ -713,3 +752,5 @@ htmlwidgets::saveWidget(
   file = "docs/line_interactive.html",
   selfcontained = TRUE
 )
+
+cat("\nInteractive chart saved to: docs/line_interactive.html\n")
