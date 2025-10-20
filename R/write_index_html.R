@@ -4,15 +4,44 @@ suppressPackageStartupMessages({
   library(stringr)
 })
 
-# Load probability summary if it exists
-probability_summary <- ""
-if (file.exists("docs/probability_summary.html")) {
-  probability_summary <- paste(readLines("docs/probability_summary.html"), collapse = "\n")
-  probability_summary <- sprintf('
-  <div style="max-width: 900px; margin: 20px auto; padding: 0;">
-    %s
-  </div>', probability_summary)
-}
+
+# ==============================================================================
+# READ AND DISPLAY RBA SUMMARY
+# ==============================================================================
+
+# Load the saved data
+rba_summary_data <- readRDS("docs/rba_summary_data.rds")
+
+# Create HTML summary text
+html_summary <- sprintf(
+  '<p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333;">As of <strong>%s</strong>, the market-implied odds of the RBA making a <strong style="color: #0066cc;">%s</strong> are <strong style="color: #0066cc;">%.0f%%</strong>, a <strong style="color: #0066cc;">%s</strong> decision is <strong style="color: #0066cc;">%.0f%%</strong>, and a <strong style="color: #0066cc;">%s</strong> is <strong style="color: #0066cc;">%.0f%%</strong> at the next meeting on <strong>%s</strong>.</p>',
+  format(rba_summary_data$scrape_date, "%d %B %Y"),
+  tolower(rba_summary_data$top3_moves[1]), 
+  rba_summary_data$top3_probabilities[1] * 100,
+  tolower(rba_summary_data$top3_moves[2]), 
+  rba_summary_data$top3_probabilities[2] * 100,
+  tolower(rba_summary_data$top3_moves[3]), 
+  rba_summary_data$top3_probabilities[3] * 100,
+  format(rba_summary_data$next_meeting, "%d %B %Y")
+)
+
+
+# Optional: Create plain text version
+text_summary <- sprintf(
+  "As of %s, the market-implied odds of the RBA making a %s are %.0f%%, a %s decision is %.0f%%, and a %s is %.0f%% at the next meeting on %s.",
+  format(rba_summary_data$scrape_date, "%d %B %Y"),
+  tolower(rba_summary_data$top3_moves[1]), 
+  rba_summary_data$top3_probabilities[1] * 100,
+  tolower(rba_summary_data$top3_moves[2]), 
+  rba_summary_data$top3_probabilities[2] * 100,
+  tolower(rba_summary_data$top3_moves[3]), 
+  rba_summary_data$top3_probabilities[3] * 100,
+  format(rba_summary_data$next_meeting, "%d %B %Y")
+)
+
+cat("\n--- Plain text version ---\n")
+cat(text_summary, "\n")
+
 
 intro_paragraph <- '
   <p style="max-width: 900px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
@@ -389,7 +418,7 @@ html <- sprintf('
 </html>
 ',
   analytics_snippet,
-  probability_summary,
+  html_summary,
   interactive_line_section,
   area_chart_section,
   future_meeting_section,
