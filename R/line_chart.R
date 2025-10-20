@@ -624,6 +624,16 @@ abs_colors <- c(
   "Labour Force" = "#AB47BC"
 )
 
+# Get the final probabilities for each move at the latest scrape
+final_points <- top3_df %>%
+  filter(scrape_time == latest_scrape) %>%
+  group_by(move) %>%
+  summarise(
+    scrape_time = first(scrape_time),
+    probability = first(probability),
+    .groups = "drop"
+  )
+
 # Create base plot WITHOUT any vertical lines
 line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
                                       y = probability,
@@ -682,8 +692,59 @@ interactive_line <- ggplotly(line_int_base, tooltip = "text") %>%
     showlegend = TRUE
   )
 
-# REDESIGNED APPROACH: Add vertical lines using layout shapes
-# This is more reliable than add_segments for datetime x-axes
+# Add larger dots with text labels for final points
+move_colors <- c(
+  "-75 bp cut" = "#000080",
+  "-50 bp cut" = "#004B8E",
+  "-25 bp cut" = "#5FA4D4",
+  "No change" = "#BFBFBF",
+  "+25 bp hike" = "#E07C7C",
+  "+50 bp hike" = "#B50000",
+  "+75 bp hike" = "#800000"
+)
+
+for (i in seq_len(nrow(final_points))) {
+  point <- final_points[i, ]
+  
+  # Add the dot
+  interactive_line <- interactive_line %>%
+    add_trace(
+      x = point$scrape_time + hours(10),
+      y = point$probability,
+      type = "scatter",
+      mode = "markers",
+      marker = list(
+        size = 12,
+        color = move_colors[as.character(point$move)],
+        line = list(color = "white", width = 2)
+      ),
+      name = point$move,
+      legendgroup = point$move,
+      showlegend = FALSE,
+      hoverinfo = "skip",
+      inherit = FALSE
+    )
+  
+  # Add the text label
+  interactive_line <- interactive_line %>%
+    add_annotations(
+      x = point$scrape_time + hours(10),
+      y = point$probability,
+      text = paste0("<b>", percent(point$probability, accuracy = 0.1), "</b>"),
+      showarrow = FALSE,
+      xanchor = "left",
+      xshift = 10,
+      font = list(
+        size = 11,
+        color = move_colors[as.character(point$move)],
+        family = "Arial, sans-serif"
+      ),
+      bgcolor = "rgba(255, 255, 255, 0.8)",
+      bordercolor = move_colors[as.character(point$move)],
+      borderwidth = 1,
+      borderpad = 3
+    )
+}
 
 # Filter releases to only show those within the chart's date range
 relevant_releases <- abs_releases %>%
@@ -692,14 +753,10 @@ relevant_releases <- abs_releases %>%
 # Create a list to track which datasets we've already added to the legend
 dataset_seen <- character(0)
 
-# Add vertical lines using shapes (more reliable for datetime axes)
+# Add vertical lines for ABS releases
 for (i in seq_len(nrow(relevant_releases))) {
   release <- relevant_releases[i, ]
   
-  # Convert datetime to the format Plotly expects
-  x_pos <- format(release$datetime, "%Y-%m-%d %H:%M:%S")
-  
-  # Add vertical line as a shape
   interactive_line <- interactive_line %>%
     add_trace(
       x = c(release$datetime, release$datetime),
