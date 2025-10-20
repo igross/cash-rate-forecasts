@@ -318,6 +318,325 @@ fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
 
 
 # =============================================
+# 1) Setup & libraries
+# =============================================
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(lubridate)
+  library(purrr)
+  library(tibble)
+  library(ggplot2)
+  library(tidyr)
+  library(plotly)
+  library(readrba)
+  library(scales)
+  library(ggpattern)
+  library(ggtext)
+  library(zoo)  # Added for na.locf
+})
+
+# =============================================
+# 1b) Create required directories
+# =============================================
+required_dirs <- c(
+  "docs/meetings",
+  "docs/meetings/csv",
+  "combined_data"
+)
+
+for (dir_path in required_dirs) {
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE, showWarnings = FALSE)
+    cat("Created directory:", dir_path, "\n")
+  }
+}
+
+# =============================================
+# 2) Load data & RMSE lookup
+# =============================================
+cash_rate <- readRDS("combined_data/all_data.Rds")
+load("combined_data/rmse_days.RData")
+
+# Consolidate to daily level
+cash_rate_daily <- cash_rate %>%
+  mutate(scrape_date = as.Date(scrape_time)) %>%
+  group_by(scrape_date, date) %>%
+  slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(scrape_date, date, cash_rate)
+
+cat("Daily consolidation complete:\n")
+cat("  Original rows:", nrow(cash_rate), "\n")
+cat("  Daily rows:", nrow(cash_rate_daily), "\n")
+cat("  Unique dates:", length(unique(cash_rate_daily$scrape_date)), "\n")
+
+blend_weight <- function(days_to_meeting) {
+  pmax(0, pmin(1, 1 - days_to_meeting / 30))
+}
+
+latest_rt <- read_rba(series_id = "FIRMMCRTD") |>
+             slice_max(date, n = 1, with_ties = FALSE) |>
+             pull(value)
+
+spread <- 0.00
+cash_rate_daily$cash_rate <- cash_rate_daily$cash_rate + spread
+
+# =============================================
+# 3) Define RBA meeting schedule
+# =============================================
+meeting_schedule <- tibble(
+  meeting_date = as.Date(c(
+    # 2022 meetings
+    "2022-02-01",  # 31 Jan-1 Feb
+    "2022-03-01",  # 28 Feb-1 Mar
+    "2022-04-05",  # 4-5 Apr
+    "2022-05-03",  # 2-3 May
+    "2022-06-07",  # 6-7 Jun
+    "2022-07-05",  # 4-5 Jul
+    "2022-08-02",  # 1-2 Aug
+    "2022-09-06",  # 5-6 Sep
+    "2022-10-04",  # 3-4 Oct
+    "2022-11-01",  # 31 Oct-1 Nov
+    "2022-12-06",  # 5-6 Dec
+    # 2023 meetings
+    "2023-02-07",  # 6-7 Feb
+    "2023-03-07",  # 6-7 Mar
+    "2023-04-04",  # 3-4 Apr
+    "2023-05-02",  # 1-2 May
+    "2023-06-06",  # 5-6 Jun
+    "2023-07-04",  # 3-4 Jul
+    "2023-08-01",  # 31 Jul-1 Aug
+    "2023-09-05",  # 4-5 Sep
+    "2023-10-03",  # 2-3 Oct
+    "2023-11-07",  # 6-7 Nov
+    "2023-12-05",  # 4-5 Dec
+    # 2024 meetings
+    "2024-02-06",  # 5-6 Feb
+    "2024-03-19",  # 18-19 Mar
+    "2024-05-07",  # 6-7 May
+    "2024-06-18",  # 17-18 Jun
+    "2024-08-06",  # 5-6 Aug
+    "2024-09-24",  # 23-24 Sep
+    "2024-11-05",  # 4-5 Nov
+    "2024-12-10",  # 9-10 Dec
+    # 2025 meetings (second day)
+    "2025-02-18",  # 17-18 Feb
+    "2025-04-01",  # 31 Mar-1 Apr
+    "2025-05-20",  # 19-20 May
+    "2025-07-08",  # 7-8 Jul
+    "2025-08-12",  # 11-12 Aug
+    "2025-09-30",  # 29-30 Sep
+    "2025-11-04",  # 3-4 Nov
+    "2025-12-09",  # 8-9 Dec
+    # 2026 meetings (second day)
+    "2026-02-03",  # 2-3 Feb
+    "2026-03-17",  # 16-17 Mar
+    "2026-05-05",  # 4-5 May
+    "2026-06-16",  # 15-16 Jun
+    "2026-08-11",  # 10-11 Aug
+    "2026-09-29",  # 28-29 Sep
+    "2026-11-03",  # 2-3 Nov
+    "2026-12-08"   # 7-8 Dec
+  ))
+) %>% 
+  mutate(
+    expiry = if_else(
+      day(meeting_date) >= days_in_month(meeting_date) - 1,
+      ceiling_date(meeting_date, "month"),
+      floor_date(meeting_date, "month")
+    )
+  ) %>% 
+  select(expiry, meeting_date)
+
+# =============================================
+# 3b) Define ABS data release schedule
+# =============================================
+abs_releases <- tribble(
+  ~dataset, ~datetime,
+  "CPI", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
+  "CPI Indicator", ymd_hm("2025-02-26 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne")
+)
+
+# =============================================
+# 4) Process data and create visualizations
+# =============================================
+last_meeting <- max(meeting_schedule$meeting_date[meeting_schedule$meeting_date < Sys.Date()])
+print(last_meeting)
+
+current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
+  filter(date == max(date)) %>%
+  pull(value)
+
+initial_rt <- latest_rt
+all_dates <- sort(unique(cash_rate_daily$scrape_date))
+
+cat("Total available daily scrapes:", length(all_dates), "\n")
+cat("Date range:", min(all_dates), "to", max(all_dates), "\n")
+
+scrapes_daily <- all_dates
+
+# Create area data
+rba_historical <- read_rba(series_id = "FIRMMCRTD") %>%
+  arrange(date)
+
+all_list_area <- map(all_dates, function(scr_date) {
+  historical_rate <- rba_historical %>%
+    filter(date <= scr_date) %>%
+    slice_max(date, n = 1, with_ties = FALSE) %>%
+    pull(value)
+  
+  initial_rt_at_scrape <- if(length(historical_rate) > 0) historical_rate else latest_rt
+  
+  df_rates <- cash_rate_daily %>% 
+    filter(scrape_date == scr_date) %>%
+    select(expiry = date, forecast_rate = cash_rate, scrape_date)
+  
+  df <- meeting_schedule %>%
+    distinct(expiry, meeting_date) %>%
+    mutate(scrape_date = scr_date) %>%
+    left_join(df_rates, by = "expiry") %>%
+    arrange(expiry) %>%
+    filter(!is.na(forecast_rate))
+  
+  if (nrow(df) == 0) return(NULL)
+  
+  prev_implied <- NA_real_
+  out <- vector("list", nrow(df))
+  
+  for (i in seq_len(nrow(df))) {
+    row <- df[i, ]
+    rt_in <- if (is.na(prev_implied)) initial_rt_at_scrape else prev_implied
+    
+    r_tp1 <- if (row$meeting_date < row$expiry) {
+      row$forecast_rate
+    } else {
+      nb <- (day(row$meeting_date)-1) / days_in_month(row$expiry)
+      na <- 1 - nb
+      (row$forecast_rate - rt_in * nb) / na
+    }
+    
+    out[[i]] <- tibble(
+      scrape_date = scr_date,
+      meeting_date = row$meeting_date,
+      implied_mean = r_tp1,
+      days_to_meeting = as.integer(row$meeting_date - scr_date),
+      previous_rate = rt_in
+    )
+    prev_implied <- r_tp1
+  }
+  bind_rows(out)
+})
+
+all_estimates_area <- all_list_area %>%
+  compact() %>%
+  bind_rows() %>%
+  filter(days_to_meeting >= 0) %>%
+  left_join(rmse_days, by = "days_to_meeting") %>%
+  rename(stdev = finalrmse)
+
+max_rmse <- suppressWarnings(max(rmse_days$finalrmse, na.rm = TRUE))
+if (!is.finite(max_rmse)) stop("No finite RMSE values found")
+
+bad_sd <- !is.finite(all_estimates_area$stdev) | is.na(all_estimates_area$stdev) | all_estimates_area$stdev <= 0
+n_bad <- sum(bad_sd, na.rm = TRUE)
+
+if (n_bad > 0) {
+  message(sprintf("Replacing %d missing/invalid stdev(s) with max RMSE = %.4f", n_bad, max_rmse))
+  all_estimates_area$stdev[bad_sd] <- max_rmse
+}
+
+# Extended range bucketing
+bp_span <- 300L
+step_bp <- 25L
+sd_fallback <- suppressWarnings(stats::median(all_estimates_area$stdev[is.finite(all_estimates_area$stdev)], na.rm = TRUE))
+if (!is.finite(sd_fallback) || sd_fallback <= 0) sd_fallback <- 0.01
+
+current_center_ext <- current_rate
+bucket_min <- 0.1
+bucket_max <- 6.1
+bucket_centers_ext <- seq(bucket_min, bucket_max, by = 0.25)
+half_width_ext <- 0.125
+
+cat("Creating extended buckets for", nrow(all_estimates_area), "estimate rows\n")
+
+bucket_list_ext <- vector("list", nrow(all_estimates_area))
+for (i in seq_len(nrow(all_estimates_area))) {
+  mu_i <- all_estimates_area$implied_mean[i]
+  sigma_i <- all_estimates_area$stdev[i]
+  d_i <- all_estimates_area$days_to_meeting[i]
+
+  if (!is.finite(mu_i)) next
+  if (!is.finite(sigma_i) || sigma_i <= 0) sigma_i <- sd_fallback
+
+  p_vec <- sapply(bucket_centers_ext, function(b) {
+    lower <- b - half_width_ext
+    upper <- b + half_width_ext
+    pnorm(upper, mean = mu_i, sd = sigma_i) - pnorm(lower, mean = mu_i, sd = sigma_i)
+  })
+
+  p_vec[!is.finite(p_vec) | p_vec < 0] <- 0
+  p_vec[p_vec < 0.01] <- 0
+  s <- sum(p_vec, na.rm = TRUE)
+  if (is.finite(s) && s > 0) {
+    p_vec <- p_vec / s
+  } else {
+    p_vec[] <- 0
+  }
+
+  nearest <- order(abs(bucket_centers_ext - mu_i))[1:2]
+  b1 <- min(bucket_centers_ext[nearest])
+  b2 <- max(bucket_centers_ext[nearest])
+  denom <- (b2 - b1)
+  w2 <- if (denom > 0) (mu_i - b1) / denom else 0
+  w2 <- min(max(w2, 0), 1)
+  l_vec <- numeric(length(bucket_centers_ext))
+  l_vec[which(bucket_centers_ext == b1)] <- 1 - w2
+  l_vec[which(bucket_centers_ext == b2)] <- w2
+
+  blend <- blend_weight(d_i)
+  v <- blend * l_vec + (1 - blend) * p_vec
+
+  bucket_list_ext[[i]] <- tibble::tibble(
+    scrape_date = all_estimates_area$scrape_date[i],
+    meeting_date = all_estimates_area$meeting_date[i],
+    implied_mean = mu_i,
+    stdev = sigma_i,
+    days_to_meeting = d_i,
+    bucket = bucket_centers_ext,
+    probability = v
+  )
+}
+
+all_estimates_buckets_ext <- dplyr::bind_rows(bucket_list_ext) %>%
+  dplyr::mutate(
+    diff_bps = as.integer(round((bucket - current_center_ext) * 100L)),
+    diff_bps = pmax(pmin(diff_bps, bp_span), -bp_span),
+    move = sprintf("%.2f%%", bucket)
+  )
+
+rate_levels <- sort(unique(all_estimates_buckets_ext$bucket))
+rate_labels <- sprintf("%.2f%%", rate_levels)
+
+all_estimates_buckets_ext <- all_estimates_buckets_ext %>%
+  dplyr::mutate(move = factor(move, levels = rate_labels))
+
+future_meetings_all <- meeting_schedule %>%
+  dplyr::mutate(meeting_date = as.Date(meeting_date)) %>%
+  dplyr::pull(meeting_date)
+
+cat("Future meetings found:", length(future_meetings_all), "\n")
+
+fmt_date <- function(x) format(as.Date(x), "%d %B %Y")
+fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
+
+
+# =============================================
 # FIXED STATIC HEATMAP VISUALIZATIONS
 # =============================================
 
@@ -900,5 +1219,7 @@ for (mt in future_meetings_all) {
     cat("✗ Error creating interactive heatmap:", e$message, "\n")
   })
 }
+
+cat("\nInteractive heatmap visualizations completed!\n")
 
 cat("\nInteractive heatmap visualizations completed!\n")
