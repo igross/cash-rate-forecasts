@@ -607,6 +607,35 @@ interactive_line <- ggplotly(line_int, tooltip = "text") %>%
     showlegend = TRUE
   )
 
+# Add vertical lines for ABS data releases to the interactive plot
+for (i in seq_len(nrow(abs_releases))) {
+  release <- abs_releases[i, ]
+  
+  # Get the color for this dataset from the manual color scale
+  line_color <- case_when(
+    release$dataset == "CPI" ~ "#FF6B6B",
+    release$dataset == "CPI Indicator" ~ "#4ECDC4",
+    release$dataset == "WPI" ~ "#45B7D1",
+    release$dataset == "National Accounts" ~ "#FFA726",
+    release$dataset == "Labour Force" ~ "#AB47BC",
+    TRUE ~ "#999999"
+  )
+  
+  interactive_line <- interactive_line %>%
+    add_segments(
+      x = release$datetime,
+      xend = release$datetime,
+      y = 0,
+      yend = 1,
+      line = list(color = line_color, dash = "dash", width = 1),
+      opacity = 0.8,
+      name = release$dataset,
+      showlegend = TRUE,
+      hoverinfo = "text",
+      text = paste0(release$dataset, "<br>", format(release$datetime, "%d %b %Y %H:%M"))
+    )
+}
+
 # Save interactive HTML
 htmlwidgets::saveWidget(
   interactive_line,
