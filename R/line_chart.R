@@ -615,6 +615,15 @@ print(top3_df, n = 50)
 # 14. CREATE INTERACTIVE VERSION
 # ------------------------------------------------------------------------------
 
+# Define colors for ABS releases (MUST be defined BEFORE use)
+abs_colors <- c(
+  "CPI" = "#FF6B6B",
+  "CPI Indicator" = "#4ECDC4",
+  "WPI" = "#45B7D1",
+  "National Accounts" = "#FFA726",
+  "Labour Force" = "#AB47BC"
+)
+
 # Create base plot WITHOUT the geom_vline for interactive version
 line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
                                       y = probability,
@@ -673,55 +682,28 @@ interactive_line <- ggplotly(line_int_base, tooltip = "text") %>%
     showlegend = TRUE
   )
 
-# Add vertical lines using shapes (Plotly's native method)
-shapes_list <- list()
-
+# Add vertical lines for ABS data releases
 for (i in seq_len(nrow(abs_releases))) {
   release <- abs_releases[i, ]
   
-  shapes_list[[i]] <- list(
-    type = "line",
-    x0 = format(release$datetime, "%Y-%m-%d %H:%M:%S"),
-    x1 = format(release$datetime, "%Y-%m-%d %H:%M:%S"),
-    y0 = 0,
-    y1 = 1,
-    yref = "paper",  # Use paper coordinates for y (0 to 1)
-    line = list(
-      color = abs_colors[release$dataset],
-      dash = "dash",
-      width = 1.5
-    ),
-    opacity = 0.6
-  )
-}
-
-# Apply all shapes at once
-interactive_line <- interactive_line %>%
-  layout(shapes = shapes_list)
-
-# Add invisible scatter traces for legend only (one per dataset type)
-unique_datasets <- unique(abs_releases$dataset)
-
-for (dataset in unique_datasets) {
-  # Get first occurrence of this dataset
-  first_release <- abs_releases %>% 
-    filter(dataset == !!dataset) %>% 
-    slice(1)
-  
   interactive_line <- interactive_line %>%
-    add_trace(
-      x = first_release$datetime,
-      y = 0.5,
-      type = "scatter",
-      mode = "lines",
+    add_segments(
+      x = as.numeric(release$datetime) * 1000,  # Convert to milliseconds for Plotly
+      xend = as.numeric(release$datetime) * 1000,
+      y = 0,
+      yend = 1,
       line = list(
-        color = abs_colors[dataset],
+        color = abs_colors[release$dataset],
         dash = "dash",
         width = 1.5
       ),
-      name = dataset,
-      showlegend = TRUE,
-      hoverinfo = "skip"
+      opacity = 0.6,
+      name = release$dataset,
+      legendgroup = release$dataset,
+      showlegend = !duplicated(abs_releases$dataset)[i],  # Only show each dataset once in legend
+      hoverinfo = "text",
+      text = paste0(release$dataset, "<br>", format(release$datetime, "%d %b %Y, %H:%M")),
+      inherit = FALSE
     )
 }
 
