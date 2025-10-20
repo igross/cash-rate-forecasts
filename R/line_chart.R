@@ -591,48 +591,95 @@ print(top3_df, n = 50)
 # 14. CREATE INTERACTIVE VERSION
 # ------------------------------------------------------------------------------
 
-# Add hover text for interactive plot
-line_int <- line +
+# Create base plot WITHOUT the geom_vline for interactive version
+line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
+                                      y = probability,
+                                      colour = move, 
+                                      group = move)) +
+  geom_line(linewidth = 1.2) +
+  scale_colour_manual(
+    values = c(
+      "-75 bp cut" = "#000080",
+      "-50 bp cut" = "#004B8E",
+      "-25 bp cut" = "#5FA4D4",
+      "No change" = "#BFBFBF",
+      "+25 bp hike" = "#E07C7C",
+      "+50 bp hike" = "#B50000",
+      "+75 bp hike" = "#800000"
+    ),
+    name = ""
+  ) +
+  scale_x_datetime(
+    limits = c(start_xlim, end_xlim),
+    date_breaks = "2 day",
+    date_labels = "%d %b",
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1),
+    labels = percent_format(accuracy = 1),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    x = "Forecast date",
+    y = "Probability"
+  ) +
   aes(text = paste0(
     "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
     "Move: ", move, "<br>",
     "Probability: ", percent(probability, accuracy = 1)
-  ))
+  )) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = "right",
+    legend.title = element_blank()
+  )
 
 # Convert to Plotly
-interactive_line <- ggplotly(line_int, tooltip = "text") %>%
+interactive_line <- ggplotly(line_int_base, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
     legend = list(x = 1.02, y = 0.5, xanchor = "left"),
     showlegend = TRUE
   )
 
-# Add vertical lines for ABS data releases to the interactive plot
+# Define colors for ABS releases
+abs_colors <- c(
+  "CPI" = "#FF6B6B",
+  "CPI Indicator" = "#4ECDC4",
+  "WPI" = "#45B7D1",
+  "National Accounts" = "#FFA726",
+  "Labour Force" = "#AB47BC"
+)
+
+# Add vertical lines for ABS data releases
 for (i in seq_len(nrow(abs_releases))) {
   release <- abs_releases[i, ]
   
-  # Get the color for this dataset from the manual color scale
-  line_color <- case_when(
-    release$dataset == "CPI" ~ "#FF6B6B",
-    release$dataset == "CPI Indicator" ~ "#4ECDC4",
-    release$dataset == "WPI" ~ "#45B7D1",
-    release$dataset == "National Accounts" ~ "#FFA726",
-    release$dataset == "Labour Force" ~ "#AB47BC",
-    TRUE ~ "#999999"
-  )
-  
   interactive_line <- interactive_line %>%
     add_segments(
-      x = release$datetime,
-      xend = release$datetime,
+      x = as.numeric(release$datetime) * 1000,  # Convert to milliseconds for Plotly
+      xend = as.numeric(release$datetime) * 1000,
       y = 0,
       yend = 1,
-      line = list(color = line_color, dash = "dash", width = 1),
-      opacity = 0.8,
+      line = list(
+        color = abs_colors[release$dataset],
+        dash = "dash",
+        width = 1.5
+      ),
+      opacity = 0.6,
       name = release$dataset,
-      showlegend = TRUE,
+      legendgroup = release$dataset,
+      showlegend = !duplicated(abs_releases$dataset)[i],  # Only show each dataset once in legend
       hoverinfo = "text",
-      text = paste0(release$dataset, "<br>", format(release$datetime, "%d %b %Y %H:%M"))
+      text = paste0(release$dataset, "<br>", format(release$datetime, "%d %b %Y, %H:%M")),
+      inherit = FALSE
     )
 }
 
@@ -642,38 +689,3 @@ htmlwidgets::saveWidget(
   file = "docs/line_interactive.html",
   selfcontained = TRUE
 )
-
-# Get top 3 probabilities for latest scrape
-top3_summary <- top3_df %>%
-  filter(scrape_time == latest_scrape) %>%
-  group_by(move) %>%
-  summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
-  arrange(desc(probability)) %>%
-  slice_head(n = 3)
-
-# Verify we have valid summary data
-if (nrow(top3_summary) < 3 || any(is.na(top3_summary$move)) || any(is.na(top3_summary$probability))) {
-  warning("Insufficient data for probability summary. Check top3_summary:")
-  print(top3_summary)
-  # Create a fallback message
-  html_summary <- sprintf(
-    '<p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333;">Market-implied probabilities for the next RBA meeting on <strong>%s</strong> will be available soon.</p>',
-    format(next_meeting, "%d %B %Y")
-  )
-} else {
-  # Create HTML summary text
-  html_summary <- sprintf(
-    '<p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333;">As of <strong>%s</strong>, the market-implied odds of the RBA making a <strong style="color: #0066cc;">%s</strong> are <strong style="color: #0066cc;">%.0f%%</strong>, a <strong style="color: #0066cc;">%s</strong> decision is <strong style="color: #0066cc;">%.0f%%</strong>, and a <strong style="color: #0066cc;">%s</strong> is <strong style="color: #0066cc;">%.0f%%</strong> at the next meeting on <strong>%s</strong>.</p>',
-    format(as.Date(latest_scrape + hours(10)), "%d %B %Y"),
-    tolower(top3_summary$move[1]), top3_summary$probability[1] * 100,
-    tolower(top3_summary$move[2]), top3_summary$probability[2] * 100,
-    tolower(top3_summary$move[3]), top3_summary$probability[3] * 100,
-    format(next_meeting, "%d %B %Y")
-  )
-}
-
-# Save HTML summary
-writeLines(html_summary, "docs/probability_summary.html")
-
-cat("\nProbability summary saved to: docs/probability_summary.html\n")
-cat(html_summary, "\n")
