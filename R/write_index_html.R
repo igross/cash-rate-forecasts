@@ -130,7 +130,7 @@ if (length(html_basenames) > 0) {
 
 # Interactive line chart section - now using HTML file
 interactive_line_section <- ""
-if (file.exists("docs/line.html")) {
+if (file.exists("docs/line_interactive.html")) {
   interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
     Forecasts for the Next RBA Meeting
@@ -141,7 +141,7 @@ if (file.exists("docs/line.html")) {
       margin: 40px 0;
     ">
     <iframe 
-      src="line.html" 
+      src="line_interactive.html" 
       style="
         width: 80%;
         height: 600px;
