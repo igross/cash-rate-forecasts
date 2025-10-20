@@ -86,7 +86,7 @@ if (length(html_basenames) > 0) {
     )
   }
   
-  # Sort past meetings (most recent first)
+  # Sort past meetings (most recent first) - now as static images
   if (any(past_idx)) {
     past_files <- html_basenames[past_idx]
     past_dates <- dates_obj[past_idx]
@@ -97,24 +97,64 @@ if (length(html_basenames) > 0) {
     past_cards <- vapply(
       seq_along(past_files),
       function(i) {
-        file <- file.path("meetings", past_files[i])
+        # Look for corresponding PNG file
+        png_file <- sub("\\.html$", ".png", past_files[i])
+        png_path <- file.path("meetings", png_file)
         date_label <- format(past_dates[i], "%d %B %Y")
-        sprintf(
-          '<div class="chart-card">
+        
+        # Check if PNG exists, otherwise fall back to iframe
+        if (file.exists(file.path("docs", png_path))) {
+          sprintf(
+            '<div class="chart-card">
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: %s</h3>
+  <img src="%s" alt="Meeting %s" class="expandable" style="width: 100%%; height: auto; border-radius: 6px;" />
+</div>', 
+            date_label, png_path, date_label
+          )
+        } else {
+          # Fallback to iframe if PNG doesn't exist
+          file <- file.path("meetings", past_files[i])
+          sprintf(
+            '<div class="chart-card">
   <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: %s</h3>
   <iframe src="%s" class="chart-iframe" frameborder="0"></iframe>
 </div>', 
-          date_label, file
-        )
+            date_label, file
+          )
+        }
       },
       character(1)
     )
   }
 }
 
-# Optional sections for next-meeting charts
+# Interactive line chart section - now using HTML file
 interactive_line_section <- ""
-if (file.exists("docs/line.png")) {
+if (file.exists("docs/line.html")) {
+  interactive_line_section <- '
+  <h1 style="margin-top:60px; text-align:center;">
+    Forecasts for the Next RBA Meeting
+  </h1>
+  <div style="
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    ">
+    <iframe 
+      src="line.html" 
+      style="
+        width: 80%;
+        height: 600px;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        background: white;
+      "
+      frameborder="0"
+    ></iframe>
+  </div>'
+} else if (file.exists("docs/line.png")) {
+  # Fallback to PNG if HTML doesn't exist
   interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
     Forecasts for the Next RBA Meeting
