@@ -628,7 +628,7 @@ for (mt in meetings_to_process) {
       ) +
       ggplot2::scale_y_discrete(expand = c(0, 0)) +
       ggplot2::labs(
-        title = paste("Cash Rate Probabilities for Meeting on", fmt_date(meeting_date_proper)),
+        title = paste("Cash Rate Probabilities"),
         x = "Date",
         y = "Cash Rate",
         caption = paste("Updated:", update_timestamp)
