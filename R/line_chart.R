@@ -468,41 +468,47 @@ for (mt in future_meetings) {
 
 print(all_estimates_buckets %>% filter(meeting_date == next_meeting))
 
-# Identify the 3-4 most probable outcomes for the next meeting
-top3_buckets <- all_estimates_buckets %>% 
+# First, create the move labels for ALL buckets
+buckets_with_moves <- all_estimates_buckets %>%
   filter(meeting_date == next_meeting) %>%
-  group_by(bucket) %>%
+  mutate(
+    diff_center = bucket - current_center,
+    move = case_when(
+      near(diff_center, -0.75, tol = 0.01) ~ "-75 bp cut",
+      near(diff_center, -0.50, tol = 0.01) ~ "-50 bp cut",
+      near(diff_center, -0.25, tol = 0.01) ~ "-25 bp cut",
+      near(diff_center, 0.00, tol = 0.01) ~ "No change",
+      near(diff_center, 0.25, tol = 0.01) ~ "+25 bp hike",
+      near(diff_center, 0.50, tol = 0.01) ~ "+50 bp hike",
+      near(diff_center, 0.75, tol = 0.01) ~ "+75 bp hike",
+      TRUE ~ sprintf("%+.0f bp", round(diff_center * 100))
+    )
+  ) %>%
+  filter(!is.na(move))  # Remove any buckets that couldn't be labeled
+
+# NOW identify the top 3-4 most probable outcomes (from labeled buckets only)
+top3_buckets <- buckets_with_moves %>% 
+  group_by(bucket, move) %>%
   summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
   slice_max(order_by = probability, n = 4, with_ties = FALSE) %>% 
   pull(bucket)
 
-
-# Filter data to these top outcomes and create descriptive labels
-top3_df <- all_estimates_buckets %>%
-  filter(
-    meeting_date == next_meeting,
-    bucket %in% top3_buckets
-  ) %>%
+# Filter to top outcomes
+top3_df <- buckets_with_moves %>%
+  filter(bucket %in% top3_buckets) %>%
   mutate(
-    diff_center = bucket - current_center,
-    move = case_when(
-      near(diff_center, -0.75) ~ "-75 bp cut",
-      near(diff_center, -0.50) ~ "-50 bp cut",
-      near(diff_center, -0.25) ~ "-25 bp cut",
-      near(diff_center, 0.00) ~ "No change",
-      near(diff_center, 0.25) ~ "+25 bp hike",
-      near(diff_center, 0.50) ~ "+50 bp hike",
-      near(diff_center, 0.75) ~ "+75 bp hike",
-      TRUE ~ sprintf("%+.0f bp", diff_center * 100)
-    ),
     move = factor(
       move,
       levels = c("-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
                  "+25 bp hike", "+50 bp hike", "+75 bp hike")
     )
   ) %>%
-  filter(!is.na(move)) %>%  # ADD THIS LINE
   select(-diff_center)
+
+# Verify we have data
+if (nrow(top3_df) == 0) {
+  stop("No valid data in top3_df. Check bucket matching logic.")
+}
 
 # Set x-axis limits for line chart
 start_xlim <- min(top3_df$scrape_time) + hours(10)
@@ -579,8 +585,7 @@ ggsave(
   dpi = 300
 )
 
-print(top3_df,n=50)
-
+print(top3_df, n = 50)
 
 # ------------------------------------------------------------------------------
 # 14. CREATE INTERACTIVE VERSION
@@ -617,15 +622,26 @@ top3_summary <- top3_df %>%
   arrange(desc(probability)) %>%
   slice_head(n = 3)
 
-# Create HTML summary text
-html_summary <- sprintf(
-  '<p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333;">As of <strong>%s</strong>, the market-implied odds of the RBA making a <strong style="color: #0066cc;">%s</strong> are <strong style="color: #0066cc;">%.0f%%</strong>, a <strong style="color: #0066cc;">%s</strong> decision is <strong style="color: #0066cc;">%.0f%%</strong>, and a <strong style="color: #0066cc;">%s</strong> is <strong style="color: #0066cc;">%.0f%%</strong> at the next meeting on <strong>%s</strong>.</p>',
-  format(as.Date(latest_scrape + hours(10)), "%d %B %Y"),
-  tolower(top3_summary$move[1]), top3_summary$probability[1] * 100,
-  tolower(top3_summary$move[2]), top3_summary$probability[2] * 100,
-  tolower(top3_summary$move[3]), top3_summary$probability[3] * 100,
-  format(next_meeting, "%d %B %Y")
-)
+# Verify we have valid summary data
+if (nrow(top3_summary) < 3 || any(is.na(top3_summary$move)) || any(is.na(top3_summary$probability))) {
+  warning("Insufficient data for probability summary. Check top3_summary:")
+  print(top3_summary)
+  # Create a fallback message
+  html_summary <- sprintf(
+    '<p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333;">Market-implied probabilities for the next RBA meeting on <strong>%s</strong> will be available soon.</p>',
+    format(next_meeting, "%d %B %Y")
+  )
+} else {
+  # Create HTML summary text
+  html_summary <- sprintf(
+    '<p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333;">As of <strong>%s</strong>, the market-implied odds of the RBA making a <strong style="color: #0066cc;">%s</strong> are <strong style="color: #0066cc;">%.0f%%</strong>, a <strong style="color: #0066cc;">%s</strong> decision is <strong style="color: #0066cc;">%.0f%%</strong>, and a <strong style="color: #0066cc;">%s</strong> is <strong style="color: #0066cc;">%.0f%%</strong> at the next meeting on <strong>%s</strong>.</p>',
+    format(as.Date(latest_scrape + hours(10)), "%d %B %Y"),
+    tolower(top3_summary$move[1]), top3_summary$probability[1] * 100,
+    tolower(top3_summary$move[2]), top3_summary$probability[2] * 100,
+    tolower(top3_summary$move[3]), top3_summary$probability[3] * 100,
+    format(next_meeting, "%d %B %Y")
+  )
+}
 
 # Save HTML summary
 writeLines(html_summary, "docs/probability_summary.html")
