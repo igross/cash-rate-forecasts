@@ -102,7 +102,7 @@ if (length(html_basenames) > 0) {
           sprintf(
             '<div class="chart-card">
   <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: %s</h3>
-  <img src="%s" alt="Meeting %s" class="expandable" style="width: 100%%; height: auto; border-radius: 6px;" />
+  <img src="%s" alt="%s" class="expandable" style="width: 100%%; height: auto; border-radius: 6px;" />
 </div>', 
             date_label, png_path, date_label
           )
