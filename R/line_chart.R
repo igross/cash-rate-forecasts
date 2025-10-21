@@ -674,57 +674,113 @@ line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10),
     legend.title = element_blank()
   )
 
+# Filter releases to only show those within the chart's date range
+relevant_releases <- abs_releases %>%
+  filter(datetime >= start_xlim & datetime <= end_xlim)
+
+# Prepare vertical line data in the SAME format as top3_df
+# Create two points for each release (bottom and top of chart)
+vlines_df <- relevant_releases %>%
+  rowwise() %>%
+  mutate(
+    data = list(tibble(
+      scrape_time = datetime - hours(10),  # Adjust back like top3_df
+      probability = c(0, 1),
+      move = dataset,
+      point_order = 1:2
+    ))
+  ) %>%
+  ungroup() %>%
+  select(data) %>%
+  unnest(data)
+
+# Combine with top3_df for plotting
+plot_df <- bind_rows(
+  top3_df %>% mutate(line_type = "probability"),
+  vlines_df %>% mutate(line_type = "release")
+)
+
+# Create completely fresh ggplot with BOTH datasets
+line_int_complete <- ggplot() +
+  # Probability lines
+  geom_line(
+    data = plot_df %>% filter(line_type == "probability"),
+    aes(x = scrape_time + hours(10), 
+        y = probability,
+        colour = move, 
+        group = move,
+        text = paste0(
+          "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
+          "Move: ", move, "<br>",
+          "Probability: ", percent(probability, accuracy = 1)
+        )),
+    linewidth = 1.2
+  ) +
+  # Vertical lines for releases
+  geom_line(
+    data = plot_df %>% filter(line_type == "release"),
+    aes(x = scrape_time + hours(10),
+        y = probability,
+        colour = move,
+        group = interaction(move, scrape_time),
+        text = paste0(
+          "<b>", move, "</b><br>",
+          format(scrape_time + hours(10), "%d %b %Y<br>%H:%M AEST")
+        )),
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  scale_colour_manual(
+    values = c(
+      "-75 bp cut" = "#000080",
+      "-50 bp cut" = "#004B8E",
+      "-25 bp cut" = "#5FA4D4",
+      "No change" = "#BFBFBF",
+      "+25 bp hike" = "#E07C7C",
+      "+50 bp hike" = "#B50000",
+      "+75 bp hike" = "#800000",
+      "CPI" = "#FF6B6B",
+      "CPI Indicator" = "#4ECDC4",
+      "WPI" = "#45B7D1",
+      "National Accounts" = "#FFA726",
+      "Labour Force" = "#AB47BC"
+    ),
+    name = ""
+  ) +
+  scale_x_datetime(
+    limits = c(start_xlim, end_xlim),
+    date_breaks = "2 day",
+    date_labels = "%d %b",
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1),
+    labels = percent_format(accuracy = 1),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    x = "Forecast date",
+    y = "Probability"
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = "right",
+    legend.title = element_blank()
+  )
+
 # Convert to Plotly
-interactive_line <- ggplotly(line_int_base, tooltip = "text") %>%
+interactive_line <- ggplotly(line_int_complete, tooltip = "text") %>%
   layout(
     hovermode = "x unified",
     legend = list(x = 1.02, y = 0.5, xanchor = "left"),
     showlegend = TRUE
   )
-
-# REDESIGNED APPROACH: Add vertical lines using layout shapes
-# This is more reliable than add_segments for datetime x-axes
-
-# Filter releases to only show those within the chart's date range
-relevant_releases <- abs_releases %>%
-  filter(datetime >= start_xlim & datetime <= end_xlim)
-
-# Create a list to track which datasets we've already added to the legend
-dataset_seen <- character(0)
-
-# Add vertical lines using shapes (more reliable for datetime axes)
-for (i in seq_len(nrow(relevant_releases))) {
-  release <- relevant_releases[i, ]
-  
-  # Convert datetime to the format Plotly expects
-  x_pos <- format(release$datetime, "%Y-%m-%d %H:%M:%S")
-  
-  # Add vertical line as a shape
-  interactive_line <- interactive_line %>%
-    add_trace(
-      x = c(release$datetime, release$datetime),
-      y = c(0, 1),
-      type = "scatter",
-      mode = "lines",
-      line = list(
-        color = abs_colors[release$dataset],
-        dash = "dash",
-        width = 2
-      ),
-      name = release$dataset,
-      legendgroup = release$dataset,
-      showlegend = !(release$dataset %in% dataset_seen),
-      hoverinfo = "text",
-      text = paste0(
-        "<b>", release$dataset, "</b><br>",
-        format(release$datetime, "%d %b %Y<br>%H:%M AEST")
-      ),
-      inherit = FALSE
-    )
-  
-  # Mark this dataset as seen
-  dataset_seen <- c(dataset_seen, release$dataset)
-}
 
 # Final layout adjustments
 interactive_line <- interactive_line %>%
