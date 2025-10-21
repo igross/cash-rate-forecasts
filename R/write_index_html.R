@@ -56,7 +56,7 @@ if (length(html_basenames) > 0) {
   future_idx <- dates_obj >= current_date
   past_idx <- dates_obj < current_date
   
-  # Sort future meetings (earliest first)
+# Sort future meetings (earliest first)
   if (any(future_idx)) {
     future_files <- html_basenames[future_idx]
     future_dates <- dates_obj[future_idx]
@@ -68,13 +68,11 @@ if (length(html_basenames) > 0) {
       seq_along(future_files),
       function(i) {
         file <- file.path("meetings", future_files[i])
-        date_label <- format(future_dates[i], "%d %B %Y")
         sprintf(
           '<div class="chart-card">
-  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: %s</h3>
   <iframe src="%s" class="chart-iframe" frameborder="0"></iframe>
 </div>', 
-          date_label, file
+          file
         )
       },
       character(1)
