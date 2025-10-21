@@ -941,7 +941,7 @@ for (mt in meetings_to_process) {
           y = 0.99,
           xanchor = "left",
           x = 0.02,
-          bgcolor = "rgba(255, 255, 255, 0.7)",
+          bgcolor = "rgba(255, 255, 255, 1)",
           bordercolor = "rgba(0, 0, 0, 0.2)",
           borderwidth = 1
         ),
