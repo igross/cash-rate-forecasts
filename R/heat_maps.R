@@ -549,31 +549,31 @@ for (mt in meetings_to_process) {
     
     # Add percentile lines WITHOUT aes mapping for legend
     if (nrow(percentile_lines) > 0) {
-      heatmap_mt <- heatmap_mt +
-        ggplot2::geom_line(
-          data = percentile_lines,
-          aes(x = scrape_date, y = p25_pos),
-          color = "#4B0082",
-          linewidth = 0.25,
-          linetype = "dashed",
-          inherit.aes = FALSE
-        ) +
-        ggplot2::geom_line(
-          data = percentile_lines,
-          aes(x = scrape_date, y = p50_pos),
-          color = "#4B0082",
-          linewidth = 0.5,
-          linetype = "dashed",
-          inherit.aes = FALSE
-        ) +
-        ggplot2::geom_line(
-          data = percentile_lines,
-          aes(x = scrape_date, y = p75_pos),
-          color = "#4B0082",
-          linewidth = 0.25,
-          linetype = "dashed",
-          inherit.aes = FALSE
-        )
+      # heatmap_mt <- heatmap_mt +
+#         ggplot2::geom_line(
+#           data = percentile_lines,
+#           aes(x = scrape_date, y = p25_pos),
+#           color = "#4B0082",
+#           linewidth = 0.25,
+#           linetype = "dashed",
+#           inherit.aes = FALSE
+#         ) +
+#         ggplot2::geom_line(
+#           data = percentile_lines,
+#           aes(x = scrape_date, y = p50_pos),
+#           color = "#4B0082",
+#           linewidth = 0.5,
+#           linetype = "dashed",
+#           inherit.aes = FALSE
+#         ) +
+#         ggplot2::geom_line(
+#           data = percentile_lines,
+#           aes(x = scrape_date, y = p75_pos),
+#           color = "#4B0082",
+#           linewidth = 0.25,
+#           linetype = "dashed",
+#           inherit.aes = FALSE
+#        )
     }
     
     # Add actual cash rate line
