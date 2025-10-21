@@ -128,7 +128,7 @@ interactive_line_section <- ""
 if (file.exists("docs/line_interactive.html")) {
   interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
-    Forecasts for the Next RBA Meeting
+    Forecasts for the Next RBA Meeting Derived from ASX Futures
   </h1>
   <div style="
       display: flex;
@@ -152,7 +152,7 @@ if (file.exists("docs/line_interactive.html")) {
   # Fallback to PNG if HTML doesn't exist
   interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
-    Forecasts for the Next RBA Meeting
+    Forecasts for the Next RBA Meeting Derived from ASX Futures
   </h1>
   <div style="
       display: flex;
