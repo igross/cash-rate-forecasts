@@ -147,7 +147,13 @@ if (file.exists("docs/line_interactive.html")) {
       "
       frameborder="0"
     ></iframe>
-  </div>'
+  </div>
+  <p style="max-width: 800px; margin: 20px auto; text-align: center; font-size: 1rem; color: #555; line-height: 1.6;">
+    This chart shows the market-implied probability of different cash rate outcomes at the next RBA meeting, 
+    tracking how expectations have evolved over time based on ASX 30-day interbank futures pricing. 
+    Hover over the chart to explore daily probabilities. 
+    <a href="line.png" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">View static version →</a>
+  </p>'
 } else if (file.exists("docs/line.png")) {
   # Fallback to PNG if HTML doesn't exist
   interactive_line_section <- '
@@ -170,7 +176,11 @@ if (file.exists("docs/line_interactive.html")) {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       "
     />
-  </div>'
+  </div>
+  <p style="max-width: 800px; margin: 20px auto; text-align: center; font-size: 1rem; color: #555; line-height: 1.6;">
+    This chart shows the market-implied probability of different cash rate outcomes at the next RBA meeting, 
+    tracking how expectations have evolved over time based on ASX 30-day interbank futures pricing.
+  </p>'
 }
 
 area_chart_section <- ""
