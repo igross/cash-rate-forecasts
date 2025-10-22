@@ -87,7 +87,7 @@ if (length(html_basenames) > 0) {
     past_files <- past_files[past_ord]
     past_dates <- past_dates[past_ord]
     
-    past_cards <- vapply(
+past_cards <- vapply(
       seq_along(past_files),
       function(i) {
         # Look for corresponding PNG file
@@ -99,7 +99,7 @@ if (length(html_basenames) > 0) {
         if (file.exists(file.path("docs", png_path))) {
           sprintf(
             '<div class="chart-card">
-  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: %s</h3>
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">%s</h3>
   <img src="%s" alt="%s" class="expandable" style="width: 100%%; height: auto; border-radius: 6px;" />
 </div>', 
             date_label, png_path, date_label
@@ -109,7 +109,7 @@ if (length(html_basenames) > 0) {
           file <- file.path("meetings", past_files[i])
           sprintf(
             '<div class="chart-card">
-  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">Meeting: %s</h3>
+  <h3 style="margin: 0 0 15px 0; color: #2c3e50;">%s</h3>
   <iframe src="%s" class="chart-iframe" frameborder="0"></iframe>
 </div>', 
             date_label, file
