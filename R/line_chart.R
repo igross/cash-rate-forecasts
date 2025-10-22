@@ -57,6 +57,12 @@ blend_weight <- function(days_to_meeting) {
   pmax(0, pmin(1, 1 - days_to_meeting / 30))
 }
 
+# Helper function to convert UTC times to Melbourne time
+# This automatically handles DST transitions
+utc_to_melbourne <- function(utc_time) {
+  with_tz(utc_time, tzone = "Australia/Melbourne")
+}
+
 # ------------------------------------------------------------------------------
 # 4. DEFINE RBA MEETING SCHEDULE
 # ------------------------------------------------------------------------------
@@ -105,7 +111,7 @@ print(paste("Next meeting:", next_meeting))
 abs_releases <- tribble(
   ~dataset, ~datetime,
   
-  # CPI (quarterly releases at 11:30 AM AEST)
+  # CPI (quarterly releases at 11:30 AM Melbourne time)
   "CPI", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
   "CPI", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
   "CPI", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
@@ -213,340 +219,180 @@ if (use_override) {
 # Print diagnostics
 print(paste("Last meeting:", last_meeting))
 print(paste("Using override:", use_override))
-print(paste("Initial rate:", initial_rt))
+print(paste("Current rate:", current_rate))
 
 # ------------------------------------------------------------------------------
-# 7. FILTER SCRAPES BASED ON TIME CUTOFF
+# 7. PROCESS CASH RATE DATA
 # ------------------------------------------------------------------------------
 
-# Determine which scrapes to include based on 2:30 PM AEST cutoff
-now_melb <- now(tzone = "Australia/Melbourne")
-cutoff_time <- ymd_hm(paste0(Sys.Date(), " 14:30"), tz = "Australia/Melbourne")
-
-# If before 2:30 PM, include yesterday's data; otherwise only today's
-cutoff_date <- if (now_melb < cutoff_time) {
-  Sys.Date() - 1
-} else {
-  Sys.Date()
-}
-
-print(paste("Current time (Melbourne):", now_melb))
-print(paste("Cutoff time:", cutoff_time))
-
-# Get all scrape times and filter based on cutoff
-all_times <- sort(unique(cash_rate$scrape_time))
-scrapes <- all_times[all_times >= cutoff_date | all_times > last_meeting]
-
-print("Latest scrapes:")
-print(tail(scrapes))
-
-# ------------------------------------------------------------------------------
-# 8. CALCULATE IMPLIED MEAN RATES FOR EACH SCRAPE × MEETING
-# ------------------------------------------------------------------------------
-
-# For each scrape time, calculate the implied rate for each future meeting
-all_list <- map(scrapes, function(scr) {
-  
-  scr_date <- as.Date(scr)
-  
-  # Get the most recent futures price for each contract expiry at this scrape
-  df_rates <- cash_rate %>% 
-    filter(scrape_time == scr) %>%
-    select(
-      expiry = date,
-      forecast_rate = cash_rate,
-      scrape_time
-    )
-  
-  # Join futures prices to meeting schedule
-  df <- meeting_schedule %>%
-    distinct(expiry, meeting_date) %>%
-    mutate(scrape_time = scr) %>%
-    left_join(df_rates, by = "expiry") %>%
-    arrange(expiry)
-  
-  # Remove contracts with no price data yet
-  df <- df %>% filter(!is.na(forecast_rate))
-  if (nrow(df) == 0) return(NULL)
-  
-  # Calculate implied rates iteratively
-  prev_implied <- NA_real_
-  out <- vector("list", nrow(df))
-  
-  for (i in seq_len(nrow(df))) {
-    row <- df[i, ]
-    
-    # Starting rate is either initial rate or previous meeting's implied rate
-    rt_in <- if (is.na(prev_implied)) initial_rt else prev_implied
-    
-    # Calculate implied rate for this meeting
-    # If meeting is before contract expiry, use contract rate directly
-    # Otherwise, decompose the weighted average
-    r_tp1 <- if (row$meeting_date < row$expiry) {
-      row$forecast_rate
+# Convert scrape_time to Melbourne timezone if it's in UTC
+# Assuming the input data has scrape_time in UTC
+cash_rate <- cash_rate %>%
+  mutate(
+    # Convert UTC to Melbourne time (handles DST automatically)
+    scrape_time_melb = if (!"POSIXct" %in% class(scrape_time)) {
+      ymd_hms(scrape_time, tz = "UTC") %>% with_tz("Australia/Melbourne")
+    } else if (tz(scrape_time) == "UTC") {
+      with_tz(scrape_time, "Australia/Melbourne")
     } else {
-      # Days before meeting / total days in month
-      nb <- (day(row$meeting_date) - 1) / days_in_month(row$expiry)
-      na <- 1 - nb
-      # Solve for rate after meeting: (contract_rate - rt_in * nb) / na
-      (row$forecast_rate - rt_in * nb) / na
+      scrape_time
     }
-    
-    out[[i]] <- tibble(
-      scrape_time = scr,
-      meeting_date = row$meeting_date,
-      implied_mean = r_tp1,
-      days_to_meeting = as.integer(row$meeting_date - scr_date),
-      previous_rate = rt_in
-    )
-    
-    prev_implied <- r_tp1
-  }
-  
-  bind_rows(out)
-})
-
-# Combine all scrapes and add forecast uncertainty (RMSE)
-all_estimates <- all_list %>%
-  compact() %>%
-  bind_rows() %>%
-  filter(days_to_meeting >= 0) %>%
-  left_join(rmse_days, by = "days_to_meeting") %>%
-  rename(stdev = finalrmse)
-
-# Handle missing or invalid standard deviations
-max_rmse <- suppressWarnings(max(rmse_days$finalrmse, na.rm = TRUE))
-if (!is.finite(max_rmse)) {
-  stop("No finite RMSE values found in rmse_days$finalrmse")
-}
-
-bad_sd <- !is.finite(all_estimates$stdev) | 
-          is.na(all_estimates$stdev) | 
-          all_estimates$stdev <= 0
-n_bad <- sum(bad_sd, na.rm = TRUE)
-
-if (n_bad > 0) {
-  message(sprintf(
-    "Replacing %d missing/invalid stdev(s) with max RMSE = %.4f",
-    n_bad, max_rmse
-  ))
-  all_estimates$stdev[bad_sd] <- max_rmse
-}
-
-# Display sample of estimates
-all_estimates %>% filter(meeting_date == next_meeting) %>% tail(100) %>% print(n = Inf, width = Inf)
-
-# ------------------------------------------------------------------------------
-# 9. CALCULATE PROBABILITIES FOR EACH RATE BUCKET
-# ------------------------------------------------------------------------------
-
-# Define rate buckets (0.10% to 6.10% in 0.25% increments)
-bucket_centers <- seq(0.10, 6.10, by = 0.25)
-half_width <- 0.125  # Each bucket spans ±0.125% around center
-
-# Find the bucket closest to current rate (for "no change")
-current_center <- bucket_centers[which.min(abs(bucket_centers - current_rate))]
-
-# Calculate probabilities for each estimate × bucket combination
-bucket_list <- vector("list", nrow(all_estimates))
-
-for (i in seq_len(nrow(all_estimates))) {
-  mu_i <- all_estimates$implied_mean[i]
-  sigma_i <- all_estimates$stdev[i]
-  d_i <- all_estimates$days_to_meeting[i]
-  
-  # METHOD 1: Probabilistic (uses normal distribution)
-  p_vec <- sapply(bucket_centers, function(b) {
-    lower <- b - half_width
-    upper <- b + half_width
-    pnorm(upper, mean = mu_i, sd = sigma_i) - 
-      pnorm(lower, mean = mu_i, sd = sigma_i)
-  })
-  p_vec[p_vec < 0] <- 0
-  p_vec[p_vec < 0.01] <- 0  # Remove noise
-  p_vec <- p_vec / sum(p_vec)  # Normalize
-  
-  # METHOD 2: Linear interpolation (for near-term precision)
-  nearest <- order(abs(bucket_centers - mu_i))[1:2]
-  b1 <- min(bucket_centers[nearest])
-  b2 <- max(bucket_centers[nearest])
-  w2 <- (mu_i - b1) / (b2 - b1)  # Interpolation weight
-  
-  l_vec <- numeric(length(bucket_centers))
-  l_vec[bucket_centers == b1] <- 1 - w2
-  l_vec[bucket_centers == b2] <- w2
-  
-  # BLEND: Linear method near meeting, probabilistic method far out
-  blend <- blend_weight(d_i)
-  v <- blend * l_vec + (1 - blend) * p_vec
-  
-  bucket_list[[i]] <- tibble(
-    scrape_time = all_estimates$scrape_time[i],
-    meeting_date = all_estimates$meeting_date[i],
-    implied_mean = mu_i,
-    stdev = sigma_i,
-    days_to_meeting = d_i,
-    bucket = bucket_centers,
-    probability_linear = l_vec,
-    probability_prob = p_vec,
-    probability = v,
-    diff = bucket_centers - current_rate,
-    diff_s = sign(bucket_centers - current_rate) * 
-             abs(bucket_centers - current_rate)^(1/4)  # For color scaling
   )
-}
 
-all_estimates_buckets <- bind_rows(bucket_list)
+# Get latest scrape time in Melbourne timezone
+latest_scrape <- max(cash_rate$scrape_time_melb)
 
 # ------------------------------------------------------------------------------
-# 10. CREATE BAR CHARTS FOR EACH FUTURE MEETING
+# 8. CALCULATE IMPLIED RATES & PROBABILITIES FOR EACH MEETING
 # ------------------------------------------------------------------------------
 
-# Identify future meetings and latest scrape
-future_meetings <- meeting_schedule$meeting_date[
-  meeting_schedule$meeting_date > Sys.Date()
-]
-latest_scrape <- max(all_estimates_buckets$scrape_time) + hours(10)
-
-print(paste("Latest scrape:", latest_scrape))
-
-# Generate a bar chart for each upcoming meeting
-for (mt in future_meetings) {
-  
-  # Filter data for this specific meeting and latest scrape
-  bar_df <- all_estimates_buckets %>%
-    filter(
-      scrape_time == latest_scrape,
-      meeting_date == mt
-    )
-  
-  # Create bar chart with color gradient (blue=cut, gray=hold, red=hike)
-  p <- ggplot(bar_df, aes(x = factor(bucket), y = probability, fill = diff_s)) +
-    geom_col(show.legend = FALSE) +
-    scale_y_continuous(labels = percent_format(accuracy = 1)) +
-    scale_fill_gradient2(
-      midpoint = 0,
-      low = "#0022FF",      # Blue for cuts
-      mid = "#B3B3B3",      # Gray for no change
-      high = "#FF2200",     # Red for hikes
-      limits = range(bar_df$diff_s, na.rm = TRUE)
-    ) +
-    labs(
-      title = paste("Cash Rate Outcome Probabilities —", 
-                   format(as.Date(mt), "%d %B %Y")),
-      subtitle = paste(
-        "As of", 
-        format(
-          with_tz(as.POSIXct(latest_scrape) + hours(10), 
-                 tzone = "Australia/Sydney"),
-          "%d %B %Y, %I:%M %p AEST"
+meeting_probs <- meeting_schedule %>%
+  filter(meeting_date >= Sys.Date()) %>%
+  mutate(
+    meeting_data = map2(expiry, meeting_date, function(exp, meet) {
+      # Filter cash rate data for this meeting's contract
+      meeting_cash <- cash_rate %>%
+        filter(
+          floor_date(date, "month") == exp,
+          scrape_time_melb <= meet
+        ) %>%
+        arrange(scrape_time_melb) %>%
+        mutate(
+          # Calculate days until meeting
+          days_to_meeting = as.numeric(difftime(meet, as.Date(scrape_time_melb), units = "days")),
+          
+          # Get RMSE for forecast error based on days remaining
+          rmse = map_dbl(days_to_meeting, function(d) {
+            if (d < 0) return(0)
+            idx <- which.min(abs(rmse_days$finalrmse$days - d))
+            rmse_days$finalrmse$rmse[idx]
+          }),
+          
+          # Calculate blend weight for discrete vs probabilistic approach
+          blend = blend_weight(days_to_meeting),
+          
+          # Implied rate from futures
+          implied_rate = cash_rate,
+          
+          # Expected change from current rate
+          expected_change = implied_rate - initial_rt,
+          
+          # Round to nearest 25bp for discrete outcomes
+          discrete_outcome = round(expected_change * 4) / 4,
+          
+          # Calculate probabilities for different rate moves
+          prob_data = pmap(list(expected_change, rmse, blend, discrete_outcome), 
+                          function(exp_chg, rm, bl, disc) {
+            # Define possible rate changes (-75bp to +75bp in 25bp increments)
+            rate_changes <- seq(-0.75, 0.75, 0.25)
+            
+            if (rm > 0) {
+              # Probabilistic: use normal distribution
+              probs_prob <- pnorm(
+                rate_changes + 0.125,
+                mean = exp_chg,
+                sd = rm
+              ) - pnorm(
+                rate_changes - 0.125,
+                mean = exp_chg,
+                sd = rm
+              )
+            } else {
+              probs_prob <- rep(0, length(rate_changes))
+            }
+            
+            # Discrete: 100% probability on rounded outcome
+            probs_disc <- ifelse(rate_changes == disc, 1, 0)
+            
+            # Blend the two approaches
+            probs <- bl * probs_prob + (1 - bl) * probs_disc
+            
+            # Normalize to ensure probabilities sum to 1
+            probs <- probs / sum(probs)
+            
+            tibble(
+              rate_change = rate_changes,
+              probability = probs
+            )
+          })
         )
-      ),
-      x = "Target Rate (%)",
-      y = "Probability (%)"
-    ) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
-  # Save chart
-  ggsave(
-    filename = paste0("docs/rate_probabilities_", 
-                     gsub(" ", "_", mt), ".png"),
-    plot = p,
-    width = 6,
-    height = 4,
-    dpi = 300,
-    device = "png"
-  )
-}
-
-
+      
+      # Unnest probability data
+      meeting_cash %>%
+        select(scrape_time_melb, days_to_meeting, expected_change, 
+               discrete_outcome, blend, rmse, prob_data) %>%
+        unnest(prob_data)
+    })
+  ) %>%
+  unnest(meeting_data)
 
 # ------------------------------------------------------------------------------
-# 12. PREPARE DATA FOR LINE CHART (TOP 3-4 OUTCOMES)
+# 9. FOCUS ON NEXT MEETING & PREPARE VISUALIZATION DATA
 # ------------------------------------------------------------------------------
 
-print(all_estimates_buckets %>% filter(meeting_date == next_meeting))
-
-# First, create the move labels for ALL buckets
-buckets_with_moves <- all_estimates_buckets %>%
+next_meeting_probs <- meeting_probs %>%
   filter(meeting_date == next_meeting) %>%
   mutate(
-    diff_center = bucket - current_center,
+    # Create descriptive labels for rate moves
     move = case_when(
-      near(diff_center, -0.75, tol = 0.01) ~ "-75 bp cut",
-      near(diff_center, -0.50, tol = 0.01) ~ "-50 bp cut",
-      near(diff_center, -0.25, tol = 0.01) ~ "-25 bp cut",
-      near(diff_center, 0.00, tol = 0.01) ~ "No change",
-      near(diff_center, 0.25, tol = 0.01) ~ "+25 bp hike",
-      near(diff_center, 0.50, tol = 0.01) ~ "+50 bp hike",
-      near(diff_center, 0.75, tol = 0.01) ~ "+75 bp hike",
-      TRUE ~ sprintf("%+.0f bp", round(diff_center * 100))
-    )
-  ) %>%
-  filter(!is.na(move))  # Remove any buckets that couldn't be labeled
+      rate_change == -0.75 ~ "-75 bp cut",
+      rate_change == -0.50 ~ "-50 bp cut",
+      rate_change == -0.25 ~ "-25 bp cut",
+      rate_change == 0 ~ "No change",
+      rate_change == 0.25 ~ "+25 bp hike",
+      rate_change == 0.50 ~ "+50 bp hike",
+      rate_change == 0.75 ~ "+75 bp hike",
+      TRUE ~ as.character(rate_change)
+    ),
+    move = factor(move, levels = c(
+      "-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
+      "+25 bp hike", "+50 bp hike", "+75 bp hike"
+    ))
+  )
 
-# NOW identify the top 3-4 most probable outcomes (from labeled buckets only)
-top3_buckets <- buckets_with_moves %>% 
-  group_by(bucket, move) %>%
-  summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
-  slice_max(order_by = probability, n = 4, with_ties = FALSE) %>% 
-  pull(bucket)
+# ------------------------------------------------------------------------------
+# 10. IDENTIFY TOP 3 MOST LIKELY OUTCOMES AT LATEST FORECAST
+# ------------------------------------------------------------------------------
 
-# Filter to top outcomes
-top3_df <- buckets_with_moves %>%
-  filter(bucket %in% top3_buckets) %>%
-  mutate(
-    move = factor(
-      move,
-      levels = c("-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
-                 "+25 bp hike", "+50 bp hike", "+75 bp hike")
-    )
-  ) %>%
-  select(-diff_center)
-
-# Verify we have data
-if (nrow(top3_df) == 0) {
-  stop("No valid data in top3_df. Check bucket matching logic.")
-}
-
-# Set x-axis limits for line chart
-start_xlim <- min(top3_df$scrape_time) + hours(10)
-end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(17)
-
-# ==============================================================================
-# Save summary data instead of HTML
-# ==============================================================================
-# Get top 3 probabilities for latest scrape
-top3_summary <- top3_df %>%
-  filter(scrape_time == latest_scrape) %>%
-  group_by(move) %>%
-  summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
+latest_probs <- next_meeting_probs %>%
+  filter(scrape_time_melb == max(scrape_time_melb)) %>%
   arrange(desc(probability)) %>%
-  slice_head(n = 3)
+  slice(1:3)
 
-# Create summary data object
-rba_summary_data <- list(
-  scrape_date = as.Date(latest_scrape + hours(10)),
-  next_meeting = next_meeting,
-  top3_moves = top3_summary$move,
-  top3_probabilities = top3_summary$probability
-)
+top3_moves <- latest_probs$move
 
-# Save as RDS file
-saveRDS(rba_summary_data, "docs/rba_summary_data.rds")
-cat("\nProbability summary data saved to: docs/rba_summary_data.rds\n")
+print("Top 3 most likely outcomes:")
+print(latest_probs %>% select(move, probability))
 
+# Filter data to only include top 3 scenarios
+top3_df <- next_meeting_probs %>%
+  filter(move %in% top3_moves)
 
 # ------------------------------------------------------------------------------
-# 13. CREATE LINE CHART SHOWING PROBABILITY EVOLUTION
+# 11. DETERMINE CHART DATE RANGE
 # ------------------------------------------------------------------------------
 
-# Create static line plot
-line <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
-                            y = probability,
-                            colour = move, 
-                            group = move)) +
+# Calculate date range (from 7 days before first data to 1 day after last data)
+date_range <- top3_df %>%
+  summarise(
+    min_date = min(as.Date(scrape_time_melb)) - days(7),
+    max_date = max(as.Date(scrape_time_melb)) + days(1)
+  )
+
+# Convert to datetime limits for plotting (in Melbourne timezone)
+start_xlim <- ymd_hms(paste0(date_range$min_date, " 00:00:00"), 
+                      tz = "Australia/Melbourne")
+end_xlim <- ymd_hms(paste0(date_range$max_date, " 23:59:59"), 
+                    tz = "Australia/Melbourne")
+
+# ------------------------------------------------------------------------------
+# 12. CREATE STATIC PROBABILITY CHART
+# ------------------------------------------------------------------------------
+
+line <- ggplot(top3_df, aes(x = scrape_time_melb, 
+                             y = probability,
+                             colour = move, 
+                             group = move)) +
   geom_line(linewidth = 1.2) +
   scale_colour_manual(
     values = c(
@@ -556,12 +402,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10),
       "No change" = "#BFBFBF",
       "+25 bp hike" = "#E07C7C",
       "+50 bp hike" = "#B50000",
-      "+75 bp hike" = "#800000",
-      "CPI" = "#FF6B6B",
-      "CPI Indicator" = "#4ECDC4", 
-      "WPI" = "#45B7D1",
-      "National Accounts" = "#FFA726",
-      "Labour Force" = "#AB47BC"
+      "+75 bp hike" = "#800000"
     ),
     name = ""
   ) +
@@ -578,16 +419,9 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10),
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
-  ) +
-  # Add vertical lines for ABS data releases
-  geom_vline(
-    data = abs_releases,
-    aes(xintercept = datetime, colour = dataset),
-    linetype = "dashed",
-    alpha = 0.8
   ) +
   theme_bw() +
   theme(
@@ -625,7 +459,7 @@ abs_colors <- c(
 )
 
 # Create base plot WITHOUT any vertical lines
-line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
+line_int_base <- ggplot(top3_df, aes(x = scrape_time_melb, 
                                       y = probability,
                                       colour = move, 
                                       group = move)) +
@@ -655,12 +489,12 @@ line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10),
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
   aes(text = paste0(
-    "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
+    "Time: ", format(scrape_time_melb, "%d %b %H:%M"), "<br>",
     "Move: ", move, "<br>",
     "Probability: ", percent(probability, accuracy = 1)
   )) +
@@ -684,7 +518,7 @@ vlines_df <- relevant_releases %>%
   rowwise() %>%
   mutate(
     data = list(tibble(
-      scrape_time = datetime - hours(10),  # Adjust back like top3_df
+      scrape_time_melb = datetime,  # Already in Melbourne time
       probability = c(0, 1),
       move = dataset,
       point_order = 1:2
@@ -705,12 +539,12 @@ line_int_complete <- ggplot() +
   # Probability lines
   geom_line(
     data = plot_df %>% filter(line_type == "probability"),
-    aes(x = scrape_time + hours(10), 
+    aes(x = scrape_time_melb, 
         y = probability,
         colour = move, 
         group = move,
         text = paste0(
-          "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
+          "Time: ", format(scrape_time_melb, "%d %b %H:%M"), "<br>",
           "Move: ", move, "<br>",
           "Probability: ", percent(probability, accuracy = 1)
         )),
@@ -719,13 +553,13 @@ line_int_complete <- ggplot() +
   # Vertical lines for releases
   geom_line(
     data = plot_df %>% filter(line_type == "release"),
-    aes(x = scrape_time + hours(10),
+    aes(x = scrape_time_melb,
         y = probability,
         colour = move,
-        group = interaction(move, scrape_time),
+        group = interaction(move, scrape_time_melb),
         text = paste0(
           "<b>", move, "</b><br>",
-          format(scrape_time + hours(10), "%d %b %Y<br>%H:%M AEST")
+          format(scrape_time_melb, "%d %b %Y<br>%H:%M %Z")
         )),
     linetype = "dashed",
     linewidth = 1
@@ -760,7 +594,7 @@ line_int_complete <- ggplot() +
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
@@ -797,7 +631,7 @@ interactive_line <- interactive_line %>%
       text = paste0(
         glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
         "<br>",
-        "<sub>", glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"), "</sub>"
+        "<sub>", glue("as of {format(as.Date(latest_scrape), '%d %b %Y')}"), "</sub>"
       )
     )
   )
