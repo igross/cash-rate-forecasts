@@ -230,13 +230,16 @@ print(paste("Current rate:", current_rate))
 cash_rate <- cash_rate %>%
   mutate(
     # Convert UTC to Melbourne time (handles DST automatically)
-    scrape_time_melb = if (!"POSIXct" %in% class(scrape_time)) {
-      ymd_hms(scrape_time, tz = "UTC") %>% with_tz("Australia/Melbourne")
-    } else if (tz(scrape_time) == "UTC") {
-      with_tz(scrape_time, "Australia/Melbourne")
-    } else {
-      scrape_time
-    }
+    scrape_time_melb = case_when(
+      # If it's already POSIXct in Australia/Melbourne, keep it
+      "POSIXct" %in% class(scrape_time) & tz(scrape_time) == "Australia/Melbourne" ~ scrape_time,
+      # If it's POSIXct in UTC, convert to Melbourne
+      "POSIXct" %in% class(scrape_time) & tz(scrape_time) == "UTC" ~ with_tz(scrape_time, "Australia/Melbourne"),
+      # If it's POSIXct with empty/unknown timezone, assume UTC and convert
+      "POSIXct" %in% class(scrape_time) ~ force_tz(scrape_time, "UTC") %>% with_tz("Australia/Melbourne"),
+      # If it's character, parse as UTC then convert
+      TRUE ~ ymd_hms(scrape_time, tz = "UTC", quiet = TRUE) %>% with_tz("Australia/Melbourne")
+    )
   )
 
 # Get latest scrape time in Melbourne timezone
@@ -264,8 +267,23 @@ meeting_probs <- meeting_schedule %>%
           # Get RMSE for forecast error based on days remaining
           rmse = map_dbl(days_to_meeting, function(d) {
             if (d < 0) return(0)
-            idx <- which.min(abs(rmse_days$finalrmse$days - d))
-            rmse_days$finalrmse$rmse[idx]
+            # Handle different rmse_days structures
+            if (is.data.frame(rmse_days$finalrmse)) {
+              # If it's a data frame with days and rmse columns
+              idx <- which.min(abs(rmse_days$finalrmse$days - d))
+              rmse_days$finalrmse$rmse[idx]
+            } else if (is.atomic(rmse_days$finalrmse)) {
+              # If it's an atomic vector (indexed by days)
+              if (d >= length(rmse_days$finalrmse)) {
+                rmse_days$finalrmse[length(rmse_days$finalrmse)]
+              } else {
+                rmse_days$finalrmse[ceiling(d) + 1]
+              }
+            } else {
+              # Fallback - try direct indexing
+              idx <- min(ceiling(d) + 1, length(rmse_days$finalrmse))
+              rmse_days$finalrmse[idx]
+            }
           }),
           
           # Calculate blend weight for discrete vs probabilistic approach
