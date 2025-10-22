@@ -44,7 +44,7 @@ cash_rate$cash_rate <- cash_rate$cash_rate + spread
 # Create output directory structure
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-
+hours_tz <- 11
 
 
 # ------------------------------------------------------------------------------
@@ -406,7 +406,7 @@ all_estimates_buckets <- bind_rows(bucket_list)
 future_meetings <- meeting_schedule$meeting_date[
   meeting_schedule$meeting_date > Sys.Date()
 ]
-latest_scrape <- max(all_estimates_buckets$scrape_time) + hours(10)
+latest_scrape <- max(all_estimates_buckets$scrape_time) + hours(hours_tz)
 
 print(paste("Latest scrape:", latest_scrape))
 
@@ -437,7 +437,7 @@ for (mt in future_meetings) {
       subtitle = paste(
         "As of", 
         format(
-          with_tz(as.POSIXct(latest_scrape) + hours(10), 
+          with_tz(as.POSIXct(latest_scrape) + hours(hours_tz), 
                  tzone = "Australia/Sydney"),
           "%d %B %Y, %I:%M %p AEST"
         )
@@ -511,8 +511,8 @@ if (nrow(top3_df) == 0) {
 }
 
 # Set x-axis limits for line chart
-start_xlim <- min(top3_df$scrape_time) + hours(10)
-end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(17)
+start_xlim <- min(top3_df$scrape_time) + hours(hours_tz)
+end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz+7)
 
 # ==============================================================================
 # Save summary data instead of HTML
@@ -527,7 +527,7 @@ top3_summary <- top3_df %>%
 
 # Create summary data object
 rba_summary_data <- list(
-  scrape_date = as.Date(latest_scrape + hours(10)),
+  scrape_date = as.Date(latest_scrape + hours(hours_tz)),
   next_meeting = next_meeting,
   top3_moves = top3_summary$move,
   top3_probabilities = top3_summary$probability
@@ -543,7 +543,7 @@ cat("\nProbability summary data saved to: docs/rba_summary_data.rds\n")
 # ------------------------------------------------------------------------------
 
 # Create static line plot
-line <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
+line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz), 
                             y = probability,
                             colour = move, 
                             group = move)) +
@@ -578,7 +578,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(10),
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
@@ -625,7 +625,7 @@ abs_colors <- c(
 )
 
 # Create base plot WITHOUT any vertical lines
-line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10), 
+line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz), 
                                       y = probability,
                                       colour = move, 
                                       group = move)) +
@@ -655,12 +655,12 @@ line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(10),
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
   aes(text = paste0(
-    "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
+    "Time: ", format(scrape_time + hours(hours_tz), "%d %b %H:%M"), "<br>",
     "Move: ", move, "<br>",
     "Probability: ", percent(probability, accuracy = 1)
   )) +
@@ -684,7 +684,7 @@ vlines_df <- relevant_releases %>%
   rowwise() %>%
   mutate(
     data = list(tibble(
-      scrape_time = datetime - hours(10),  # Adjust back like top3_df
+      scrape_time = datetime - hours(hours_tz),  # Adjust back like top3_df
       probability = c(0, 1),
       move = dataset,
       point_order = 1:2
@@ -705,12 +705,12 @@ line_int_complete <- ggplot() +
   # Probability lines
   geom_line(
     data = plot_df %>% filter(line_type == "probability"),
-    aes(x = scrape_time + hours(10), 
+    aes(x = scrape_time + hours(hours_tz), 
         y = probability,
         colour = move, 
         group = move,
         text = paste0(
-          "Time: ", format(scrape_time + hours(10), "%d %b %H:%M"), "<br>",
+          "Time: ", format(scrape_time + hours(hours_tz), "%d %b %H:%M"), "<br>",
           "Move: ", move, "<br>",
           "Probability: ", percent(probability, accuracy = 1)
         )),
@@ -719,13 +719,13 @@ line_int_complete <- ggplot() +
   # Vertical lines for releases
   geom_line(
     data = plot_df %>% filter(line_type == "release"),
-    aes(x = scrape_time + hours(10),
+    aes(x = scrape_time + hours(hours_tz),
         y = probability,
         colour = move,
         group = interaction(move, scrape_time),
         text = paste0(
           "<b>", move, "</b><br>",
-          format(scrape_time + hours(10), "%d %b %Y<br>%H:%M AEST")
+          format(scrape_time + hours(hours_tz), "%d %b %Y<br>%H:%M AEST")
         )),
     linetype = "dashed",
     linewidth = 1
@@ -760,7 +760,7 @@ line_int_complete <- ggplot() +
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
@@ -797,7 +797,7 @@ interactive_line <- interactive_line %>%
       text = paste0(
         glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
         "<br>",
-        "<sub>", glue("as of {format(as.Date(latest_scrape + hours(10)), '%d %b %Y')}"), "</sub>"
+        "<sub>", glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"), "</sub>"
       )
     )
   )
