@@ -330,7 +330,7 @@ needs_update <- function(filepath, days_threshold = 30) {
 # Get current time
 current_datetime <- Sys.time()
 current_date <- Sys.Date()
-current_hour <- as.numeric(format(current_datetime, "%H"))
+current_hour <- 16#as.numeric(format(current_datetime, "%H"))
 
 # Categorize meetings
 past_meetings <- future_meetings_all[future_meetings_all < current_date]
