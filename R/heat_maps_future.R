@@ -329,54 +329,22 @@ needs_update <- function(filepath, days_threshold = 30) {
 
 # Get current time
 current_datetime <- Sys.time()
-current_date <- 1#Sys.Date()
-current_hour <- as.numeric(format(current_datetime, "%H"))
-
+current_date <- Sys.Date()
 # Categorize meetings
 past_meetings <- future_meetings_all[future_meetings_all < current_date]
 future_meetings <- future_meetings_all[future_meetings_all >= current_date]
 
-# Get next two meetings
-next_two_meetings <- head(future_meetings, 2)
-
-# Get other future meetings (beyond next two)
-other_future_meetings <- if(length(future_meetings) > 2) {
-  tail(future_meetings, -2)
-} else {
-  as.Date(character(0))
-}
-
 cat("\n=== Meeting Categories ===\n")
 cat("Past meetings:", length(past_meetings), "\n")
-cat("Next two meetings:", length(next_two_meetings), "\n")
-cat("Other future meetings:", length(other_future_meetings), "\n")
-cat("Current hour:", current_hour, "\n")
+cat("Future meetings:", length(future_meetings), "\n")
 
-# Determine which meetings to process
-meetings_to_process <- c(
-  next_two_meetings  # Always process next two
-)
+meetings_to_process <- future_meetings
 
-# Add other future meetings only between 4-5pm
-if (current_hour >= 11 && current_hour < 15) {
-  cat("Within 4-5pm window - processing all future meetings\n")
-  meetings_to_process <- c(meetings_to_process, other_future_meetings)
+if (length(meetings_to_process) == 0) {
+  cat("\nNo future meetings to process.\n")
 } else {
-  cat("Outside 4-5pm window - skipping other future meetings\n")
+  cat("\nTotal future meetings to process:", length(meetings_to_process), "\n\n")
 }
-
-# Add past meetings that need monthly update
-for (mt in past_meetings) {
-  meeting_date_proper <- as.Date(mt) - days(1)
-  filename <- paste0("docs/meetings/daily_heatmap_", fmt_file(meeting_date_proper), ".png")
-  
-  if (needs_update(filename, days_threshold = 30)) {
-    meetings_to_process <- c(meetings_to_process, mt)
-    cat("Adding past meeting", as.character(meeting_date_proper), "for monthly update\n")
-  }
-}
-
-cat("\nTotal meetings to process:", length(meetings_to_process), "\n\n")
 
 # =============================================
 # FIXED STATIC HEATMAP VISUALIZATIONS
