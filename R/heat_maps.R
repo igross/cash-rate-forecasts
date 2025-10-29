@@ -330,7 +330,7 @@ needs_update <- function(filepath, days_threshold = 30) {
 # Get current time
 current_datetime <- Sys.time()
 current_date <- Sys.Date()
-current_hour <- 16#as.numeric(format(current_datetime, "%H"))
+current_hour <- as.numeric(format(current_datetime, "%H"))
 
 # Categorize meetings
 past_meetings <- future_meetings_all[future_meetings_all < current_date]
@@ -358,7 +358,7 @@ meetings_to_process <- c(
 )
 
 # Add other future meetings only between 4-5pm
-if (current_hour >= 16 && current_hour < 17) {
+if (current_hour >= 11 && current_hour < 15) {
   cat("Within 4-5pm window - processing all future meetings\n")
   meetings_to_process <- c(meetings_to_process, other_future_meetings)
 } else {
