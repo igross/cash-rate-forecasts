@@ -329,7 +329,7 @@ needs_update <- function(filepath, days_threshold = 30) {
 
 # Get current time
 current_datetime <- Sys.time()
-current_date <- Sys.Date()
+current_date <- 1#Sys.Date()
 current_hour <- as.numeric(format(current_datetime, "%H"))
 
 # Categorize meetings
