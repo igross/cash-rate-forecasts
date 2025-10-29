@@ -320,63 +320,10 @@ fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
 # MEETING UPDATE LOGIC
 # =============================================
 
-# Function to check if file needs updating
-needs_update <- function(filepath, days_threshold = 30) {
-  if (!file.exists(filepath)) return(TRUE)
-  file_age <- as.numeric(Sys.Date() - as.Date(file.info(filepath)$mtime))
-  return(file_age >= days_threshold)
-}
-
-# Get current time
-current_datetime <- Sys.time()
-current_date <- 1#Sys.Date()
-current_hour <- as.numeric(format(current_datetime, "%H"))
-
-# Categorize meetings
-past_meetings <- future_meetings_all[future_meetings_all < current_date]
-future_meetings <- future_meetings_all[future_meetings_all >= current_date]
-
-# Get next two meetings
-next_two_meetings <- head(future_meetings, 2)
-
-# Get other future meetings (beyond next two)
-other_future_meetings <- if(length(future_meetings) > 2) {
-  tail(future_meetings, -2)
-} else {
-  as.Date(character(0))
-}
-
-cat("\n=== Meeting Categories ===\n")
-cat("Past meetings:", length(past_meetings), "\n")
-cat("Next two meetings:", length(next_two_meetings), "\n")
-cat("Other future meetings:", length(other_future_meetings), "\n")
-cat("Current hour:", current_hour, "\n")
-
-# Determine which meetings to process
-meetings_to_process <- c(
-  next_two_meetings  # Always process next two
-)
-
-# Add other future meetings only between 4-5pm
-if (current_hour >= 11 && current_hour < 15) {
-  cat("Within 4-5pm window - processing all future meetings\n")
-  meetings_to_process <- c(meetings_to_process, other_future_meetings)
-} else {
-  cat("Outside 4-5pm window - skipping other future meetings\n")
-}
-
-# Add past meetings that need monthly update
-for (mt in past_meetings) {
-  meeting_date_proper <- as.Date(mt) - days(1)
-  filename <- paste0("docs/meetings/daily_heatmap_", fmt_file(meeting_date_proper), ".png")
-  
-  if (needs_update(filename, days_threshold = 30)) {
-    meetings_to_process <- c(meetings_to_process, mt)
-    cat("Adding past meeting", as.character(meeting_date_proper), "for monthly update\n")
-  }
-}
-
-cat("\nTotal meetings to process:", length(meetings_to_process), "\n\n")
+# Process every meeting in the schedule on each run
+cat("\nProcessing heatmaps for all scheduled meetings every run.\n")
+meetings_to_process <- sort(unique(meeting_schedule$meeting_date))
+cat("Total meetings to process:", length(meetings_to_process), "\n\n")
 
 # =============================================
 # FIXED STATIC HEATMAP VISUALIZATIONS
