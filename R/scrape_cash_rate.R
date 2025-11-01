@@ -86,11 +86,9 @@ all_data <- bind_rows(df_list) %>%
     date        = as.Date(date),
     cash_rate   = as.double(cash_rate),    # ← use as.double()
     scrape_date = as.Date(scrape_date),
-    scrape_time = if_else(
-      is.na(scrape_time),
-      as.POSIXct(paste(scrape_date, "12:00:00"),
-                 tz = "Australia/Melbourne"),
-      scrape_time
+    scrape_time = coalesce(
+      scrape_time,
+      as.POSIXct(scrape_date, tz = "Australia/Melbourne") + hours(12)
     )
   ) %>%
   filter(
@@ -99,6 +97,7 @@ all_data <- bind_rows(df_list) %>%
       "2023-01-18","2023-01-24","2023-01-31",
       "2023-02-02","2022-12-30","2022-12-29"
     )),
+    !is.na(scrape_date),
     !is.na(date),
     !is.na(cash_rate)
   )
