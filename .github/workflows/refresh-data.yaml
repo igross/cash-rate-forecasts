@@ -6,7 +6,7 @@ permissions:
 on:
   schedule:
   # 23:00–05:00 UTC → 10:00–16:00 AEST (non-DST)
-    - cron: '*/5 23,0-6 * * *'
+    - cron: '*/5 22,0-6 * * *'
   push:
     branches: [main, master]
   pull_request:
