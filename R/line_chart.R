@@ -685,17 +685,20 @@ vlines_df <- if (nrow(relevant_releases) == 0) {
     scrape_time = as.POSIXct(character()),
     probability = numeric(),
     move = character(),
-    point_order = integer()
+    point_order = integer(),
+    event_id = integer()
   )
 } else {
   relevant_releases %>%
+    mutate(event_id = row_number()) %>%
     rowwise() %>%
     mutate(
       data = list(tibble(
         scrape_time = datetime - hours(hours_tz),  # Adjust back like top3_df
         probability = c(0, 1),
         move = dataset,
-        point_order = 1:2
+        point_order = 1:2,
+        event_id = event_id
       ))
     ) %>%
     ungroup() %>%
@@ -707,19 +710,22 @@ vlines_df <- if (nrow(relevant_releases) == 0) {
 plot_df <- bind_rows(
   top3_df %>% mutate(line_type = "probability"),
   vlines_df %>% mutate(line_type = "release")
-)
+) %>%
+  mutate(
+    plot_time = as.POSIXct(scrape_time + hours(hours_tz), tz = "Australia/Melbourne")
+  )
 
 # Create completely fresh ggplot with BOTH datasets
 line_int_complete <- ggplot() +
   # Probability lines
   geom_line(
     data = plot_df %>% filter(line_type == "probability"),
-    aes(x = scrape_time + hours(hours_tz), 
+    aes(x = plot_time,
         y = probability,
-        colour = move, 
+        colour = move,
         group = move,
         text = paste0(
-          "Time: ", format(scrape_time + hours(hours_tz), "%d %b %H:%M"), "<br>",
+          "Time: ", format(plot_time, "%d %b %H:%M"), "<br>",
           "Move: ", move, "<br>",
           "Probability: ", percent(probability, accuracy = 1)
         )),
@@ -728,13 +734,13 @@ line_int_complete <- ggplot() +
   # Vertical lines for releases
   geom_line(
     data = plot_df %>% filter(line_type == "release"),
-    aes(x = scrape_time + hours(hours_tz),
+    aes(x = plot_time,
         y = probability,
         colour = move,
-        group = interaction(move, scrape_time),
+        group = interaction(move, event_id, drop = TRUE),
         text = paste0(
           "<b>", move, "</b><br>",
-          format(scrape_time + hours(hours_tz), "%d %b %Y<br>%H:%M AEST")
+          format(plot_time, "%d %b %Y<br>%H:%M AEST")
         )),
     linetype = "dashed",
     linewidth = 1
