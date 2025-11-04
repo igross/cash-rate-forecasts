@@ -680,19 +680,28 @@ relevant_releases <- abs_releases %>%
 
 # Prepare vertical line data in the SAME format as top3_df
 # Create two points for each release (bottom and top of chart)
-vlines_df <- relevant_releases %>%
-  rowwise() %>%
-  mutate(
-    data = list(tibble(
-      scrape_time = datetime - hours(hours_tz),  # Adjust back like top3_df
-      probability = c(0, 1),
-      move = dataset,
-      point_order = 1:2
-    ))
-  ) %>%
-  ungroup() %>%
-  select(data) %>%
-  unnest(data)
+vlines_df <- if (nrow(relevant_releases) == 0) {
+  tibble(
+    scrape_time = as.POSIXct(character()),
+    probability = numeric(),
+    move = character(),
+    point_order = integer()
+  )
+} else {
+  relevant_releases %>%
+    rowwise() %>%
+    mutate(
+      data = list(tibble(
+        scrape_time = datetime - hours(hours_tz),  # Adjust back like top3_df
+        probability = c(0, 1),
+        move = dataset,
+        point_order = 1:2
+      ))
+    ) %>%
+    ungroup() %>%
+    select(data) %>%
+    unnest(data)
+}
 
 # Combine with top3_df for plotting
 plot_df <- bind_rows(
