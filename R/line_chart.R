@@ -542,27 +542,35 @@ cat("\nProbability summary data saved to: docs/rba_summary_data.rds\n")
 # 13. CREATE LINE CHART SHOWING PROBABILITY EVOLUTION
 # ------------------------------------------------------------------------------
 
+# Define colour palettes for moves and ABS releases
+move_colors <- c(
+  "-75 bp cut" = "#000080",
+  "-50 bp cut" = "#004B8E",
+  "-25 bp cut" = "#5FA4D4",
+  "No change" = "#BFBFBF",
+  "+25 bp hike" = "#E07C7C",
+  "+50 bp hike" = "#B50000",
+  "+75 bp hike" = "#800000"
+)
+
+abs_colors <- c(
+  "CPI" = "#FF6B6B",
+  "CPI Indicator" = "#4ECDC4",
+  "WPI" = "#45B7D1",
+  "National Accounts" = "#FFA726",
+  "Labour Force" = "#AB47BC"
+)
+
+combined_colors <- c(move_colors, abs_colors)
+
 # Create static line plot
-line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz), 
+line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
                             y = probability,
-                            colour = move, 
+                            colour = move,
                             group = move)) +
   geom_line(linewidth = 1.2) +
   scale_colour_manual(
-    values = c(
-      "-75 bp cut" = "#000080",
-      "-50 bp cut" = "#004B8E",
-      "-25 bp cut" = "#5FA4D4",
-      "No change" = "#BFBFBF",
-      "+25 bp hike" = "#E07C7C",
-      "+50 bp hike" = "#B50000",
-      "+75 bp hike" = "#800000",
-      "CPI" = "#FF6B6B",
-      "CPI Indicator" = "#4ECDC4", 
-      "WPI" = "#45B7D1",
-      "National Accounts" = "#FFA726",
-      "Labour Force" = "#AB47BC"
-    ),
+    values = combined_colors,
     name = ""
   ) +
   scale_x_datetime(
@@ -615,31 +623,14 @@ print(top3_df, n = 50)
 # 14. CREATE INTERACTIVE VERSION WITH PROPER VERTICAL LINES
 # ------------------------------------------------------------------------------
 
-# Define colors for ABS releases
-abs_colors <- c(
-  "CPI" = "#FF6B6B",
-  "CPI Indicator" = "#4ECDC4",
-  "WPI" = "#45B7D1",
-  "National Accounts" = "#FFA726",
-  "Labour Force" = "#AB47BC"
-)
-
 # Create base plot WITHOUT any vertical lines
-line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz), 
+line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
                                       y = probability,
-                                      colour = move, 
+                                      colour = move,
                                       group = move)) +
   geom_line(linewidth = 1.2) +
   scale_colour_manual(
-    values = c(
-      "-75 bp cut" = "#000080",
-      "-50 bp cut" = "#004B8E",
-      "-25 bp cut" = "#5FA4D4",
-      "No change" = "#BFBFBF",
-      "+25 bp hike" = "#E07C7C",
-      "+50 bp hike" = "#B50000",
-      "+75 bp hike" = "#800000"
-    ),
+    values = combined_colors,
     name = ""
   ) +
   scale_x_datetime(
@@ -678,115 +669,32 @@ line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
 relevant_releases <- abs_releases %>%
   filter(datetime >= start_xlim & datetime <= end_xlim)
 
-# Prepare vertical line data in the SAME format as top3_df
-# Create two points for each release (bottom and top of chart)
-vlines_df <- if (nrow(relevant_releases) == 0) {
-  tibble(
-    scrape_time = as.POSIXct(character()),
-    probability = numeric(),
-    move = character(),
-    point_order = integer(),
-    event_id = integer()
-  )
-} else {
-  relevant_releases %>%
-    mutate(event_id = row_number()) %>%
-    rowwise() %>%
-    mutate(
-      data = list(tibble(
-        scrape_time = datetime - hours(hours_tz),  # Adjust back like top3_df
-        probability = c(0, 1),
-        move = dataset,
-        point_order = 1:2,
-        event_id = event_id
-      ))
-    ) %>%
-    ungroup() %>%
-    select(data) %>%
-    unnest(data)
-}
-
-# Combine with top3_df for plotting
-plot_df <- bind_rows(
-  top3_df %>% mutate(line_type = "probability"),
-  vlines_df %>% mutate(line_type = "release")
-) %>%
-  mutate(
-    plot_time = as.POSIXct(scrape_time + hours(hours_tz), tz = "Australia/Melbourne")
+# Build release segment data for interactive plot
+release_segments <- relevant_releases %>%
+  transmute(
+    dataset,
+    plot_time = datetime,
+    tooltip = paste0(
+      "<b>", dataset, "</b><br>",
+      format(datetime, "%d %b %Y<br>%H:%M AEST")
+    )
   )
 
-# Create completely fresh ggplot with BOTH datasets
-line_int_complete <- ggplot() +
-  # Probability lines
-  geom_line(
-    data = plot_df %>% filter(line_type == "probability"),
-    aes(x = plot_time,
-        y = probability,
-        colour = move,
-        group = move,
-        text = paste0(
-          "Time: ", format(plot_time, "%d %b %H:%M"), "<br>",
-          "Move: ", move, "<br>",
-          "Probability: ", percent(probability, accuracy = 1)
-        )),
-    linewidth = 1.2
-  ) +
-  # Vertical lines for releases
-  geom_line(
-    data = plot_df %>% filter(line_type == "release"),
-    aes(x = plot_time,
-        y = probability,
-        colour = move,
-        group = interaction(move, event_id, drop = TRUE),
-        text = paste0(
-          "<b>", move, "</b><br>",
-          format(plot_time, "%d %b %Y<br>%H:%M AEST")
-        )),
+# Combine probability lines with release segments
+line_int_complete <- line_int_base +
+  geom_segment(
+    data = release_segments,
+    aes(
+      x = plot_time,
+      xend = plot_time,
+      y = 0,
+      yend = 1,
+      colour = dataset,
+      text = tooltip
+    ),
+    inherit.aes = FALSE,
     linetype = "dashed",
     linewidth = 1
-  ) +
-  scale_colour_manual(
-    values = c(
-      "-75 bp cut" = "#000080",
-      "-50 bp cut" = "#004B8E",
-      "-25 bp cut" = "#5FA4D4",
-      "No change" = "#BFBFBF",
-      "+25 bp hike" = "#E07C7C",
-      "+50 bp hike" = "#B50000",
-      "+75 bp hike" = "#800000",
-      "CPI" = "#FF6B6B",
-      "CPI Indicator" = "#4ECDC4",
-      "WPI" = "#45B7D1",
-      "National Accounts" = "#FFA726",
-      "Labour Force" = "#AB47BC"
-    ),
-    name = ""
-  ) +
-  scale_x_datetime(
-    limits = c(start_xlim, end_xlim),
-    date_breaks = "2 day",
-    date_labels = "%d %b",
-    expand = c(0, 0)
-  ) +
-  scale_y_continuous(
-    limits = c(0, 1),
-    labels = percent_format(accuracy = 1),
-    expand = c(0, 0)
-  ) +
-  labs(
-    title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"),
-    x = "Forecast date",
-    y = "Probability"
-  ) +
-  theme_bw() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
-    axis.text.y = element_text(size = 12),
-    axis.title.x = element_text(size = 14),
-    axis.title.y = element_text(size = 14),
-    legend.position = "right",
-    legend.title = element_blank()
   )
 
 # Convert to Plotly
