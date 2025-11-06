@@ -10,7 +10,7 @@ cash_rate_daily <- readRDS("combined_data/all_data.Rds") %>%
   ungroup() %>%
   select(scrape_date, date, cash_rate)
 
-load("combined_data/rmse_days.RData")
+load("combined_data/rmse_new.RData")
 
 # Meeting schedule
 meeting_schedule <- tibble(

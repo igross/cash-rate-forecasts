@@ -36,7 +36,7 @@ for (dir_path in required_dirs) {
 # 2) Load data & RMSE lookup
 # =============================================
 cash_rate <- readRDS("combined_data/all_data.Rds")
-load("combined_data/rmse_days.RData")
+load("combined_data/rmse_new.RData")
 
 # Consolidate to daily level
 cash_rate_daily <- cash_rate %>%
