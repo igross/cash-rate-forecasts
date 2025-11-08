@@ -100,6 +100,7 @@ daily_forecasts <- cash_rate %>%
     forecast_date = as.Date(scrape_time),
     days_ahead = as.integer(meeting_date - forecast_date),
     forecast_rate = cash_rate,
+    forecast_error = forecast_rate - actual_rate,
     day_of_week = lubridate::wday(forecast_date, week_start = 1)
   ) %>%
   # Remove weekends (Saturday = 6, Sunday = 7)
@@ -110,7 +111,7 @@ daily_forecasts <- cash_rate %>%
   slice(1) %>%
   ungroup() %>%
   filter(days_ahead > 0) %>%
-  select(forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate)
+  select(forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate, forecast_error)
 
 cat("\n=== DAILY FORECASTS (CLEANED) ===\n")
 cat("Total rows:", nrow(daily_forecasts), "\n")
@@ -144,7 +145,6 @@ print(quarterly_rmse %>% select(days_ahead, n_forecasts, rmse), n = 20)
 
 daily_rmse <- daily_forecasts %>%
   mutate(
-    forecast_error = forecast_rate - actual_rate,
     squared_error = forecast_error^2
   ) %>%
   group_by(days_ahead) %>%
@@ -158,6 +158,47 @@ daily_rmse <- daily_forecasts %>%
 
 cat("\n=== DAILY RMSE (sample) ===\n")
 print(daily_rmse %>% select(days_ahead, n_forecasts, rmse) %>% head(20))
+
+# =============================================
+# 4a. Visualise Forecast Error Distributions at Key Horizons
+# =============================================
+
+selected_horizons <- c(40, 30, 20, 10, 1)
+
+error_distributions <- daily_forecasts %>%
+  filter(days_ahead %in% selected_horizons) %>%
+  mutate(days_ahead = factor(days_ahead, levels = selected_horizons))
+
+if (nrow(error_distributions) == 0) {
+  warning("No forecasts available for the requested horizons; skipping distribution plot.")
+} else {
+  distribution_plot <- ggplot(error_distributions, aes(x = forecast_error, y = after_stat(density))) +
+    geom_histogram(
+      binwidth = 0.025,
+      fill = "#2C7BB6",
+      colour = "white",
+      alpha = 0.8
+    ) +
+    geom_vline(xintercept = 0, linetype = "dashed", colour = "#B2182B") +
+    facet_wrap(~days_ahead, scales = "free_y", nrow = 2) +
+    labs(
+      title = "Forecast Errors by Horizon",
+      subtitle = "Forecasted cash rate minus final outcome (percentage points)",
+      x = "Forecast error",
+      y = "Density"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+      strip.text = element_text(face = "bold"),
+      panel.grid.minor = element_blank()
+    )
+
+  output_file <- "docs/forecast_error_histograms.png"
+
+  ggsave(output_file, distribution_plot, width = 10, height = 6, dpi = 300)
+
+  cat("\n✓ Saved forecast error distribution plot to:", output_file, "\n")
+}
 
 # =============================================
 # SECTION 5: Create Adjusted RMSE Using CONSTANT Ratio
