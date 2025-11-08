@@ -266,7 +266,7 @@ cat("\n=== CREATING FINAL RMSE BASED ON DAILY, SCALED BY CONSTANT RATIO ===\n")
 # Scale daily RMSE by constant ratio (up to quarterly level)
 rmse_days_raw <- daily_rmse %>% 
   mutate(
-    finalrmse_0 = rmse / constant_ratio * 0.7
+    finalrmse_0 = rmse / constant_ratio 
   ) %>%
   select(days_to_meeting = days_ahead, finalrmse_0) %>%
   mutate(
