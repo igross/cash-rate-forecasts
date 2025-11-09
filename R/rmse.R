@@ -285,7 +285,7 @@ quarterly_adjusted <- quarterly_interpolated %>%
     # Where we have daily data, adjust it toward quarterly by dividing by the constant ratio
     rmse_daily_adjusted = if_else(
       !is.na(rmse_daily),
-      rmse_daily / constant_ratio,  # Adjust daily up to quarterly level
+      rmse_daily / constant_ratio * 0.8,  # Adjust daily up to quarterly level
       NA_real_
     ),
     
