@@ -1,18 +1,20 @@
 name: refresh-data
 
 permissions:
-  contents: write 
+  contents: write
 
 on:
   schedule:
+    # Every 5 minutes
     - cron: '*/5 * * * *'
+    # Once a month at midnight on the 1st
+    - cron: '0 0 1 * *'
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
 
- 
 jobs:
   refresh-data:
     runs-on: macOS-latest
@@ -21,43 +23,31 @@ jobs:
       R_KEEP_PKG_SOURCE: yes
     steps:
       - uses: actions/checkout@v2
-
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
-
       - uses: r-lib/actions/setup-pandoc@v2
-
       - name: Install XQuartz on macOS
         if: runner.os == 'macOS'
         run: brew install xquartz --cask
-
       - name: Install vctrs
-        run: Rscript -e 'install.packages(c("vctrs"))'
-
+        run: Rscript -e 'install.packages("vctrs")'
       - name: Install packages
-        run: Rscript -e 'install.packages(c("tidyverse", "here", "jsonlite", "ggrepel", "conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo"))'
+        run: Rscript -e 'install.packages(c("tidyverse","here","jsonlite","ggrepel","conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo"))'
 
-      - name: Calculate RMSEs
-        run: Rscript -e 'source(here::here("R", "rmse.R"), echo = TRUE)'
+      # Run RMSE only once a month (on 1st at midnight)
+      - name: Calculate RMSEs (monthly)
+        if: github.event.schedule == '0 0 1 * *'
+        run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
 
       - name: Get data
-        run: Rscript -e 'source(here::here("R", "scrape_cash_rate.R"), echo = TRUE)' 
+        run: Rscript -e 'source(here::here("R","scrape_cash_rate.R"), echo = TRUE)'
 
       - name: Make line graph
-        run: Rscript -e 'source(here::here("R", "line_chart.R"), echo = TRUE)'  
-        
+        run: Rscript -e 'source(here::here("R","line_chart.R"), echo = TRUE)'
+
       - name: Make heatmaps graph
-        run: Rscript -e 'source(here::here("R", "heat_maps.R"), echo = TRUE)'   
-
-#      - name: Make heatmaps graph
-#        run: Rscript -e 'source(here::here("R", "shiny_heat.R"), echo = TRUE)'           
-        
-#      - name: Make area graphs
-#        run: Rscript -e 'source(here::here("R", "area_charts.R"), echo = TRUE)'  
-
-#      - name: Make daily area graphs
-#        run: Rscript -e 'source(here::here("R", "daily_area_charts.R"), echo = TRUE)'         
+        run: Rscript -e 'source(here::here("R","heat_maps.R"), echo = TRUE)'
 
       - name: Generate index.html from charts
         run: Rscript R/write_index_html.R
