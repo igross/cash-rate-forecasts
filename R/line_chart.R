@@ -142,11 +142,12 @@ abs_releases <- tribble(
   "WPI", ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
   "WPI", ymd_hm("2025-05-14 11:30", tz = "Australia/Melbourne"),
   "WPI", ymd_hm("2025-08-13 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2025-11-12 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2025-11-19 11:30", tz = "Australia/Melbourne"),
   "WPI", ymd_hm("2026-02-18 11:30", tz = "Australia/Melbourne"),
   "WPI", ymd_hm("2026-05-13 11:30", tz = "Australia/Melbourne"),
   "WPI", ymd_hm("2026-08-12 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2026-11-11 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2026-11-17 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2027-02-17 11:30", tz = "Australia/Melbourne"),
   
   # National Accounts (quarterly releases)
   "National Accounts", ymd_hm("2025-03-05 11:30", tz = "Australia/Melbourne"),
