@@ -35,9 +35,11 @@ jobs:
       - name: Install packages
         run: Rscript -e 'install.packages(c("tidyverse","here","jsonlite","ggrepel","conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo"))'
 
-      # Run RMSE only once a month (on 1st at midnight)
-      - name: Calculate RMSEs (monthly)
-        if: github.event.schedule == '0 0 1 * *'
+      # Run RMSEs on push OR monthly (1st at midnight)
+      - name: Calculate RMSEs (push or monthly)
+        if: |
+          github.event_name == 'push' ||
+          (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *')
         run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
 
       - name: Get data
