@@ -201,6 +201,44 @@ if (nrow(error_distributions) == 0) {
 }
 
 # =============================================
+# 4b. Visualise Squared Forecast Errors by Meeting
+# =============================================
+
+if (nrow(daily_forecasts) == 0) {
+  warning("No daily forecasts available; skipping squared error plot.")
+} else {
+  squared_error_plot <- daily_forecasts %>%
+    mutate(
+      squared_error = forecast_error^2,
+      meeting_label = format(meeting_date, "%Y-%m-%d")
+    ) %>%
+    ggplot(aes(x = days_ahead, y = squared_error,
+               colour = meeting_label, group = meeting_label)) +
+    geom_line(linewidth = 0.7, alpha = 0.85) +
+    scale_x_reverse() +
+    labs(
+      title = "Squared Forecast Error by Meeting",
+      subtitle = "Squared difference between forecast and actual cash rate",
+      x = "Days to meeting",
+      y = expression((Forecast - Actual)^2),
+      colour = "Meeting"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+      legend.position = "bottom",
+      legend.key.width = grid::unit(1.2, "lines"),
+      legend.title = element_text(face = "bold"),
+      plot.title = element_text(face = "bold")
+    )
+
+  squared_error_file <- "docs/squared_forecast_error.png"
+
+  ggsave(squared_error_file, squared_error_plot, width = 10, height = 6, dpi = 300)
+
+  cat("\n✓ Saved squared forecast error plot to:", squared_error_file, "\n")
+}
+
+# =============================================
 # SECTION 5: Create Adjusted RMSE Using CONSTANT Ratio
 # =============================================
 
