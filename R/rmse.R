@@ -216,6 +216,7 @@ if (nrow(daily_forecasts) == 0) {
                colour = meeting_label, group = meeting_label)) +
     geom_line(linewidth = 0.7, alpha = 0.85) +
     scale_x_reverse() +
+    coord_cartesian(xlim = c(30, 0)) +   # limit to 30 days before meeting
     labs(
       title = "Squared Forecast Error by Meeting",
       subtitle = "Squared difference between forecast and actual cash rate",
