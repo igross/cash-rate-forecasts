@@ -39,7 +39,6 @@ jobs:
       - name: Calculate RMSEs (push or monthly)
         if: |
           github.event_name == 'push' ||
-          github.event_name == 'workflow_dispatch' ||
           (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *')
         run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
 
