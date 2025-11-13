@@ -646,21 +646,12 @@ line_dual <- ggplot(
   aes(
     x = scrape_time + hours(hours_tz),
     y = probability_value,
-    colour = move
+    colour = move,
+    group = interaction(move, model),
+    linetype = model
   )
 ) +
-  geom_line(
-    data = top3_df_long %>%
-      filter(model == "Standard probability model"),
-    aes(group = move, linetype = "Standard probability model"),
-    linewidth = 1.1
-  ) +
-  geom_line(
-    data = top3_df_long %>%
-      filter(model == "Two-outcome linear model"),
-    aes(group = move, linetype = "Two-outcome linear model"),
-    linewidth = 1.1
-  ) +
+  geom_line(linewidth = 1.1) +
   scale_colour_manual(
     values = combined_colors,
     name = ""
