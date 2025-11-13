@@ -563,6 +563,27 @@ abs_colors <- c(
 
 combined_colors <- c(move_colors, abs_colors)
 
+# Prepare data for alternate model comparison
+top3_df_long <- top3_df %>%
+  select(scrape_time, move, probability, probability_linear) %>%
+  pivot_longer(
+    cols = c(probability, probability_linear),
+    names_to = "model",
+    values_to = "probability_value"
+  ) %>%
+  drop_na(probability_value) %>%
+  mutate(
+    model = recode(
+      model,
+      probability = "Standard probability model",
+      probability_linear = "Two-outcome linear model"
+    ),
+    model = factor(
+      model,
+      levels = c("Standard probability model", "Two-outcome linear model")
+    )
+  )
+
 # Create static line plot
 line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
                             y = probability,
@@ -618,6 +639,70 @@ ggsave(
 )
 
 print(top3_df, n = 50)
+
+# Create static line plot with both probability models
+line_dual <- ggplot(
+  top3_df_long,
+  aes(
+    x = scrape_time + hours(hours_tz),
+    y = probability_value,
+    colour = move,
+    group = interaction(move, model),
+    linetype = model
+  )
+) +
+  geom_line(linewidth = 1.1) +
+  scale_colour_manual(
+    values = combined_colors,
+    name = ""
+  ) +
+  scale_linetype_manual(
+    values = c("Standard probability model" = "solid",
+               "Two-outcome linear model" = "dashed"),
+    name = "Model"
+  ) +
+  scale_x_datetime(
+    limits = c(start_xlim, end_xlim),
+    date_breaks = "2 day",
+    date_labels = "%d %b",
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1),
+    labels = percent_format(accuracy = 1),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
+    subtitle = glue(
+      "Comparing standard probabilities with two-outcome linear model as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"
+    ),
+    x = "Forecast date",
+    y = "Probability"
+  ) +
+  geom_vline(
+    data = abs_releases,
+    aes(xintercept = datetime, colour = dataset),
+    linetype = "dashed",
+    alpha = 0.8
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    legend.position = "right"
+  )
+
+ggsave("docs/line_dual.png", line_dual, width = 10, height = 5, dpi = 300)
+ggsave(
+  glue("docs/line_dual_{format(next_meeting, '%d %b %Y')}.png"),
+  line_dual,
+  width = 10,
+  height = 5,
+  dpi = 300
+)
 
 # ------------------------------------------------------------------------------
 # 14. CREATE INTERACTIVE VERSION WITH PROPER VERTICAL LINES
