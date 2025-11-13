@@ -584,6 +584,14 @@ top3_df_long <- top3_df %>%
     )
   )
 
+
+std_df <- top3_df_long %>%
+  filter(model == "Standard probability model")
+
+lin_df <- top3_df_long %>%
+  filter(model == "Two-outcome linear model")
+
+
 # Create static line plot
 line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
                             y = probability,
@@ -640,26 +648,34 @@ ggsave(
 
 print(top3_df, n = 50)
 
-# Create static line plot with both probability models
-line_dual <- ggplot(
-  top3_df_long,
-  aes(
-    x = scrape_time + hours(hours_tz),
-    y = probability_value,
-    colour = move,
-    group = interaction(move, model),
-    linetype = model
-  )
-) +
-  geom_line(linewidth = 1.1) +
+
+line_dual <- ggplot() +
+  # Standard probability model (solid)
+  geom_line(
+    data = std_df,
+    aes(
+      x = scrape_time + hours(hours_tz),
+      y = probability_value,
+      colour = move,
+      group = move
+    ),
+    linewidth = 1.1
+  ) +
+  # Two-outcome linear model (dashed)
+  geom_line(
+    data = lin_df,
+    aes(
+      x = scrape_time + hours(hours_tz),
+      y = probability_value,
+      colour = move,
+      group = move
+    ),
+    linewidth = 1.1,
+    linetype = "dashed"
+  ) +
   scale_colour_manual(
     values = combined_colors,
     name = ""
-  ) +
-  scale_linetype_manual(
-    values = c("Standard probability model" = "solid",
-               "Two-outcome linear model" = "dashed"),
-    name = "Model"
   ) +
   scale_x_datetime(
     limits = c(start_xlim, end_xlim),
