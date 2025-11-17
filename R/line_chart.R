@@ -657,25 +657,33 @@ line_dual <- ggplot() +
       x = scrape_time + hours(hours_tz),
       y = probability_value,
       colour = move,
-      group = move
+      group = move,
+      linetype = "Standard probabilities"
     ),
     linewidth = 1.1
   ) +
-  # Two-outcome linear model (dashed)
+  # Two-outcome linear model (dotted)
   geom_line(
     data = lin_df,
     aes(
       x = scrape_time + hours(hours_tz),
       y = probability_value,
       colour = move,
-      group = move
+      group = move,
+      linetype = "Linear probability model"
     ),
-    linewidth = 1.1,
-    linetype = "dashed"
+    linewidth = 1.1
   ) +
   scale_colour_manual(
     values = combined_colors,
     name = ""
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "Standard probabilities" = "solid",
+      "Linear probability model" = "dotted"
+    ),
+    name = "Model"
   ) +
   scale_x_datetime(
     limits = c(start_xlim, end_xlim),
