@@ -9,6 +9,8 @@ library(lubridate)
 library(readr)
 library(ggplot2)
 library(zoo)
+library(broom)
+library(purrr)
 
 # =============================================
 # 1. Load Quarterly Forecast Data
@@ -71,6 +73,18 @@ meeting_schedule <- tibble(
     )
   )
 
+# CPI release schedule (quarterly CPI and monthly indicator)
+cpi_release_dates <- as.Date(c(
+  # 2025 releases
+  "2025-01-29", "2025-02-26", "2025-03-26", "2025-04-30",
+  "2025-05-28", "2025-06-25", "2025-07-30", "2025-08-27",
+  "2025-09-24", "2025-10-29", "2025-11-26", "2025-12-31",
+  # 2026 releases
+  "2026-01-28", "2026-02-25", "2026-03-25", "2026-04-29",
+  "2026-05-27", "2026-06-24", "2026-07-29", "2026-08-26",
+  "2026-09-30", "2026-10-28", "2026-11-25", "2026-12-30"
+))
+
 # Load actual RBA cash rate outcomes
 library(readrba)
 rba_actual <- read_rba(series_id = "FIRMMCRTD") %>%
@@ -101,7 +115,9 @@ daily_forecasts <- cash_rate %>%
     days_ahead = as.integer(meeting_date - forecast_date),
     forecast_rate = cash_rate,
     forecast_error = forecast_rate - actual_rate,
-    day_of_week = lubridate::wday(forecast_date, week_start = 1)
+    day_of_week = lubridate::wday(forecast_date, week_start = 1),
+    cpi_release_window = forecast_date %in% cpi_release_dates |
+      forecast_date %in% (cpi_release_dates - days(1))
   ) %>%
   # Remove weekends (Saturday = 6, Sunday = 7)
   filter(day_of_week %in% 1:5) %>%
@@ -111,7 +127,10 @@ daily_forecasts <- cash_rate %>%
   slice(1) %>%
   ungroup() %>%
   filter(days_ahead > 0) %>%
-  select(forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate, forecast_error)
+  select(
+    forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate,
+    forecast_error, cpi_release_window
+  )
 
 cat("\n=== DAILY FORECASTS (CLEANED) ===\n")
 cat("Total rows:", nrow(daily_forecasts), "\n")
@@ -160,6 +179,95 @@ cat("\n=== DAILY RMSE (sample) ===\n")
 print(daily_rmse %>% select(days_ahead, n_forecasts, rmse) %>% head(20))
 
 # =============================================
+# 4b. Model RMSE as a Function of Days to Meeting
+# =============================================
+
+cat("\n=== MODEL: RMSE ~ DAYS TO MEETING (WITH NONLINEAR TERMS) ===\n")
+
+if (nrow(daily_forecasts) == 0) {
+  warning("No daily forecasts available; skipping RMSE regressions.")
+  rmse_regression_results <- tibble()
+  rmse_model_glance <- tibble()
+} else {
+  model_data <- daily_forecasts %>%
+    mutate(
+      abs_error = sqrt(forecast_error^2),
+      year = lubridate::year(forecast_date)
+    ) %>%
+    select(abs_error, days_ahead, year, meeting_date, cpi_release_window)
+
+  rmse_models <- list(
+    baseline = lm(abs_error ~ days_ahead + I(days_ahead^2) + cpi_release_window, data = model_data),
+    year_fixed_effects = lm(abs_error ~ days_ahead + I(days_ahead^2) + cpi_release_window + factor(year), data = model_data),
+    meeting_fixed_effects = lm(abs_error ~ days_ahead + I(days_ahead^2) + cpi_release_window + factor(meeting_date), data = model_data)
+  )
+
+  rmse_regression_results <- imap(rmse_models, ~ tidy(.x) %>% mutate(model = .y)) %>%
+    bind_rows() %>%
+    select(model, term, estimate, std.error, statistic, p.value)
+
+  rmse_model_glance <- imap(rmse_models, ~ glance(.x) %>% mutate(model = .y)) %>%
+    bind_rows() %>%
+    select(model, r.squared, adj.r.squared, sigma, df, logLik, AIC, BIC)
+
+  print(rmse_regression_results)
+  cat("\nModel fit statistics:\n")
+  print(rmse_model_glance)
+
+  write_csv(rmse_regression_results, "combined_data/rmse_regression_results.csv")
+  write_csv(rmse_model_glance, "combined_data/rmse_regression_glance.csv")
+  saveRDS(rmse_models, "combined_data/rmse_regression_models.rds")
+
+  cat("\n✓ Saved regression coefficients to combined_data/rmse_regression_results.csv\n")
+  cat("✓ Saved model fit statistics to combined_data/rmse_regression_glance.csv\n")
+  cat("✓ Saved model objects to combined_data/rmse_regression_models.rds\n")
+
+  # --- Model the day-to-day reduction in RMSE ---
+  reduction_data <- daily_rmse %>%
+    arrange(desc(days_ahead)) %>%
+    mutate(
+      next_days_ahead = lead(days_ahead),
+      next_rmse = lead(rmse),
+      day_span = days_ahead - next_days_ahead,
+      reduction = rmse - next_rmse,
+      reduction_per_day = reduction / day_span
+    ) %>%
+    filter(!is.na(reduction_per_day), day_span > 0)
+
+  if (nrow(reduction_data) == 0) {
+    warning("No consecutive RMSE points available to model daily reductions.")
+    rmse_reduction_results <- tibble()
+    rmse_reduction_glance <- tibble()
+  } else {
+    reduction_models <- list(
+      reduction_baseline = lm(reduction_per_day ~ days_ahead + I(days_ahead^2), data = reduction_data),
+      reduction_with_level = lm(reduction_per_day ~ days_ahead + I(days_ahead^2) + rmse, data = reduction_data)
+    )
+
+    rmse_reduction_results <- imap(reduction_models, ~ tidy(.x) %>% mutate(model = .y)) %>%
+      bind_rows() %>%
+      select(model, term, estimate, std.error, statistic, p.value)
+
+    rmse_reduction_glance <- imap(reduction_models, ~ glance(.x) %>% mutate(model = .y)) %>%
+      bind_rows() %>%
+      select(model, r.squared, adj.r.squared, sigma, df, logLik, AIC, BIC)
+
+    cat("\nReduction models (RMSE change per day):\n")
+    print(rmse_reduction_results)
+    cat("\nReduction model fit statistics:\n")
+    print(rmse_reduction_glance)
+
+    write_csv(rmse_reduction_results, "combined_data/rmse_reduction_regression_results.csv")
+    write_csv(rmse_reduction_glance, "combined_data/rmse_reduction_regression_glance.csv")
+    saveRDS(reduction_models, "combined_data/rmse_reduction_regression_models.rds")
+
+    cat("\n✓ Saved reduction coefficients to combined_data/rmse_reduction_regression_results.csv\n")
+    cat("✓ Saved reduction fit statistics to combined_data/rmse_reduction_regression_glance.csv\n")
+    cat("✓ Saved reduction model objects to combined_data/rmse_reduction_regression_models.rds\n")
+  }
+}
+
+# =============================================
 # 4a. Visualise Forecast Error Distributions at Key Horizons
 # =============================================
 
@@ -201,7 +309,7 @@ if (nrow(error_distributions) == 0) {
 }
 
 # =============================================
-# 4b. Visualise Squared Forecast Errors by Meeting
+# 4c. Visualise Squared Forecast Errors by Meeting
 # =============================================
 
 if (nrow(daily_forecasts) == 0) {
