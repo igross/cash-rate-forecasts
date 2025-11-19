@@ -9,7 +9,7 @@ library(lubridate)
 library(readr)
 library(ggplot2)
 library(zoo)
-library(broom)
+library(broom) 
 library(purrr)
 
 # =============================================
