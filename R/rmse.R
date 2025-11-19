@@ -9,6 +9,8 @@ library(lubridate)
 library(readr)
 library(ggplot2)
 library(zoo)
+library(broom)
+library(purrr)
 
 # =============================================
 # 1. Load Quarterly Forecast Data
@@ -160,6 +162,51 @@ cat("\n=== DAILY RMSE (sample) ===\n")
 print(daily_rmse %>% select(days_ahead, n_forecasts, rmse) %>% head(20))
 
 # =============================================
+# 4b. Model RMSE as a Function of Days to Meeting
+# =============================================
+
+cat("\n=== MODEL: RMSE ~ DAYS TO MEETING (WITH NONLINEAR TERMS) ===\n")
+
+if (nrow(daily_forecasts) == 0) {
+  warning("No daily forecasts available; skipping RMSE regressions.")
+  rmse_regression_results <- tibble()
+  rmse_model_glance <- tibble()
+} else {
+  model_data <- daily_forecasts %>%
+    mutate(
+      abs_error = sqrt(forecast_error^2),
+      year = lubridate::year(forecast_date)
+    ) %>%
+    select(abs_error, days_ahead, year, meeting_date)
+
+  rmse_models <- list(
+    baseline = lm(abs_error ~ days_ahead + I(days_ahead^2), data = model_data),
+    year_fixed_effects = lm(abs_error ~ days_ahead + I(days_ahead^2) + factor(year), data = model_data),
+    meeting_fixed_effects = lm(abs_error ~ days_ahead + I(days_ahead^2) + factor(meeting_date), data = model_data)
+  )
+
+  rmse_regression_results <- imap(rmse_models, ~ tidy(.x) %>% mutate(model = .y)) %>%
+    bind_rows() %>%
+    select(model, term, estimate, std.error, statistic, p.value)
+
+  rmse_model_glance <- imap(rmse_models, ~ glance(.x) %>% mutate(model = .y)) %>%
+    bind_rows() %>%
+    select(model, r.squared, adj.r.squared, sigma, df, logLik, AIC, BIC)
+
+  print(rmse_regression_results)
+  cat("\nModel fit statistics:\n")
+  print(rmse_model_glance)
+
+  write_csv(rmse_regression_results, "combined_data/rmse_regression_results.csv")
+  write_csv(rmse_model_glance, "combined_data/rmse_regression_glance.csv")
+  saveRDS(rmse_models, "combined_data/rmse_regression_models.rds")
+
+  cat("\n✓ Saved regression coefficients to combined_data/rmse_regression_results.csv\n")
+  cat("✓ Saved model fit statistics to combined_data/rmse_regression_glance.csv\n")
+  cat("✓ Saved model objects to combined_data/rmse_regression_models.rds\n")
+}
+
+# =============================================
 # 4a. Visualise Forecast Error Distributions at Key Horizons
 # =============================================
 
@@ -201,7 +248,7 @@ if (nrow(error_distributions) == 0) {
 }
 
 # =============================================
-# 4b. Visualise Squared Forecast Errors by Meeting
+# 4c. Visualise Squared Forecast Errors by Meeting
 # =============================================
 
 if (nrow(daily_forecasts) == 0) {
