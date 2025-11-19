@@ -38,9 +38,9 @@ jobs:
       # Run RMSEs on push OR monthly (1st at midnight)
       - name: Calculate RMSEs (push or monthly)
         if: |
-          github.event_name == 'push' ||
-          github.event_name == 'workflow_dispatch' ||
-          (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *')
+  #        github.event_name == 'push' ||
+  #        github.event_name == 'workflow_dispatch' ||
+  #        (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *')
         run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
 
       - name: Get data
@@ -51,7 +51,7 @@ jobs:
 
       - name: Make heatmaps graph
         if: github.event_name != 'workflow_dispatch'
-        run: Rscript -e 'source(here::here("R","heat_maps.R"), echo = TRUE)'
+ #       run: Rscript -e 'source(here::here("R","heat_maps.R"), echo = TRUE)'
 
       - name: Generate index.html from charts
         run: Rscript R/write_index_html.R
