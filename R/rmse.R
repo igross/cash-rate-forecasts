@@ -73,6 +73,18 @@ meeting_schedule <- tibble(
     )
   )
 
+# CPI release schedule (quarterly CPI and monthly indicator)
+cpi_release_dates <- as.Date(c(
+  # 2025 releases
+  "2025-01-29", "2025-02-26", "2025-03-26", "2025-04-30",
+  "2025-05-28", "2025-06-25", "2025-07-30", "2025-08-27",
+  "2025-09-24", "2025-10-29", "2025-11-26", "2025-12-31",
+  # 2026 releases
+  "2026-01-28", "2026-02-25", "2026-03-25", "2026-04-29",
+  "2026-05-27", "2026-06-24", "2026-07-29", "2026-08-26",
+  "2026-09-30", "2026-10-28", "2026-11-25", "2026-12-30"
+))
+
 # Load actual RBA cash rate outcomes
 library(readrba)
 rba_actual <- read_rba(series_id = "FIRMMCRTD") %>%
@@ -103,7 +115,9 @@ daily_forecasts <- cash_rate %>%
     days_ahead = as.integer(meeting_date - forecast_date),
     forecast_rate = cash_rate,
     forecast_error = forecast_rate - actual_rate,
-    day_of_week = lubridate::wday(forecast_date, week_start = 1)
+    day_of_week = lubridate::wday(forecast_date, week_start = 1),
+    cpi_release_window = forecast_date %in% cpi_release_dates |
+      forecast_date %in% (cpi_release_dates - days(1))
   ) %>%
   # Remove weekends (Saturday = 6, Sunday = 7)
   filter(day_of_week %in% 1:5) %>%
@@ -113,7 +127,10 @@ daily_forecasts <- cash_rate %>%
   slice(1) %>%
   ungroup() %>%
   filter(days_ahead > 0) %>%
-  select(forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate, forecast_error)
+  select(
+    forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate,
+    forecast_error, cpi_release_window
+  )
 
 cat("\n=== DAILY FORECASTS (CLEANED) ===\n")
 cat("Total rows:", nrow(daily_forecasts), "\n")
