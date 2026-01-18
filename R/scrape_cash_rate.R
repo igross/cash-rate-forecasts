@@ -7,6 +7,7 @@ ensure_packages <- function(pkgs) {
 }
 
 ensure_packages(c(
+  "fastmap",
   "conflicted",
   "memoise",
   "tidyverse",
