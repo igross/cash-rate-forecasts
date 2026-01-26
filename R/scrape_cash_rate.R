@@ -7,6 +7,7 @@ ensure_packages <- function(pkgs) {
 }
 
 ensure_packages(c(
+  # Core packages
   "conflicted",
   "memoise",
   "tidyverse",
@@ -15,7 +16,38 @@ ensure_packages(c(
   "R6",
   "bit",
   "bit64",
-  "gtable"
+  # ggplot2 dependencies
+  "gtable",
+  "scales",
+  "isoband",
+  "farver",
+  "labeling",
+  "munsell",
+  "viridisLite",
+  "RColorBrewer",
+  "colorspace",
+  # tibble/dplyr dependencies
+  "pillar",
+  "utf8",
+  "fansi",
+  "pkgconfig",
+  "cli",
+  "glue",
+  "rlang",
+  "vctrs",
+  "tidyselect",
+  "generics",
+  "lifecycle",
+  "withr",
+  "magrittr",
+  # stringr dependencies
+  "stringi",
+  # readr dependencies
+  "cpp11",
+  "tzdb",
+  "vroom",
+  "progress",
+  "hms"
 ))
 
 library(conflicted)
