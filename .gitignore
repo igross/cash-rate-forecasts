@@ -1,5 +1,61 @@
+# R/RStudio
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+
+# OS
 .DS_Store
+
+# ===========================================
+# Generated outputs (large files - regenerate as needed)
+# ===========================================
+
+# Daily heatmap HTML visualizations (18-24MB each)
+docs/meetings/daily_heatmap_*.html
+
+# Generated htmlwidgets/plotly support files
+docs/*_files/
+docs/**/*_files/
+
+# Large aggregated CSV files in docs/meetings/csv/
+docs/meetings/csv/all_meetings_area_data.csv
+docs/meetings/csv/daily_all_meetings_area_data.csv
+docs/meetings/csv/area_data_*.csv
+docs/meetings/csv/daily_area_data_*.csv
+
+# Generated PNG images in docs/meetings/
+docs/meetings/area_all_moves_*.png
+
+# Generated meeting line plots
+docs/meeting_lines/*.png
+
+# Interactive HTML visualizations (can be regenerated)
+docs/area_interactive.html
+docs/line_interactive.html
+docs/cash_rate_forecast_paths.html
+
+# Generated static plots in docs/
+docs/line_*.png
+docs/forecast_error_histograms.png
+docs/cash_rate_forecast_paths.png
+
+# ===========================================
+# Data files (consider archiving instead)
+# ===========================================
+
+# Daily scraped data (400+ files accumulating)
+daily_data/cash_rate_*.csv
+
+# Combined data outputs
+combined_data/*.png
+combined_data/*.rds
+
+# Keep the main CSV but ignore generated images
+# combined_data/cash_rate.csv  # Uncomment to ignore this too
+
+# ===========================================
+# Preserve these files (do NOT ignore)
+# ===========================================
+# docs/CNAME - needed for GitHub Pages custom domain
+# docs/.gitkeep - keeps the docs folder in git
