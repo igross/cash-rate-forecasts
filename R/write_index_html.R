@@ -496,7 +496,9 @@ html <- sprintf('
 
   %s
 
+  %s
 
+  %s
 
   <!-- Lightbox Modal -->
   <div id="lightbox" class="lightbox">
@@ -572,7 +574,11 @@ html <- sprintf('
 
   forecast_paths_section,
 
-  future_meeting_section
+  future_meeting_section,
+
+  past_meeting_section,
+
+  past_line_section
 )
 
 # Write output
