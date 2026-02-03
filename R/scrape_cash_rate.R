@@ -2,7 +2,12 @@ ensure_packages <- function(pkgs) {
   missing_pkgs <- pkgs[!pkgs %in% rownames(installed.packages())]
 
   if (length(missing_pkgs) > 0) {
-    install.packages(missing_pkgs, repos = "https://cloud.r-project.org")
+    # Use session repos (RSPM in GitHub Actions) with CRAN fallback
+    repos <- getOption("repos")
+    if (is.null(repos) || repos["CRAN"] == "@CRAN@") {
+      repos <- "https://cloud.r-project.org"
+    }
+    install.packages(missing_pkgs, repos = repos)
   }
 }
 
