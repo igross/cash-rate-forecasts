@@ -9,8 +9,6 @@ on:
     - cron: '*/5 * * * *'
     # Once a month at midnight on the 1st
     - cron: '0 0 1 * *'
-    # 11:31 AM AEST (01:31 UTC) - data and line chart only
-    - cron: '31 1 * * *'
   push:
     branches: [main, master]
   pull_request:
@@ -24,7 +22,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
@@ -32,43 +30,54 @@ jobs:
       - name: Install XQuartz on macOS
         if: runner.os == 'macOS'
         run: brew install xquartz --cask
-      - name: Install pak
-        run: Rscript -e 'install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s", .Platform$pkgType, R.Version()$os, R.Version()$arch))'
+      - name: Install vctrs
+        run: Rscript -e 'install.packages("vctrs")'
       - name: Install packages
-        run: |
-          Rscript -e '
-            options(repos = c(CRAN = "https://cloud.r-project.org"))
-            install.packages(c(
-              "stringi", "tidyverse", "here", "rprojroot", "jsonlite",
-              "ggrepel", "viridis", "conflicted", "tidyr", "scales",
-              "readabs", "readrba", "plotly", "purrr", "cachem",
-              "dplyr", "ggpattern", "ggtext", "zoo", "vroom",
-              "bit", "bit64", "xfun", "backports"
-            ), type = "source", dependencies = TRUE, Ncpus = 3)
-          '
-      - name: Cache R packages
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ hashFiles('**/*.R') }}
-          restore-keys: |
-            ${{ runner.os }}-r-
+        run: Rscript -e 'install.packages(c("tidyverse","here","jsonlite","ggrepel","viridis","conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo","vroom"))'
+
       # Run RMSEs on push OR monthly (1st at midnight)
       - name: Calculate RMSEs (push or monthly)
-        if: github.event_name != 'workflow_dispatch'
         continue-on-error: true
-        run: Rscript -e 'source("R/rmse.R", echo = TRUE)'
+        if: |
+          github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *')
+        run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
 
       - name: Get data
-        run: Rscript -e 'source("R/scrape_cash_rate.R", echo = TRUE)'
+        run: Rscript -e 'source(here::here("R","scrape_cash_rate.R"), echo = TRUE)'
 
       - name: Make line graph
         continue-on-error: true
-        run: Rscript -e 'source("R/line_chart.R", echo = TRUE)'
+        run: Rscript -e 'source(here::here("R","line_chart.R"), echo = TRUE)'
 
-      - name: Make forecast paths graph
+      - name: Make multi-meeting line graphs
         continue-on-error: true
-        run: Rscript -e 'source("R/actual_vs_implied.R", echo = TRUE)'
+        run: Rscript -e 'source(here::here("R","future_meeting_line_charts.R"), echo = TRUE)'
+
+      - name: Make heatmaps graph
+        if: github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        run: Rscript -e 'source(here::here("R","heat_maps.R"), echo = TRUE)'
+
+      - name: Make area graph
+        if: github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        run: Rscript -e 'source(here::here("R","daily_area_charts.R"), echo = TRUE)'
+
+      - name: Make area graph
+        if: github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        run: Rscript -e 'source(here::here("R","area_charts.R"), echo = TRUE)'
+
+      - name: Make actual vs implied graph
+        continue-on-error: true
+        run: Rscript -e 'source(here::here("R","actual_vs_implied.R"), echo = TRUE)'
+
+      - name: Make historical heatmaps graph (monthly)
+        if: github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *'
+        continue-on-error: true
+        run: Rscript -e 'source(here::here("R","heat_maps_old.R"), echo = TRUE)'
 
       - name: Generate index.html from charts
         continue-on-error: true
@@ -77,9 +86,7 @@ jobs:
       - name: Commit
         run: |
           git config --global user.name 'igross'
-          git config --global user.email 'igross@users.noreply.github.com'
           git add .
           git add docs/*.png docs/index.html
           git commit -m 'refreshing data' || echo "No changes to commit"
-          git pull --rebase origin main || true
           git push || echo "No changes to commit"
