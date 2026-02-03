@@ -15,7 +15,8 @@ ensure_packages(c(
   "R6",
   "bit",
   "bit64",
-  "gtable"
+  "gtable",
+    "dplyr"
 ))
 
 library(conflicted)
