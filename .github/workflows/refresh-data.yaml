@@ -45,6 +45,8 @@ jobs:
               "bit", "bit64", "xfun", "backports"
             ))
           '
+        env:
+          PKG_TYPE: source
       - name: Cache R packages
         uses: actions/cache@v4
         with:
