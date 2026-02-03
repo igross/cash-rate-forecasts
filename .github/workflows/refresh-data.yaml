@@ -24,7 +24,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
@@ -32,11 +32,26 @@ jobs:
       - name: Install XQuartz on macOS
         if: runner.os == 'macOS'
         run: brew install xquartz --cask
-      - name: Install vctrs
-        run: Rscript -e 'install.packages("vctrs")'
+      - name: Install pak
+        run: Rscript -e 'install.packages("pak", repos = sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s", .Platform$pkgType, R.Version()$os, R.Version()$arch))'
       - name: Install packages
-        run: Rscript -e 'install.packages(c("stringi","tidyverse","here","rprojroot","jsonlite","ggrepel","viridis","conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo","vroom","bit","bit64","xfun","backports","dplyr"))'
-
+        run: |
+          Rscript -e '
+            pak::pkg_install(c(
+              "stringi", "tidyverse", "here", "rprojroot", "jsonlite",
+              "ggrepel", "viridis", "conflicted", "tidyr", "scales",
+              "readabs", "readrba", "plotly", "purrr", "cachem",
+              "dplyr", "ggpattern", "ggtext", "zoo", "vroom",
+              "bit", "bit64", "xfun", "backports"
+            ))
+          '
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ hashFiles('**/*.R') }}
+          restore-keys: |
+            ${{ runner.os }}-r-
       # Run RMSEs on push OR monthly (1st at midnight)
       - name: Calculate RMSEs (push or monthly)
         if: github.event_name != 'workflow_dispatch'
