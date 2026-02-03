@@ -37,16 +37,19 @@ jobs:
       - name: Install packages
         run: |
           Rscript -e '
+            options(
+              pkg.type = "source",
+              pkgType = "source",
+              install.packages.compile.from.source = "always"
+            )
             pak::pkg_install(c(
               "stringi", "tidyverse", "here", "rprojroot", "jsonlite",
               "ggrepel", "viridis", "conflicted", "tidyr", "scales",
               "readabs", "readrba", "plotly", "purrr", "cachem",
               "dplyr", "ggpattern", "ggtext", "zoo", "vroom",
               "bit", "bit64", "xfun", "backports"
-            ))
+            ), dependencies = TRUE)
           '
-        env:
-          PKG_TYPE: source
       - name: Cache R packages
         uses: actions/cache@v4
         with:
