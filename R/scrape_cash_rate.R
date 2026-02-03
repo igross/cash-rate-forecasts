@@ -8,14 +8,12 @@ ensure_packages <- function(pkgs) {
 
 ensure_packages(c(
   "conflicted",
-  "memoise",
-  "tidyverse",
+  "dplyr",
   "jsonlite",
   "lubridate",
-  "R6",
-  "bit",
-  "bit64",
-  "gtable"
+  "purrr",
+  "readr",
+  "tidyverse"
 ))
 
 library(conflicted)
