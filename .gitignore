@@ -45,7 +45,7 @@ docs/cash_rate_forecast_paths.png
 # ===========================================
 
 # Daily scraped data (400+ files accumulating)
-daily_data/cash_rate_*.csv
+daily_data/scraped_cash_rate_*.csv
 
 # Combined data outputs
 combined_data/*.png
