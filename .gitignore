@@ -36,6 +36,7 @@ docs/line_interactive.html
 docs/cash_rate_forecast_paths.html
 
 # Generated static plots in docs/
+docs/line.png
 docs/line_*.png
 docs/forecast_error_histograms.png
 docs/cash_rate_forecast_paths.png
