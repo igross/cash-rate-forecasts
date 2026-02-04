@@ -53,14 +53,14 @@ jobs:
       - name: Make multi-meeting line graphs
         run: Rscript -e 'source(here::here("R","future_meeting_line_charts.R"), echo = TRUE)'
 
-      - name: Make heatmaps graph
-        run: Rscript -e 'source(here::here("R","heat_maps.R"), echo = TRUE)'
+  #    - name: Make heatmaps graph
+  #      run: Rscript -e 'source(here::here("R","heat_maps.R"), echo = TRUE)'
 
-      - name: Make area graph
-        run: Rscript -e 'source(here::here("R","daily_area_charts.R"), echo = TRUE)'
+   #   - name: Make area graph
+   #     run: Rscript -e 'source(here::here("R","daily_area_charts.R"), echo = TRUE)'
 
-      - name: Make area graph
-        run: Rscript -e 'source(here::here("R","area_charts.R"), echo = TRUE)'
+  #    - name: Make area graph
+  #      run: Rscript -e 'source(here::here("R","area_charts.R"), echo = TRUE)'
 
       - name: Make actual vs implied graph
         run: Rscript -e 'source(here::here("R","actual_vs_implied.R"), echo = TRUE)'
