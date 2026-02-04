@@ -227,46 +227,12 @@ forecast_paths_window <- forecast_paths %>%
   ) %>%
   filter(expiry >= x_start, expiry <= x_end)
 
-forecast_paths_grouped <- forecast_paths_window %>%
-  arrange(scrape_time, expiry) %>%
-  group_split(scrape_time)
-
-path_changes <- map_dfr(seq_along(forecast_paths_grouped), function(i) {
-  path_df <- forecast_paths_grouped[[i]]
-  current_scrape <- unique(path_df$scrape_time)
-
-  if (length(current_scrape) != 1) {
-    return(tibble())
-  }
-
-  if (i == 1) {
-    return(tibble(scrape_time = current_scrape, mean_change_bp = NA_real_))
-  }
-
-  previous_df <- forecast_paths_grouped[[i - 1]]
-  overlap <- inner_join(
-    path_df %>% select(expiry, cash_rate),
-    previous_df %>% select(expiry, cash_rate),
-    by = "expiry",
-    suffix = c("", "_prev")
-  )
-
-  mean_change_bp <- overlap %>%
-    summarise(mean_bp = mean(abs(cash_rate - cash_rate_prev) * 100, na.rm = TRUE)) %>%
-    pull(mean_bp)
-
-  tibble(scrape_time = current_scrape, mean_change_bp = mean_change_bp)
-})
-
-top_changes <- path_changes %>%
-  filter(!is.na(mean_change_bp)) %>%
-  slice_max(mean_change_bp, n = 8, with_ties = FALSE)
-
-kept_scrapes <- if (nrow(top_changes) > 0) {
-  top_changes %>% pull(scrape_time)
-} else {
-  unique(forecast_paths_window$scrape_time)
-}
+kept_scrapes <- forecast_paths_window %>%
+  mutate(scrape_week = floor_date(scrape_time, unit = "week")) %>%
+  group_by(scrape_week) %>%
+  slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  pull(scrape_time)
 
 forecast_paths_window <- forecast_paths_window %>%
   filter(scrape_time %in% kept_scrapes) %>%
@@ -314,7 +280,7 @@ latest_event_date <- forecast_snapshots %>%
   labs(
     title = "Cash Rate Forecast Paths",
     subtitle = paste0(
-      "Top 8 daily shifts up to ",
+      "Weekly snapshots up to ",
       format(latest_event_date, "%d %B %Y")
     ),
     x = "Futures contract expiry",
