@@ -47,7 +47,7 @@ if (!dir.exists(here("docs"))) {
 }
 
 # Load consolidated futures data (columns: date, cash_rate, scrape_time)
-cash_rate <- readRDS(here("combined_data", "all_data.Rds"))
+cash_rate <- readRDS("combined_data/all_data.Rds")
 
 # Latest observation per contract per scrape date
 cash_rate_daily <- cash_rate %>%
