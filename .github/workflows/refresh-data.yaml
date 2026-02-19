@@ -1,14 +1,12 @@
 name: refresh-data
-
 permissions:
   contents: write
 
 on:
   schedule:
-    # Every 5 minutes
-    - cron: '*/5 * * * *'
-    # Once a month at midnight on the 1st
-    - cron: '0 0 1 * *'
+    - cron: '*/5 * * * *'   # Every 5 minutes - data + line chart only
+    - cron: '0 3 * * *'     # Daily at 3am UTC - all charts
+    - cron: '0 0 1 * *'     # Monthly on 1st - includes RMSEs
   push:
     branches: [main, master]
   pull_request:
@@ -17,57 +15,66 @@ on:
 
 jobs:
   refresh-data:
-    runs-on: macOS-latest
+    runs-on: macos-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
+
       - uses: r-lib/actions/setup-pandoc@v2
+
       - name: Install XQuartz on macOS
         if: runner.os == 'macOS'
-        run: brew install xquartz --cask
+        run: brew install --cask xquartz
+
       - name: Install vctrs
         run: Rscript -e 'install.packages("vctrs")'
+
       - name: Install packages
         run: Rscript -e 'install.packages(c("tidyverse","here","jsonlite","ggrepel","viridis","conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo","vroom"))'
 
-      # Run RMSEs on push OR monthly (1st at midnight)
-      - name: Calculate RMSEs (push or monthly)
-        continue-on-error: true
-        if: |
-          github.event_name == 'push' ||
-          github.event_name == 'workflow_dispatch' ||
-          (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *')
-        run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
-
+      # ── Always: scrape data ────────────────────────────────────────────
       - name: Get data
         run: Rscript -e 'source(here::here("R","scrape_cash_rate.R"), echo = TRUE)'
 
+      # ── Always: line chart ─────────────────────────────────────────────
       - name: Make line graph
         run: Rscript -e 'source(here::here("R","line_chart.R"), echo = TRUE)'
 
+      # ── Daily + monthly + push: all other charts ───────────────────────
       - name: Make multi-meeting line graphs
+        if: |
+          ${{ github.event_name == 'push' ||
+              (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
         run: Rscript -e 'source(here::here("R","future_meeting_line_charts.R"), echo = TRUE)'
 
       - name: Make heatmaps graph
+        if: |
+          ${{ github.event_name == 'push' ||
+              (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
         run: Rscript -e 'source(here::here("R","heat_maps.R"), echo = TRUE)'
 
-   #   - name: Make area graph
-   #     run: Rscript -e 'source(here::here("R","daily_area_charts.R"), echo = TRUE)'
-
-  #    - name: Make area graph
-  #      run: Rscript -e 'source(here::here("R","area_charts.R"), echo = TRUE)'
-
       - name: Make actual vs implied graph
+        if: |
+          ${{ github.event_name == 'push' ||
+              (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
         run: Rscript -e 'source(here::here("R","actual_vs_implied.R"), echo = TRUE)'
 
-   #   - name: Make historical heatmaps graph (monthly)
-   #     run: Rscript -e 'source(here::here("R","heat_maps_old.R"), echo = TRUE)'
+      # ── Monthly + push: RMSEs ──────────────────────────────────────────
+      - name: Calculate RMSEs
+        continue-on-error: true
+        if: |
+          ${{ github.event_name == 'push' ||
+              (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *') }}
+        run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
 
+      # ── Always: rebuild index and commit ──────────────────────────────
       - name: Generate index.html from charts
         run: Rscript R/write_index_html.R
 
@@ -75,6 +82,5 @@ jobs:
         run: |
           git config --global user.name 'igross'
           git add .
-          git add docs/*.png docs/index.html
           git commit -m 'refreshing data' || echo "No changes to commit"
           git push || echo "No changes to commit"
