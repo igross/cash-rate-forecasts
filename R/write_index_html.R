@@ -12,7 +12,7 @@ suppressPackageStartupMessages({
 intro_paragraph <- '
   <p style="max-width: 900px; margin: 0 auto 30px auto; text-align: center; font-size: 1.1rem; color: #444;">
     This website is built by Zac Gross and provides a daily snapshot of <strong>futures-implied expectations</strong> for the Reserve Bank of Australia\'s cash rate,
-    based on ASX 30-day interbank futures data and historical data. These expectations update automatically based off code by Matt Cowgill.
+    based on ASX 30-day interbank futures data and historical data. These expectations update automatically every 5 minutes based off code by Matt Cowgill.
   </p>'
 
 # ====== Analytics snippet ======

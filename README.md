@@ -18,9 +18,9 @@ July, as the ASX changed its website.
 I offer no assurance that this will continue to work, or that the data
 extracted using this script will be free of errors.
 
-The `.github/workflows/refresh_data.yaml` file contains the instructions
-to GitHub Actions to tell it to run `scrape_cash_rate.R` each day and
-commit the results in this repo.
+The `.github/workflows/refresh-data.yaml` file contains the instructions
+to GitHub Actions to tell it to run `scrape_cash_rate.R` every 5 minutes
+and commit the results in this repo.
 
 Please fork/copy/modify as you see fit.
 
