@@ -13,9 +13,13 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+concurrency:
+  group: refresh-data
+  cancel-in-progress: true
+
 jobs:
   refresh-data:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
@@ -29,15 +33,28 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      - name: Install XQuartz on macOS
-        if: runner.os == 'macOS'
-        run: brew install --cask xquartz
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-packages-${{ runner.os }}-${{ hashFiles('.github/workflows/refresh-data.yaml') }}
+          restore-keys: |
+            r-packages-${{ runner.os }}-
 
-      - name: Install vctrs
-        run: Rscript -e 'install.packages("vctrs")'
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libfontconfig1-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev libgdal-dev
 
       - name: Install packages
-        run: Rscript -e 'install.packages(c("tidyverse","here","jsonlite","ggrepel","viridis","conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo","vroom"))'
+        run: |
+          Rscript -e '
+            pkgs <- c("vctrs","tidyverse","here","jsonlite","ggrepel","viridis",
+                       "conflicted","tidyr","scales","readabs","readrba","plotly",
+                       "purrr","cachem","dplyr","ggpattern","ggtext","zoo","vroom")
+            new_pkgs <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
+            if (length(new_pkgs) > 0) install.packages(new_pkgs)
+          '
 
       # ── Always: scrape data ────────────────────────────────────────────
       - name: Get data
