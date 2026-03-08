@@ -46,7 +46,7 @@ new_data <- fromJSON(json_file) %>%
     scrape_time  = now(tzone = "Australia/Melbourne"),
     # choose price based on which date is more recent (trade preferred if tied)
     cash_rate    = if_else(
-      ymd(dateLastTrade) >= ymd(datePreviousSettlement),
+      !is.na(dateLastTrade) & ymd(dateLastTrade) >= ymd(datePreviousSettlement),
       100 - priceLastTrade,
       100 - pricePreviousSettlement
     ),
