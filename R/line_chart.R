@@ -189,7 +189,12 @@ abs_releases <- tribble(
   "Labour Force", ymd_hm("2026-09-17 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-10-15 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-11-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne")
+  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne"),
+
+  # March 2026 meeting events
+  "Invasion of Iran", ymd_hm("2026-03-01 07:30", tz = "Australia/Melbourne"),
+  "Peak oil price", ymd_hm("2026-03-09 10:00", tz = "Australia/Melbourne"),
+  "Hauser podcast", ymd_hm("2026-03-10 17:00", tz = "Australia/Melbourne")
 )
 
 # ------------------------------------------------------------------------------
@@ -574,7 +579,10 @@ abs_colors <- c(
   "CPI Indicator" = "#4ECDC4",
   "WPI" = "#45B7D1",
   "National Accounts" = "#FFA726",
-  "Labour Force" = "#AB47BC"
+  "Labour Force" = "#AB47BC",
+  "Invasion of Iran" = "#E53935",
+  "Peak oil price" = "#FFD600",
+  "Hauser podcast" = "#00E676"
 )
 
 combined_colors <- c(move_colors, abs_colors)
