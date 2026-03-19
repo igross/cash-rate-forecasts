@@ -234,6 +234,12 @@ kept_scrapes <- forecast_paths_window %>%
   ungroup() %>%
   pull(scrape_time)
 
+# Always include the most recent scrape so the latest forecast is never dropped
+max_scrape_in_window <- max(forecast_paths_window$scrape_time)
+if (!max_scrape_in_window %in% kept_scrapes) {
+  kept_scrapes <- c(kept_scrapes, max_scrape_in_window)
+}
+
 forecast_paths_window <- forecast_paths_window %>%
   filter(scrape_time %in% kept_scrapes) %>%
   arrange(scrape_time, expiry)
@@ -255,7 +261,7 @@ latest_event_date <- forecast_snapshots %>%
       color = "#2b2b2b"
     ) +
     geom_line(
-      data = forecast_paths_window,
+      data = forecast_paths_window %>% filter(scrape_time != max(scrape_time)),
       aes(
         x = expiry,
         y = cash_rate,
@@ -264,6 +270,17 @@ latest_event_date <- forecast_snapshots %>%
         text = tooltip_text
       ),
       alpha = 0.5
+    ) +
+    geom_line(
+      data = latest_path,
+      aes(
+        x = expiry,
+        y = cash_rate,
+        text = tooltip_text
+      ),
+      color = "black",
+      linetype = "dashed",
+      linewidth = 0.8
     ) +
     scale_color_gradientn(
       colors = viridis(9),
