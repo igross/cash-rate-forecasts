@@ -312,6 +312,10 @@ for (mt in future_meetings_all) {
   
   meeting_date_proper <- as.Date(mt) - days(1)
   start_xlim_mt <- min(df_mt$scrape_date, na.rm = TRUE)
+  # For 2027 meetings, ensure x-axis starts no earlier than 2026
+  if (year(as.Date(mt)) >= 2027) {
+    start_xlim_mt <- max(start_xlim_mt, as.Date("2026-01-01"))
+  }
   end_xlim_mt <- meeting_date_proper
   
   available_moves <- unique(df_mt$move[!is.na(df_mt$move)])

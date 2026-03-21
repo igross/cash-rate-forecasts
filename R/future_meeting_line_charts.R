@@ -277,6 +277,11 @@ for (mt in future_meetings) {
   start_time <- min(meeting_df$scrape_time)
   six_months_back <- as.POSIXct(Sys.Date() %m-% months(3), tz = "Australia/Melbourne")
   axis_start <- max(start_time + hours(hours_tz), six_months_back)
+  # For 2027 meetings, ensure x-axis starts no earlier than 2026
+  if (year(as.Date(mt)) >= 2027) {
+    floor_2026 <- as.POSIXct("2026-01-01", tz = "Australia/Melbourne")
+    axis_start <- max(axis_start, floor_2026)
+  }
 
   line_plot <- ggplot(meeting_df, aes(x = scrape_time + hours(hours_tz), y = probability, color = move)) +
     geom_line(linewidth = 1) +

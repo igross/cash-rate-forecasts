@@ -1,11 +1,9 @@
 # ==============================================================================
 # Actual vs Forecast Implied Cash Rate
 # ==============================================================================
-# Purpose: Create charts comparing the historical RBA cash rate with the
-#          front-month futures-implied cash rate level, and visualise full
-#          forecast paths captured on key event dates (RBA meetings, CPI
-#          releases, and Labour Force releases). Static and interactive
-#          outputs are written to the docs/ directory.
+# Purpose: Create charts comparing the historical RBA cash rate with
+#          weekly snapshots of futures-implied forecast paths. Static and
+#          interactive outputs are written to the docs/ directory.
 # ==============================================================================
 
 ensure_packages <- function(pkgs) {
@@ -83,125 +81,26 @@ plot_actual <- actual_cash_rate %>%
 
 
 # ------------------------------------------------------------------------------
-# 2) Build historical forecast paths on key event dates
+# 2) Build weekly forecast paths from all available scrapes
 # ------------------------------------------------------------------------------
 
-# Event schedules ---------------------------------------------------------------
-rba_meetings <- tibble(
-  event_type = "RBA meeting",
-  event_time = ymd_hm(c(
-    "2025-02-18 14:30", "2025-04-01 14:30", "2025-05-20 14:30",
-    "2025-07-08 14:30", "2025-08-12 14:30", "2025-09-30 14:30",
-    "2025-11-04 14:30", "2025-12-09 14:30", "2026-02-03 14:30",
-    "2026-03-17 14:30", "2026-05-05 14:30", "2026-06-16 14:30",
-    "2026-08-11 14:30", "2026-09-29 14:30", "2026-11-03 14:30",
-    "2026-12-08 14:30", "2027-02-09 14:30", "2027-03-23 14:30",
-    "2027-05-04 14:30", "2027-06-22 14:30", "2027-08-10 14:30",
-    "2027-09-21 14:30", "2027-11-02 14:30", "2027-12-14 14:30"
-  ), tz = "Australia/Melbourne")
-) %>%
-  filter(month(event_time) %in% c(2, 5, 8, 11))
+# Take one snapshot per calendar week (last scrape of each week)
+weekly_scrapes <- cash_rate %>%
+  mutate(scrape_week = floor_date(scrape_time, unit = "week")) %>%
+  group_by(scrape_week) %>%
+  slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  distinct(scrape_time)
 
-cpi_releases <- tribble(
-  ~event_type, ~event_time,
-  "CPI", ymd_hm("2025-01-29 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2025-04-30 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2025-07-30 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2025-10-29 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-01-07 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-01-28 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-02-25 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-03-25 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-04-29 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-05-27 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-06-24 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-07-29 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-08-26 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-09-30 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-11-25 11:30", tz = "Australia/Melbourne"),
-  "CPI", ymd_hm("2026-12-30 11:30", tz = "Australia/Melbourne")
-)
-
-labour_force <- tribble(
-  ~event_type, ~event_time,
-  "Labour Force", ymd_hm("2025-01-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-02-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-03-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-04-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-05-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-06-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-07-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-08-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-09-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-10-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-11-13 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2025-12-11 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-01-22 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-02-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-03-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-04-23 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-05-14 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-06-18 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-07-16 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-08-20 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-09-17 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-10-15 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-11-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne")
-)
-
-events <- bind_rows(rba_meetings, cpi_releases, labour_force) %>%
-  mutate(event_date = as.Date(event_time))
-
-# Helper: choose the first scrape on/after the event, otherwise the latest before
-target_scrapes <- sort(unique(cash_rate$scrape_time))
-
-select_scrape <- function(event_time) {
-  later <- target_scrapes[target_scrapes >= event_time]
-  if (length(later) > 0) {
-    return(min(later))
-  }
-  max(target_scrapes[target_scrapes <= event_time])
-}
-
-select_same_day_last <- function(event_time) {
-  event_date <- as.Date(event_time)
-  same_day_scrapes <- target_scrapes[as.Date(target_scrapes) == event_date]
-
-  if (length(same_day_scrapes) > 0) {
-    return(max(same_day_scrapes))
-  }
-
-  select_scrape(event_time)
-}
-
-max_scrape_time <- max(target_scrapes)
-
-forecast_snapshots <- events %>%
-  filter(event_time <= max_scrape_time) %>%
-  mutate(
-    scrape_time = map2(
-      event_time,
-      event_type,
-      ~ if (.y == "RBA meeting") select_same_day_last(.x) else select_scrape(.x)
-    ) %>% reduce(c),
-    event_label = str_c(event_type, ": ", format(event_date, "%d %b %Y"))
-  ) %>%
-  distinct(event_type, event_label, scrape_time, event_time)
-
-forecast_paths <- forecast_snapshots %>%
-  inner_join(cash_rate, by = "scrape_time") %>%
+# Build forecast paths: for each weekly scrape, get all contract expiries
+forecast_paths <- cash_rate %>%
+  filter(scrape_time %in% weekly_scrapes$scrape_time) %>%
   mutate(expiry = as.Date(date)) %>%
-  select(event_type, event_label, event_time, scrape_time, expiry, cash_rate)
-
-# Only keep expiries within two years of the scrape to avoid very distant tails
-forecast_paths <- forecast_paths %>%
+  select(scrape_time, expiry, cash_rate) %>%
+  # Only keep expiries within two years of the scrape
   filter(expiry <= as.Date(scrape_time) + years(2))
 
-latest_scrape_date <- forecast_paths %>%
-  summarise(latest = max(as.Date(scrape_time), na.rm = TRUE)) %>%
-  pull(latest)
+latest_scrape_date <- max(as.Date(forecast_paths$scrape_time), na.rm = TRUE)
 
 x_start <- latest_scrape_date - years(1)
 x_end <- latest_scrape_date + months(18)
@@ -212,40 +111,18 @@ plot_actual_filtered <- plot_actual %>%
 forecast_paths_window <- forecast_paths %>%
   mutate(scrape_date = as.Date(scrape_time)) %>%
   mutate(
-    event_reason = case_when(
-      event_type == "RBA meeting" ~ "RBA meeting (policy decision)",
-      event_type == "CPI" ~ "Inflation print (CPI release)",
-      event_type == "Labour Force" ~ "Labour Force / unemployment release",
-      TRUE ~ event_type
-    ),
     tooltip_text = str_glue(
-      "Reason: {event_reason} on {format(event_time, '%d %b %Y')}<br>",
+      "Week of: {format(floor_date(scrape_time, 'week'), '%d %b %Y')}<br>",
       "Scrape: {format(scrape_time, '%d %b %Y %H:%M %Z')}<br>",
       "Expiry: {format(expiry, '%b %Y')}<br>",
       "Implied rate: {scales::number(cash_rate, accuracy = 0.001)}%"
     )
   ) %>%
-  filter(expiry >= x_start, expiry <= x_end)
-
-kept_scrapes <- forecast_paths_window %>%
-  mutate(scrape_week = floor_date(scrape_time, unit = "week")) %>%
-  group_by(scrape_week) %>%
-  slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
-  ungroup() %>%
-  pull(scrape_time)
-
-forecast_paths_window <- forecast_paths_window %>%
-  filter(scrape_time %in% kept_scrapes) %>%
+  filter(expiry >= x_start, expiry <= x_end) %>%
   arrange(scrape_time, expiry)
 
 latest_path <- forecast_paths_window %>%
   filter(scrape_time == max(scrape_time))
-
-latest_event_date <- forecast_snapshots %>%
-  filter(scrape_time %in% kept_scrapes) %>%
-  slice_max(event_time, n = 1, with_ties = FALSE) %>%
-  pull(event_time) %>%
-  as.Date()
 
   forecast_plot <- ggplot() +
     geom_line(
@@ -281,7 +158,7 @@ latest_event_date <- forecast_snapshots %>%
     title = "Cash Rate Forecast Paths",
     subtitle = paste0(
       "Weekly snapshots up to ",
-      format(latest_event_date, "%d %B %Y")
+      format(latest_scrape_date, "%d %B %Y")
     ),
     x = "Futures contract expiry",
     y = "Implied cash rate (%)",

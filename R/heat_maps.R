@@ -407,13 +407,17 @@ for (mt in meetings_to_process) {
       probability = pmin(probability, 1.0),
       probability = pmax(probability, 0.0)
     )
-  
+
   if (nrow(df_mt_heat) == 0) next
-  
+
   meeting_date_proper <- as.Date(mt) - days(1)
   start_xlim_mt <- min(df_mt_heat$scrape_date, na.rm = TRUE)
+  # For 2027 meetings, ensure x-axis starts no earlier than 2026
+  if (year(as.Date(mt)) >= 2027) {
+    start_xlim_mt <- max(start_xlim_mt, as.Date("2026-01-01"))
+  }
   end_xlim_mt <- meeting_date_proper
-  
+
   available_moves <- unique(df_mt_heat$move[!is.na(df_mt_heat$move)])
   valid_move_levels <- rate_labels[rate_labels %in% available_moves]
   
@@ -696,13 +700,17 @@ for (mt in meetings_to_process) {
       probability = pmax(probability, 0.0),
       probability = ifelse(probability < 0.01, NA_real_, probability)
     )
-  
+
   if (nrow(df_mt_heat) == 0) next
-  
+
   meeting_date_proper <- as.Date(mt) - days(1)
   start_xlim_mt <- min(df_mt_heat$scrape_date, na.rm = TRUE)
+  # For 2027 meetings, ensure x-axis starts no earlier than 2026
+  if (year(as.Date(mt)) >= 2027) {
+    start_xlim_mt <- max(start_xlim_mt, as.Date("2026-01-01"))
+  }
   end_xlim_mt <- meeting_date_proper
-  
+
   available_moves <- unique(df_mt_heat$move[!is.na(df_mt_heat$move)])
   valid_move_levels <- rate_labels[rate_labels %in% available_moves]
   
