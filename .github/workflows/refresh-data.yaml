@@ -5,7 +5,8 @@ permissions:
 on:
   schedule:
     - cron: '*/5 * * * *'   # Every 5 minutes - data + line chart only
-    - cron: '0 3 * * *'     # Daily at 3am UTC - all charts
+    - cron: '0 3 * * *'     # Daily at 3am UTC - most charts
+    - cron: '0 3 * * 1'     # Weekly on Monday at 3am UTC - historical forecast paths
     - cron: '0 0 1 * *'     # Monthly on 1st - includes RMSEs
   push:
     branches: [main, master]
@@ -63,7 +64,7 @@ jobs:
       - name: Make actual vs implied graph
         if: |
           ${{ github.event_name == 'push' ||
-              (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
+              (github.event_name == 'schedule' && (github.event.schedule == '0 3 * * 1' || github.event.schedule == '0 0 1 * *')) }}
         run: Rscript -e 'source(here::here("R","actual_vs_implied.R"), echo = TRUE)'
 
       # ── Monthly + push: RMSEs ──────────────────────────────────────────
