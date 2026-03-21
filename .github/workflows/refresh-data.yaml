@@ -43,6 +43,14 @@ jobs:
       - name: Get data
         run: Rscript -e 'source(here::here("R","scrape_cash_rate.R"), echo = TRUE)'
 
+         # ── Monthly + push: RMSEs ──────────────────────────────────────────
+      - name: Calculate RMSEs
+        continue-on-error: true
+        if: |
+          ${{ github.event_name == 'push' ||
+              (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *') }}
+        run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
+
       # ── Always: line chart ─────────────────────────────────────────────
       - name: Make line graph
         run: Rscript -e 'source(here::here("R","line_chart.R"), echo = TRUE)'
@@ -66,13 +74,7 @@ jobs:
               (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
         run: Rscript -e 'source(here::here("R","actual_vs_implied.R"), echo = TRUE)'
 
-      # ── Monthly + push: RMSEs ──────────────────────────────────────────
-      - name: Calculate RMSEs
-        continue-on-error: true
-        if: |
-          ${{ github.event_name == 'push' ||
-              (github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *') }}
-        run: Rscript -e 'source(here::here("R","rmse.R"), echo = TRUE)'
+     
 
       # ── Always: rebuild index and commit ──────────────────────────────
       - name: Generate index.html from charts
