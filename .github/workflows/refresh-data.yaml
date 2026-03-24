@@ -74,6 +74,12 @@ jobs:
               (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
         run: Rscript -e 'source(here::here("R","actual_vs_implied.R"), echo = TRUE)'
 
+      - name: Make IFM-style cash rate expectations chart
+        if: |
+          ${{ github.event_name == 'push' ||
+              (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
+        run: Rscript -e 'source(here::here("R","ifm_cash_rate_chart.R"), echo = TRUE)'
+
      
 
       # ── Always: rebuild index and commit ──────────────────────────────
