@@ -105,9 +105,9 @@ endpoint <- latest_strip %>% slice_max(expiry, n = 1)
 # 3) Build static ggplot (IFM style)
 # ------------------------------------------------------------------------------
 
-ifm_teal   <- "#1a6e6e"
-ifm_taupe  <- "#b5a99a"
-ifm_orange <- "#e8731a"
+ifm_teal   <- "#00565e"
+ifm_taupe  <- "#c4b09c"
+ifm_orange <- "#d45a00"
 
 p <- ggplot() +
   # Old futures strips — grey/taupe
@@ -115,22 +115,22 @@ p <- ggplot() +
     data = old_strips,
     aes(x = expiry, y = cash_rate, group = scrape_date),
     colour    = ifm_taupe,
-    linewidth = 0.4,
-    alpha     = 0.55
+    linewidth = 0.35,
+    alpha     = 0.45
   ) +
   # Latest futures strip — orange
   geom_line(
     data = latest_strip,
     aes(x = expiry, y = cash_rate),
     colour    = ifm_orange,
-    linewidth = 1.8
+    linewidth = 2.2
   ) +
   # Actual cash rate — dark teal step line
   geom_step(
     data = actual_cash_rate,
     aes(x = date, y = actual_rate),
     colour    = ifm_teal,
-    linewidth = 1.2,
+    linewidth = 1.4,
     direction = "hv"
   ) +
   # Endpoint annotation
@@ -153,7 +153,7 @@ p <- ggplot() +
     x = as.Date("2023-06-01"), y = 5.15,
     label    = "RBA cash rate\n& futures pricing",
     fontface = "bold.italic",
-    colour   = "#2b2b2b",
+    colour   = "#00565e",
     size     = 3.5,
     hjust    = 0.5
   ) +
@@ -225,8 +225,8 @@ p_interactive <- ggplot() +
       ),
     aes(x = expiry, y = cash_rate, group = scrape_date, text = tooltip_text),
     colour    = ifm_taupe,
-    linewidth = 0.4,
-    alpha     = 0.55
+    linewidth = 0.35,
+    alpha     = 0.45
   ) +
   geom_line(
     data = latest_strip %>%
@@ -239,14 +239,14 @@ p_interactive <- ggplot() +
       ),
     aes(x = expiry, y = cash_rate, text = tooltip_text),
     colour    = ifm_orange,
-    linewidth = 1.8
+    linewidth = 2.2
   ) +
   geom_step(
     data = actual_cash_rate %>%
       mutate(tooltip_text = str_glue("Actual rate: {actual_rate}%\nDate: {format(date, '%d %b %Y')}")),
     aes(x = date, y = actual_rate, text = tooltip_text),
     colour    = ifm_teal,
-    linewidth = 1.2,
+    linewidth = 1.4,
     direction = "hv"
   ) +
   scale_x_date(
