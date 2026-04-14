@@ -467,6 +467,17 @@ for (mt in meetings_to_process) {
     ) %>%
     dplyr::select(-first_non_na) %>%
     dplyr::ungroup()
+
+  # Most likely (mode) cash rate path through time
+  most_likely_line <- df_mt_heat %>%
+    dplyr::filter(!is.na(probability)) %>%
+    dplyr::group_by(scrape_date) %>%
+    dplyr::slice_max(order_by = probability, n = 1, with_ties = FALSE) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      move_position = as.numeric(move)
+    ) %>%
+    dplyr::select(scrape_date, move, move_position)
   
   # Calculate percentile lines
   percentile_lines <- all_estimates_area %>%
@@ -583,6 +594,19 @@ for (mt in meetings_to_process) {
           color = "#0066CC",
           linewidth = 1.0,
           linetype = "solid",
+          inherit.aes = FALSE
+        )
+    }
+
+    # Add most likely (mode) path line through the heatmap center
+    if (nrow(most_likely_line) > 0) {
+      heatmap_mt <- heatmap_mt +
+        ggplot2::geom_line(
+          data = most_likely_line,
+          ggplot2::aes(x = scrape_date, y = move_position),
+          color = "black",
+          linewidth = 0.9,
+          linetype = "dashed",
           inherit.aes = FALSE
         )
     }
@@ -756,6 +780,14 @@ for (mt in meetings_to_process) {
     ) %>%
     dplyr::select(-first_non_na) %>%
     dplyr::ungroup()
+
+  # Most likely (mode) cash rate path through time
+  most_likely_line <- df_mt_heat %>%
+    dplyr::filter(!is.na(probability)) %>%
+    dplyr::group_by(scrape_date) %>%
+    dplyr::slice_max(order_by = probability, n = 1, with_ties = FALSE) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(scrape_date, move)
   
   # Calculate percentile lines
   percentile_lines <- all_estimates_area %>%
@@ -872,6 +904,21 @@ for (mt in meetings_to_process) {
           mode = "lines",
           name = "Actual Cash Rate",
           line = list(color = "#0066CC", width = 2),
+          yaxis = "y",
+          hoverinfo = "skip"
+        )
+    }
+
+    # Add most likely (mode) path line through the heatmap center
+    if (nrow(most_likely_line) > 0) {
+      fig <- fig %>%
+        plotly::add_trace(
+          x = most_likely_line$scrape_date,
+          y = most_likely_line$move,
+          type = "scatter",
+          mode = "lines",
+          name = "Most Likely Outcome",
+          line = list(color = "black", width = 2, dash = "dash"),
           yaxis = "y",
           hoverinfo = "skip"
         )
