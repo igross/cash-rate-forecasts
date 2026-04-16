@@ -37,7 +37,7 @@ for (dir_path in required_dirs) {
 # =============================================
 cash_rate <- readRDS("combined_data/all_data.Rds")
 
-tz_scrape <- "Australia/Sydney"
+tz_scrape <- "Australia/Melbourne"
 
 # Append any newer CSV scrapes so we always plot the latest data (including today)
 latest_rds_scrape <- suppressWarnings(max(as.Date(lubridate::with_tz(cash_rate$scrape_time, tz_scrape)), na.rm = TRUE))
@@ -542,7 +542,8 @@ for (mt in meetings_to_process) {
     date_labels <- function(x) format(x, "%b-%Y")
     
     # Create timestamp for plot
-    update_timestamp <- format(Sys.time(), "%d %B %Y at %I:%M %p AEDT")
+    tz_label <- ifelse(dst(now(tzone = "Australia/Melbourne")), "AEDT", "AEST")
+    update_timestamp <- format(Sys.time(), paste0("%d %B %Y at %I:%M %p ", tz_label))
     
     # Create base heatmap with rainbow colors
     heatmap_mt <- ggplot2::ggplot(df_mt_heat, ggplot2::aes(x = scrape_date, y = move, fill = probability)) +
@@ -864,7 +865,8 @@ for (mt in meetings_to_process) {
   
   tryCatch({
     # Create timestamp
-    update_timestamp <- format(Sys.time(), "%d %B %Y at %I:%M %p AEDT")
+    tz_label <- ifelse(dst(now(tzone = "Australia/Melbourne")), "AEDT", "AEST")
+    update_timestamp <- format(Sys.time(), paste0("%d %B %Y at %I:%M %p ", tz_label))
     
     fig <- plotly::plot_ly(
       x = dates,

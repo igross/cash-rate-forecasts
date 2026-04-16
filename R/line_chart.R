@@ -44,7 +44,9 @@ cash_rate$cash_rate <- cash_rate$cash_rate + spread
 # Create output directory structure
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-hours_tz <- 11
+# Dynamically determine UTC offset for Australia/Melbourne (accounts for DST)
+hours_tz <- ifelse(dst(now(tzone = "Australia/Melbourne")), 11, 10)
+tz_label <- ifelse(dst(now(tzone = "Australia/Melbourne")), "AEDT", "AEST")
 
 
 # ------------------------------------------------------------------------------
@@ -443,9 +445,9 @@ for (mt in future_meetings) {
       subtitle = paste(
         "As of", 
         format(
-          with_tz(as.POSIXct(latest_scrape) + hours(hours_tz), 
-                 tzone = "Australia/Sydney"),
-          "%d %B %Y, %I:%M %p AEST"
+          with_tz(as.POSIXct(latest_scrape) + hours(hours_tz),
+                 tzone = "Australia/Melbourne"),
+          paste0("%d %B %Y, %I:%M %p ", tz_label)
         )
       ),
       x = "Target Rate (%)",
@@ -821,7 +823,7 @@ release_segments <- relevant_releases %>%
     text = paste0(
       "<b>", dataset, "</b><br>",
       "Meeting: ", meeting_label, "<br>",
-      format(datetime, "%d %b %Y<br>%H:%M AEST")
+      format(datetime, paste0("%d %b %Y<br>%H:%M ", tz_label))
     )
   )
 
