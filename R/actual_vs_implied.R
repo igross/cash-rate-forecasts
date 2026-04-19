@@ -241,6 +241,28 @@ forecast_paths_window <- forecast_paths_window %>%
 latest_path <- forecast_paths_window %>%
   filter(scrape_time == max(scrape_time))
 
+today_date <- Sys.Date()
+
+latest_actual_anchor <- plot_actual_filtered %>%
+  filter(date <= today_date) %>%
+  slice_tail(n = 1) %>%
+  transmute(
+    expiry = today_date,
+    cash_rate = actual_rate,
+    tooltip_text = "Most recent forecast path"
+  )
+
+latest_path_highlight <- latest_path %>%
+  filter(expiry >= today_date) %>%
+  transmute(
+    expiry = expiry,
+    cash_rate = cash_rate,
+    tooltip_text = "Most recent forecast path"
+  ) %>%
+  bind_rows(latest_actual_anchor) %>%
+  arrange(expiry) %>%
+  distinct(expiry, .keep_all = TRUE)
+
 latest_event_date <- forecast_snapshots %>%
   filter(scrape_time %in% kept_scrapes) %>%
   slice_max(event_time, n = 1, with_ties = FALSE) %>%
@@ -264,6 +286,17 @@ latest_event_date <- forecast_snapshots %>%
         text = tooltip_text
       ),
       alpha = 0.5
+    ) +
+    geom_line(
+      data = latest_path_highlight,
+      aes(
+        x = expiry,
+        y = cash_rate,
+        text = tooltip_text
+      ),
+      linewidth = 1,
+      colour = "#000000",
+      linetype = "dashed"
     ) +
     scale_color_gradientn(
       colors = viridis(9),
