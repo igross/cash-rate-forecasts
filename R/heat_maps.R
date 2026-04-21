@@ -471,6 +471,7 @@ for (mt in meetings_to_process) {
   # Most likely (mode) cash rate path through time
   most_likely_line <- df_mt_heat %>%
     dplyr::filter(!is.na(probability)) %>%
+    dplyr::filter(scrape_date >= Sys.Date()) %>%
     dplyr::group_by(scrape_date) %>%
     dplyr::slice_max(order_by = probability, n = 1, with_ties = FALSE) %>%
     dplyr::ungroup() %>%
@@ -784,6 +785,7 @@ for (mt in meetings_to_process) {
   # Most likely (mode) cash rate path through time
   most_likely_line <- df_mt_heat %>%
     dplyr::filter(!is.na(probability)) %>%
+    dplyr::filter(scrape_date >= Sys.Date()) %>%
     dplyr::group_by(scrape_date) %>%
     dplyr::slice_max(order_by = probability, n = 1, with_ties = FALSE) %>%
     dplyr::ungroup() %>%
