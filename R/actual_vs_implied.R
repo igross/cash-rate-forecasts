@@ -241,16 +241,19 @@ forecast_paths_window <- forecast_paths_window %>%
 latest_path <- forecast_paths_window %>%
   filter(scrape_time == max(scrape_time))
 
+current_date_au <- lubridate::today(tzone = "Australia/Melbourne")
+
 latest_actual_anchor <- plot_actual_filtered %>%
-  filter(date <= min(latest_path$expiry, na.rm = TRUE)) %>%
+  filter(date <= current_date_au) %>%
   slice_tail(n = 1) %>%
   transmute(
-    expiry = date,
+    expiry = current_date_au,
     cash_rate = actual_rate,
     tooltip_text = "Most recent forecast path"
   )
 
 latest_path_highlight <- latest_path %>%
+  filter(expiry >= current_date_au) %>%
   transmute(
     expiry = expiry,
     cash_rate = cash_rate,

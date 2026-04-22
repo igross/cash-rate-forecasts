@@ -557,33 +557,17 @@ for (mt in meetings_to_process) {
         name = "Probability"
       )
     
-    # Add percentile lines WITHOUT aes mapping for legend
+    # Add dashed median path through the middle of the distribution
     if (nrow(percentile_lines) > 0) {
-      # heatmap_mt <- heatmap_mt +
-#         ggplot2::geom_line(
-#           data = percentile_lines,
-#           aes(x = scrape_date, y = p25_pos),
-#           color = "#4B0082",
-#           linewidth = 0.25,
-#           linetype = "dashed",
-#           inherit.aes = FALSE
-#         ) +
-#         ggplot2::geom_line(
-#           data = percentile_lines,
-#           aes(x = scrape_date, y = p50_pos),
-#           color = "#4B0082",
-#           linewidth = 0.5,
-#           linetype = "dashed",
-#           inherit.aes = FALSE
-#         ) +
-#         ggplot2::geom_line(
-#           data = percentile_lines,
-#           aes(x = scrape_date, y = p75_pos),
-#           color = "#4B0082",
-#           linewidth = 0.25,
-#           linetype = "dashed",
-#           inherit.aes = FALSE
-#        )
+      heatmap_mt <- heatmap_mt +
+        ggplot2::geom_line(
+          data = percentile_lines,
+          aes(x = scrape_date, y = p50_pos),
+          color = "#4B0082",
+          linewidth = 0.6,
+          linetype = "dashed",
+          inherit.aes = FALSE
+        )
     }
     
     # Add actual cash rate line
@@ -801,7 +785,12 @@ for (mt in meetings_to_process) {
       p75 = qnorm(0.75, mean = implied_mean, sd = stdev)
     ) %>%
     dplyr::select(scrape_date, p25, p50, p75) %>%
-    dplyr::distinct()
+    dplyr::distinct() %>%
+    dplyr::mutate(
+      p50_level = sapply(p50, function(val) {
+        valid_move_levels[which.min(abs(as.numeric(gsub("%", "", valid_move_levels)) - val))]
+      })
+    )
   
   # Prepare actual cash rate line
   actual_rate_line <- rba_historical %>%
@@ -895,6 +884,21 @@ for (mt in meetings_to_process) {
         yanchor = "middle"
       )
     )
+
+    # Add dashed median path through the middle of the distribution
+    if (nrow(percentile_lines) > 0) {
+      fig <- fig %>%
+        plotly::add_trace(
+          x = percentile_lines$scrape_date,
+          y = percentile_lines$p50_level,
+          type = "scatter",
+          mode = "lines",
+          name = "Median Path",
+          line = list(color = "#4B0082", width = 1.5, dash = "dash"),
+          yaxis = "y",
+          hoverinfo = "skip"
+        )
+    }
     
     # Add actual cash rate line
     if (nrow(actual_rate_line) > 0) {
