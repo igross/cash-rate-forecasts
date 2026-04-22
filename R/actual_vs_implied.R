@@ -242,10 +242,10 @@ latest_path <- forecast_paths_window %>%
   filter(scrape_time == max(scrape_time))
 
 latest_actual_anchor <- plot_actual_filtered %>%
-  filter(date <= min(latest_path$expiry, na.rm = TRUE)) %>%
+  filter(date <= Sys.Date()) %>%
   slice_tail(n = 1) %>%
   transmute(
-    expiry = date,
+    expiry = Sys.Date(),
     cash_rate = actual_rate,
     tooltip_text = "Most recent forecast path"
   )
@@ -256,6 +256,7 @@ latest_path_highlight <- latest_path %>%
     cash_rate = cash_rate,
     tooltip_text = "Most recent forecast path"
   ) %>%
+  filter(expiry >= Sys.Date()) %>%
   bind_rows(latest_actual_anchor) %>%
   arrange(expiry) %>%
   distinct(expiry, .keep_all = TRUE)
