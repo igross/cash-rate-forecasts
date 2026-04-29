@@ -302,3 +302,81 @@ for (mt in future_meetings) {
   output_path <- here("docs", "meeting_lines", glue("line_probabilities_meeting_{meeting_label}.png"))
   ggsave(filename = output_path, plot = line_plot, width = 8, height = 5, dpi = 300, device = "png")
 }
+
+# ----------------------------------------------------------------------------
+# Next-meeting snapshot charts (pie + column)
+# ----------------------------------------------------------------------------
+if (length(future_meetings) > 0) {
+  next_meeting <- min(future_meetings)
+  next_meeting_latest <- all_estimates_buckets %>%
+    filter(meeting_date == next_meeting) %>%
+    filter(scrape_time == max(scrape_time, na.rm = TRUE)) %>%
+    mutate(
+      diff_center = bucket - current_center,
+      move = case_when(
+        near(diff_center, -0.75, tol = 0.01) ~ "-75 bp cut",
+        near(diff_center, -0.50, tol = 0.01) ~ "-50 bp cut",
+        near(diff_center, -0.25, tol = 0.01) ~ "-25 bp cut",
+        near(diff_center, 0.00, tol = 0.01) ~ "No change",
+        near(diff_center, 0.25, tol = 0.01) ~ "+25 bp hike",
+        near(diff_center, 0.50, tol = 0.01) ~ "+50 bp hike",
+        near(diff_center, 0.75, tol = 0.01) ~ "+75 bp hike",
+        TRUE ~ NA_character_
+      )
+    ) %>%
+    filter(!is.na(move)) %>%
+    group_by(move) %>%
+    summarize(probability = sum(probability), .groups = "drop") %>%
+    mutate(move = factor(move, levels = move_levels)) %>%
+    arrange(move) %>%
+    mutate(probability = probability / sum(probability))
+
+  if (nrow(next_meeting_latest) > 0) {
+    meeting_label <- format(as.Date(next_meeting), "%Y-%m-%d")
+    charts_dir <- here("docs", "meeting_charts")
+    if (!dir.exists(charts_dir)) dir.create(charts_dir, recursive = TRUE)
+
+    pie_plot <- ggplot(next_meeting_latest, aes(x = "", y = probability, fill = move)) +
+      geom_col(width = 1, color = "white") +
+      coord_polar(theta = "y") +
+      scale_fill_manual(values = move_palette, drop = FALSE) +
+      scale_y_continuous(labels = percent_format(accuracy = 1)) +
+      labs(
+        title = glue("Next meeting probability mix — {format(as.Date(next_meeting), '%d %B %Y')}"),
+        subtitle = glue("As of {format(as_of_time, '%d %B %Y, %I:%M %p AEST')}"),
+        fill = "Move"
+      ) +
+      theme_minimal() +
+      theme(
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "bottom",
+        legend.title = element_text(face = "bold")
+      )
+
+    col_plot <- ggplot(next_meeting_latest, aes(x = move, y = probability, fill = move)) +
+      geom_col(width = 0.7, show.legend = FALSE) +
+      scale_fill_manual(values = move_palette, drop = FALSE) +
+      scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
+      labs(
+        title = glue("Next meeting move probabilities — {format(as.Date(next_meeting), '%d %B %Y')}"),
+        subtitle = glue("As of {format(as_of_time, '%d %B %Y, %I:%M %p AEST')}"),
+        x = "Move",
+        y = "Probability"
+      ) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 25, hjust = 1))
+
+    ggsave(
+      filename = here("docs", "meeting_charts", glue("next_meeting_probabilities_pie_{meeting_label}.png")),
+      plot = pie_plot, width = 7, height = 5, dpi = 300, device = "png"
+    )
+    ggsave(
+      filename = here("docs", "meeting_charts", glue("next_meeting_probabilities_column_{meeting_label}.png")),
+      plot = col_plot, width = 8, height = 5, dpi = 300, device = "png"
+    )
+  } else {
+    message(glue("Skipping next-meeting snapshot charts for {next_meeting}: no mapped moves found."))
+  }
+}
