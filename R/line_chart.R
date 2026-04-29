@@ -44,8 +44,6 @@ cash_rate$cash_rate <- cash_rate$cash_rate + spread
 # Create output directory structure
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-hours_tz <- 11
-
 
 # ------------------------------------------------------------------------------
 # 3. HELPER FUNCTIONS
@@ -412,7 +410,7 @@ all_estimates_buckets <- bind_rows(bucket_list)
 future_meetings <- meeting_schedule$meeting_date[
   meeting_schedule$meeting_date > Sys.Date()
 ]
-latest_scrape <- max(all_estimates_buckets$scrape_time) + hours(hours_tz)
+latest_scrape <- max(all_estimates_buckets$scrape_time)
 
 print(paste("Latest scrape:", latest_scrape))
 
@@ -443,8 +441,7 @@ for (mt in future_meetings) {
       subtitle = paste(
         "As of", 
         format(
-          with_tz(as.POSIXct(latest_scrape) + hours(hours_tz), 
-                 tzone = "Australia/Sydney"),
+          with_tz(as.POSIXct(latest_scrape), tzone = "Australia/Sydney"),
           "%d %B %Y, %I:%M %p AEST"
         )
       ),
@@ -525,10 +522,10 @@ if (nrow(top3_df) == 0) {
 
 # Set x-axis limits for line chart
 start_xlim <- max(
-  min(top3_df$scrape_time) + hours(hours_tz),
-  as.POSIXct(today_melb %m-% months(12), tz = "Australia/Melbourne") + hours(hours_tz)
+  min(with_tz(top3_df$scrape_time, "Australia/Melbourne")),
+  as.POSIXct(today_melb %m-% months(12), tz = "Australia/Melbourne")
 )
-end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz+7)
+end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(18)
 
 # ==============================================================================
 # Save summary data instead of HTML
@@ -543,7 +540,7 @@ top3_summary <- top3_df %>%
 
 # Create summary data object
 rba_summary_data <- list(
-  scrape_date = as.Date(latest_scrape + hours(hours_tz)),
+  scrape_date = as.Date(with_tz(latest_scrape, "Australia/Melbourne")),
   next_meeting = next_meeting,
   top3_moves = top3_summary$move,
   top3_probabilities = top3_summary$probability
@@ -609,7 +606,7 @@ lin_df <- top3_df_long %>%
 
 
 # Create static line plot
-line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
+line <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbourne"),
                             y = probability,
                             colour = move,
                             group = move)) +
@@ -631,7 +628,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(with_tz(latest_scrape, 'Australia/Melbourne')), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
@@ -678,7 +675,7 @@ line_dual <- ggplot() +
   geom_line(
     data = std_df,
     aes(
-      x = scrape_time + hours(hours_tz),
+      x = with_tz(scrape_time, "Australia/Melbourne"),
       y = probability_value,
       colour = move,
       group = move,
@@ -690,7 +687,7 @@ line_dual <- ggplot() +
   geom_line(
     data = lin_df,
     aes(
-      x = scrape_time + hours(hours_tz),
+      x = with_tz(scrape_time, "Australia/Melbourne"),
       y = probability_value,
       colour = move,
       group = move,
@@ -723,7 +720,7 @@ line_dual <- ggplot() +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
     subtitle = glue(
-      "Comparing standard probabilities with two-outcome linear model as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"
+      "Comparing standard probabilities with two-outcome linear model as of {format(as.Date(with_tz(latest_scrape, 'Australia/Melbourne')), '%d %b %Y')}"
     ),
     x = "Forecast date",
     y = "Probability"
@@ -762,7 +759,7 @@ ggsave(
 # Create base plot WITHOUT any vertical lines
 meeting_label <- format(next_meeting, "%d %b %Y")
 
-line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
+line_int_base <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbourne"),
                                       y = probability,
                                       colour = move,
                                       group = move)) +
@@ -784,13 +781,13 @@ line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(with_tz(latest_scrape, 'Australia/Melbourne')), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
   aes(text = paste0(
     "Meeting: ", meeting_label, "<br>",
-    "Time: ", format(scrape_time + hours(hours_tz), "%d %b %H:%M"), "<br>",
+    "Time: ", format(with_tz(scrape_time, "Australia/Melbourne"), "%d %b %H:%M"), "<br>",
     "Move: ", move, "<br>",
     "Probability: ", percent(probability, accuracy = 1)
   )) +
@@ -865,7 +862,7 @@ interactive_line <- interactive_line %>%
       text = paste0(
         glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
         "<br>",
-        "<sub>", glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"), "</sub>"
+        "<sub>", glue("as of {format(as.Date(with_tz(latest_scrape, 'Australia/Melbourne')), '%d %b %Y')}"), "</sub>"
       )
     )
   )
