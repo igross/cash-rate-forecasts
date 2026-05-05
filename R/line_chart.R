@@ -36,7 +36,7 @@ print(head(rmse_days$finalrmse, 30))
 
 # Configuration parameters
 spread <- 0.00  # Spread adjustment for cash rate
-override <- 3.85  # Manual override for current rate (if needed)
+override <- 4.35  # Manual override for current rate (if needed)
 
 # Apply spread adjustment
 cash_rate$cash_rate <- cash_rate$cash_rate + spread
@@ -533,6 +533,7 @@ previous_meeting <- meeting_schedule %>%
 
 start_xlim <- as.POSIXct(previous_meeting, tz = "Australia/Melbourne") + hours(hours_tz)
 end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz + 7)
+<<<<<<< codex/print-x-axis-limits-on-run-1el79o
 cat(
   "Line chart x-axis config (Australia/Melbourne):\n",
   "  previous_meeting = ", as.character(previous_meeting), "\n",
@@ -542,6 +543,9 @@ cat(
   "  end_xlim         = ", format(end_xlim, tz = "Australia/Melbourne", usetz = TRUE), "\n",
   sep = ""
 )
+=======
+cat("Line chart x-axis limits:", as.character(start_xlim), "to", as.character(end_xlim), "\n")
+>>>>>>> main
 
 # ==============================================================================
 # Save summary data instead of HTML
