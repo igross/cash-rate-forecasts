@@ -856,10 +856,7 @@ interactive_line <- interactive_line %>%
     ),
     yaxis = list(
       title = "Probability",
-      tickformat = ".0%",
-      tickmode = "linear",
-      tick0 = 0.10,
-      dtick = 0.25
+      tickformat = ".0%"
     ),
     title = list(
       text = paste0(
