@@ -811,8 +811,7 @@ relevant_releases <- abs_releases %>%
 release_segments <- relevant_releases %>%
   transmute(
     dataset,
-    x_start = datetime,
-    x_end = datetime,
+    datetime,
     text = paste0(
       "<b>", dataset, "</b><br>",
       "Meeting: ", meeting_label, "<br>",
@@ -825,12 +824,11 @@ line_int_complete <- line_int_base +
   geom_segment(
     data = release_segments,
     aes(
-      x = .data$x_start,
-      xend = .data$x_end,
+      x = .data$datetime,
+      xend = .data$datetime,
       colour = .data$dataset,
       text = .data$text
     ),
-    # x and xend are intentionally equal so each marker is a vertical line
     y = 0,
     yend = 1,
     inherit.aes = FALSE,
