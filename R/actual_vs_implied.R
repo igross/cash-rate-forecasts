@@ -269,6 +269,12 @@ latest_event_date <- forecast_snapshots %>%
   pull(event_time) %>%
   as.Date()
 
+y_min <- min(c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate), na.rm = TRUE)
+y_max <- max(c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate), na.rm = TRUE)
+y_break_start <- floor((y_min - 0.10) / 0.25) * 0.25 + 0.10
+y_break_end <- ceiling((y_max - 0.10) / 0.25) * 0.25 + 0.10
+y_breaks <- seq(y_break_start, y_break_end, by = 0.25)
+
   forecast_plot <- ggplot() +
     geom_line(
       data = plot_actual_filtered,
@@ -303,7 +309,10 @@ latest_event_date <- forecast_snapshots %>%
       name = "Scrape date",
       guide = guide_colorbar(barheight = unit(5, "cm"), barwidth = unit(0.4, "cm"))
     ) +
-  scale_y_continuous(labels = number_format(accuracy = 0.05)) +
+  scale_y_continuous(
+    breaks = y_breaks,
+    labels = number_format(accuracy = 0.01)
+  ) +
   scale_x_date(
     limits = c(x_start, x_end),
     date_labels = "%b %Y",
