@@ -850,11 +850,18 @@ interactive_line <- ggplotly(line_int_complete, tooltip = "text") %>%
   )
 
 # Final layout adjustments
+meeting_tickvals <- seq(from = start_xlim, to = end_xlim, by = "2 weeks")
+meeting_tickvals <- unique(c(start_xlim, meeting_tickvals, end_xlim))
+meeting_ticktext <- format(meeting_tickvals, "%d %b %Y")
+
 interactive_line <- interactive_line %>%
   layout(
     xaxis = list(
       title = "Forecast date",
       tickangle = 45,
+      tickmode = "array",
+      tickvals = meeting_tickvals,
+      ticktext = meeting_ticktext,
       range = c(start_xlim, end_xlim)
     ),
     yaxis = list(
