@@ -396,6 +396,7 @@ for (i in seq_len(nrow(all_estimates))) {
     probability_linear = l_vec,
     probability_prob = p_vec,
     probability = v,
+    # All move calculations are relative to the current interest rate
     diff = bucket_centers - current_rate,
     diff_s = sign(bucket_centers - current_rate) * 
              abs(bucket_centers - current_rate)^(1/4)  # For color scaling
@@ -524,11 +525,9 @@ if (nrow(top3_df) == 0) {
 }
 
 # Set x-axis limits for line chart
-start_xlim <- max(
-  min(top3_df$scrape_time) + hours(hours_tz),
-  as.POSIXct(today_melb %m-% months(12), tz = "Australia/Melbourne") + hours(hours_tz)
-)
-end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz+7)
+# Start at the previous meeting date and end at the upcoming meeting date
+start_xlim <- as.POSIXct(last_meeting, tz = "Australia/Melbourne") + hours(hours_tz)
+end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz + 7)
 
 # ==============================================================================
 # Save summary data instead of HTML
@@ -809,15 +808,11 @@ relevant_releases <- abs_releases %>%
   filter(datetime >= start_xlim & datetime <= end_xlim)
 
 # Build release segment data for interactive plot
-# Use explicit x/xend/y/yend columns so ggplotly can reliably
-# evaluate the aesthetics during conversion to plotly.
 release_segments <- relevant_releases %>%
   transmute(
     dataset,
-    x = datetime,
-    xend = datetime,
-    y = 0,
-    yend = 1,
+    x_start = datetime,
+    x_end = datetime,
     text = paste0(
       "<b>", dataset, "</b><br>",
       "Meeting: ", meeting_label, "<br>",
@@ -825,18 +820,19 @@ release_segments <- relevant_releases %>%
     )
   )
 
-# Combine probability lines with release segments
+# Combine probability lines with release markers
 line_int_complete <- line_int_base +
   geom_segment(
     data = release_segments,
     aes(
-      x = x,
-      xend = xend,
-      y = y,
-      yend = yend,
-      colour = dataset,
-      text = text
+      x = .data$x_start,
+      xend = .data$x_end,
+      colour = .data$dataset,
+      text = .data$text
     ),
+    # x and xend are intentionally equal so each marker is a vertical line
+    y = 0,
+    yend = 1,
     inherit.aes = FALSE,
     linetype = "dashed",
     linewidth = 1
