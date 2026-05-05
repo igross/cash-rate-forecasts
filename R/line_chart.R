@@ -822,25 +822,28 @@ release_segments <- relevant_releases %>%
     )
   )
 
-# Combine probability lines with release segments
-line_int_complete <- line_int_base +
-  geom_segment(
-    data = release_segments,
-    aes(
-      x = x,
-      xend = xend,
-      y = y,
-      yend = yend,
-      colour = dataset,
-      text = text
-    ),
-    inherit.aes = FALSE,
-    linetype = "dashed",
-    linewidth = 1
-  )
+# Convert probability lines to Plotly first
+interactive_line <- ggplotly(line_int_base, tooltip = "text")
 
-# Convert to Plotly
-interactive_line <- ggplotly(line_int_complete, tooltip = "text") %>%
+# Add release markers directly in plotly to avoid ggplotly conversion issues
+if (nrow(release_segments) > 0) {
+  interactive_line <- interactive_line %>%
+    add_segments(
+      data = release_segments,
+      x = ~x,
+      xend = ~xend,
+      y = ~y,
+      yend = ~yend,
+      color = ~dataset,
+      text = ~text,
+      hoverinfo = "text",
+      inherit = FALSE,
+      line = list(dash = "dash", width = 1),
+      showlegend = TRUE
+    )
+}
+
+interactive_line <- interactive_line %>%
   layout(
     hovermode = "x unified",
     legend = list(x = 1.02, y = 0.5, xanchor = "left"),
