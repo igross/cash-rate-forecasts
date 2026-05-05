@@ -533,6 +533,15 @@ previous_meeting <- meeting_schedule %>%
 
 start_xlim <- as.POSIXct(previous_meeting, tz = "Australia/Melbourne") + hours(hours_tz)
 end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz + 7)
+cat(
+  "Line chart x-axis config (Australia/Melbourne):\n",
+  "  previous_meeting = ", as.character(previous_meeting), "\n",
+  "  next_meeting     = ", as.character(next_meeting), "\n",
+  "  hours_tz         = ", hours_tz, "\n",
+  "  start_xlim       = ", format(start_xlim, tz = "Australia/Melbourne", usetz = TRUE), "\n",
+  "  end_xlim         = ", format(end_xlim, tz = "Australia/Melbourne", usetz = TRUE), "\n",
+  sep = ""
+)
 
 # ==============================================================================
 # Save summary data instead of HTML
@@ -853,6 +862,8 @@ interactive_line <- ggplotly(line_int_complete, tooltip = "text") %>%
 meeting_tickvals <- seq(from = start_xlim, to = end_xlim, by = "2 weeks")
 meeting_tickvals <- unique(c(start_xlim, meeting_tickvals, end_xlim))
 meeting_ticktext <- format(meeting_tickvals, "%d %b %Y")
+meeting_tickvals_plotly <- format(meeting_tickvals, tz = "Australia/Melbourne", usetz = FALSE)
+xaxis_range_plotly <- format(c(start_xlim, end_xlim), tz = "Australia/Melbourne", usetz = FALSE)
 
 interactive_line <- interactive_line %>%
   layout(
@@ -860,9 +871,9 @@ interactive_line <- interactive_line %>%
       title = "Forecast date",
       tickangle = 45,
       tickmode = "array",
-      tickvals = meeting_tickvals,
+      tickvals = meeting_tickvals_plotly,
       ticktext = meeting_ticktext,
-      range = c(start_xlim, end_xlim)
+      range = xaxis_range_plotly
     ),
     yaxis = list(
       title = "Probability",
