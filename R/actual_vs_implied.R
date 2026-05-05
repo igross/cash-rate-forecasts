@@ -269,18 +269,11 @@ latest_event_date <- forecast_snapshots %>%
   pull(event_time) %>%
   as.Date()
 
-y_values <- c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate)
-y_values <- y_values[is.finite(y_values)]
-
-if (length(y_values) > 0) {
-  y_min <- min(y_values)
-  y_max <- max(y_values)
-  y_break_start <- floor((y_min - 0.10) / 0.25) * 0.25 + 0.10
-  y_break_end <- ceiling((y_max - 0.10) / 0.25) * 0.25 + 0.10
-  y_breaks <- seq(y_break_start, y_break_end, by = 0.25)
-} else {
-  y_breaks <- NULL
-}
+y_min <- min(c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate), na.rm = TRUE)
+y_max <- max(c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate), na.rm = TRUE)
+y_break_start <- floor((y_min - 0.10) / 0.25) * 0.25 + 0.10
+y_break_end <- ceiling((y_max - 0.10) / 0.25) * 0.25 + 0.10
+y_breaks <- seq(y_break_start, y_break_end, by = 0.25)
 
   forecast_plot <- ggplot() +
     geom_line(
