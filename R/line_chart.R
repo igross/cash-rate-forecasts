@@ -36,7 +36,7 @@ print(head(rmse_days$finalrmse, 30))
 
 # Configuration parameters
 spread <- 0.00  # Spread adjustment for cash rate
-override <- 3.85  # Manual override for current rate (if needed)
+override <- 4.35  # Manual override for current rate (if needed)
 
 # Apply spread adjustment
 cash_rate$cash_rate <- cash_rate$cash_rate + spread
