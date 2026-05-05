@@ -525,8 +525,13 @@ if (nrow(top3_df) == 0) {
 }
 
 # Set x-axis limits for line chart
-# Start at the previous meeting date and end at the upcoming meeting date
-start_xlim <- as.POSIXct(last_meeting, tz = "Australia/Melbourne") + hours(hours_tz)
+# Start at the meeting immediately before the upcoming meeting
+previous_meeting <- meeting_schedule %>%
+  filter(meeting_date < next_meeting) %>%
+  slice_max(meeting_date, n = 1, with_ties = FALSE) %>%
+  pull(meeting_date)
+
+start_xlim <- as.POSIXct(previous_meeting, tz = "Australia/Melbourne") + hours(hours_tz)
 end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz + 7)
 
 # ==============================================================================
@@ -849,7 +854,8 @@ interactive_line <- interactive_line %>%
   layout(
     xaxis = list(
       title = "Forecast date",
-      tickangle = 45
+      tickangle = 45,
+      range = c(start_xlim, end_xlim)
     ),
     yaxis = list(
       title = "Probability",
