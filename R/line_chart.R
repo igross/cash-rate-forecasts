@@ -517,6 +517,7 @@ top3_df <- buckets_with_moves %>%
                  "+25 bp hike", "+50 bp hike", "+75 bp hike")
     )
   ) %>%
+  arrange(move, scrape_time) %>%
   select(-diff_center)
 
 # Verify we have data
