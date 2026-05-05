@@ -533,6 +533,7 @@ previous_meeting <- meeting_schedule %>%
 
 start_xlim <- as.POSIXct(previous_meeting, tz = "Australia/Melbourne") + hours(hours_tz)
 end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz + 7)
+cat("Line chart x-axis limits:", as.character(start_xlim), "to", as.character(end_xlim), "\n")
 
 # ==============================================================================
 # Save summary data instead of HTML
