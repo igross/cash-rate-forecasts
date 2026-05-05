@@ -396,6 +396,7 @@ for (i in seq_len(nrow(all_estimates))) {
     probability_linear = l_vec,
     probability_prob = p_vec,
     probability = v,
+    # All move calculations are relative to the current interest rate
     diff = bucket_centers - current_rate,
     diff_s = sign(bucket_centers - current_rate) * 
              abs(bucket_centers - current_rate)^(1/4)  # For color scaling
@@ -524,11 +525,9 @@ if (nrow(top3_df) == 0) {
 }
 
 # Set x-axis limits for line chart
-start_xlim <- max(
-  min(top3_df$scrape_time) + hours(hours_tz),
-  as.POSIXct(today_melb %m-% months(12), tz = "Australia/Melbourne") + hours(hours_tz)
-)
-end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz+7)
+# Start at the previous meeting date and end at the upcoming meeting date
+start_xlim <- as.POSIXct(last_meeting, tz = "Australia/Melbourne") + hours(hours_tz)
+end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz + 7)
 
 # ==============================================================================
 # Save summary data instead of HTML
@@ -820,7 +819,7 @@ release_segments <- relevant_releases %>%
     )
   )
 
-# Combine probability lines with release segments
+# Combine probability lines with release markers
 line_int_complete <- line_int_base +
   geom_segment(
     data = release_segments,
