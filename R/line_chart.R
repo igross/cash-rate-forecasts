@@ -852,12 +852,8 @@ interactive_line <- ggplotly(line_int_complete, tooltip = "text") %>%
   )
 
 # Final layout adjustments
-meeting_tickvals <- seq(from = start_xlim, to = end_xlim, by = "2 weeks")
-meeting_tickvals <- unique(c(start_xlim, meeting_tickvals, end_xlim))
-meeting_ticktext <- format(meeting_tickvals, "%d %b %Y")
-meeting_tickvals_plotly <- as.POSIXct(meeting_tickvals, tz = "Australia/Melbourne")
-plotly_start_xlim <- as.POSIXct(start_xlim, tz = "Australia/Melbourne")
-plotly_end_xlim <- as.POSIXct(end_xlim, tz = "Australia/Melbourne")
+plotly_start_xlim <- format(as.POSIXct(start_xlim, tz = "Australia/Melbourne"), "%Y-%m-%d %H:%M:%S")
+plotly_end_xlim <- format(as.POSIXct(end_xlim, tz = "Australia/Melbourne"), "%Y-%m-%d %H:%M:%S")
 
 interactive_line <- interactive_line %>%
   layout(
@@ -865,9 +861,9 @@ interactive_line <- interactive_line %>%
       title = "Forecast date",
       type = "date",
       tickangle = 45,
-      tickmode = "array",
-      tickvals = meeting_tickvals_plotly,
-      ticktext = meeting_ticktext,
+      tickmode = "linear",
+      dtick = 24 * 60 * 60 * 1000,
+      tickformat = "%d %b",
       showticklabels = TRUE,
       showline = TRUE,
       automargin = TRUE,
