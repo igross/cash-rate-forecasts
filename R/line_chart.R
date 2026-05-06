@@ -855,6 +855,9 @@ interactive_line <- ggplotly(line_int_complete, tooltip = "text") %>%
 meeting_tickvals <- seq(from = start_xlim, to = end_xlim, by = "2 weeks")
 meeting_tickvals <- unique(c(start_xlim, meeting_tickvals, end_xlim))
 meeting_ticktext <- format(meeting_tickvals, "%d %b %Y")
+meeting_tickvals_plotly <- format(meeting_tickvals, "%Y-%m-%d %H:%M:%S")
+plotly_start_xlim <- format(start_xlim, "%Y-%m-%d %H:%M:%S")
+plotly_end_xlim <- format(end_xlim, "%Y-%m-%d %H:%M:%S")
 
 interactive_line <- interactive_line %>%
   layout(
@@ -862,9 +865,9 @@ interactive_line <- interactive_line %>%
       title = "Forecast date",
       tickangle = 45,
       tickmode = "array",
-      tickvals = meeting_tickvals,
+      tickvals = meeting_tickvals_plotly,
       ticktext = meeting_ticktext,
-      range = c(start_xlim, end_xlim)
+      range = c(plotly_start_xlim, plotly_end_xlim)
     ),
     yaxis = list(
       title = "Probability",
