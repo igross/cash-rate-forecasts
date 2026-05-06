@@ -122,37 +122,9 @@ past_cards <- vapply(
   }
 }
 
-# Interactive line chart section - now using HTML file
+# Line chart section (static default with interactive fallback)
 interactive_line_section <- ""
-if (file.exists("docs/line_interactive.html")) {
-  interactive_line_section <- '
-  <h1 style="margin-top:60px; text-align:center;">
-    Forecasts for the Next RBA Meeting Derived from ASX Futures
-  </h1>
-  <div style="
-      display: flex;
-      justify-content: center;
-      margin: 40px 0;
-    ">
-    <iframe 
-      src="line_interactive.html" 
-      style="
-        width: 80%;
-        height: 600px;
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        background: white;
-      "
-      frameborder="0"
-    ></iframe>
-  </div>
-  <p style="max-width: 800px; margin: 20px auto; text-align: center; font-size: 1rem; color: #555; line-height: 1.6;">
-    This chart shows the market-implied probability of different cash rate outcomes at the next RBA meeting, hover over the chart to explore daily probabilities. 
-    <a href="plots/line_charts/line.png" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">View static version →</a>
-  </p>'
-} else if (file.exists("docs/plots/line_charts/line.png")) {
-  # Fallback to PNG if HTML doesn't exist
+if (file.exists("docs/plots/line_charts/line.png")) {
   interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
     Forecasts for the Next RBA Meeting Derived from ASX Futures
@@ -176,11 +148,67 @@ if (file.exists("docs/line_interactive.html")) {
   </div>
   <p style="max-width: 800px; margin: 20px auto; text-align: center; font-size: 1rem; color: #555; line-height: 1.6;">
     This chart shows the market-implied probability of different cash rate outcomes at the next RBA meeting.
+    <a href="line_interactive.html" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">View interactive version →</a>
+  </p>'
+} else if (file.exists("docs/line_interactive.html")) {
+  # Fallback to interactive version if static PNG doesn't exist
+  interactive_line_section <- '
+  <h1 style="margin-top:60px; text-align:center;">
+    Forecasts for the Next RBA Meeting Derived from ASX Futures
+  </h1>
+  <div style="
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    ">
+    <iframe 
+      src="line_interactive.html" 
+      style="
+        width: 80%;
+        height: 600px;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        background: white;
+      "
+      frameborder="0"
+    ></iframe>
+  </div>
+  <p style="max-width: 800px; margin: 20px auto; text-align: center; font-size: 1rem; color: #555; line-height: 1.6;">
+    This chart shows the market-implied probability of different cash rate outcomes at the next RBA meeting, hover over the chart to explore daily probabilities.
   </p>'
 }
 
 forecast_paths_section <- ""
-if (file.exists("docs/cash_rate_forecast_paths.html")) {
+if (file.exists("docs/plots/forecast_paths/cash_rate_forecast_paths.png")) {
+  forecast_paths_section <- '
+  <h1 style="margin-top:60px; text-align:center;">
+    Cash Rate Forecast Paths Around Key Events
+  </h1>
+  <div style="
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    ">
+    <img
+      src="plots/forecast_paths/cash_rate_forecast_paths.png"
+      alt="Cash rate forecast paths"
+      class="expandable"
+      style="
+        width: 90%;
+        height: auto;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      "
+    />
+  </div>
+  <p style="max-width: 900px; margin: 20px auto; text-align: center; font-size: 1rem; color: #555; line-height: 1.6;">
+    Forecast paths around RBA meetings, CPI releases, and labour force publications.
+    <a href="cash_rate_forecast_paths.html" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">
+      View interactive version →
+    </a>
+  </p>'
+} else if (file.exists("docs/cash_rate_forecast_paths.html")) {
   forecast_paths_section <- '
   <h1 style="margin-top:60px; text-align:center;">
     Cash Rate Forecast Paths Around Key Events
@@ -204,39 +232,7 @@ if (file.exists("docs/cash_rate_forecast_paths.html")) {
     ></iframe>
   </div>
   <p style="max-width: 900px; margin: 20px auto; text-align: center; font-size: 1rem; color: #555; line-height: 1.6;">
-    Interactive forecast paths around RBA meetings, CPI releases, and labour force publications. Hover to inspect each scrape and
-    use the scroll wheel or pinch gesture to zoom the timeline.
-    <a href="cash_rate_forecast_paths.html" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">
-      Open full-screen →
-    </a>
-    <a href="plots/forecast_paths/cash_rate_forecast_paths.png" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">
-      View static version →
-    </a>
-  </p>'
-} else if (file.exists("docs/plots/forecast_paths/cash_rate_forecast_paths.png")) {
-  forecast_paths_section <- '
-  <h1 style="margin-top:60px; text-align:center;">
-    Cash Rate Forecast Paths Around Key Events
-  </h1>
-  <div style="
-      display: flex;
-      justify-content: center;
-      margin: 40px 0;
-    ">
-    <img
-      src="plots/forecast_paths/cash_rate_forecast_paths.png"
-      alt="Cash rate forecast paths"
-      class="expandable"
-      style="
-        width: 90%;
-        height: auto;
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      "
-    />
-  </div>
-  <p style="max-width: 900px; margin: 20px auto; text-align: center; font-size: 1rem; color: #555; line-height: 1.6;">
-    Forecast paths around RBA meetings, CPI releases, and labour force publications. Interactive version currently unavailable.
+    Interactive forecast paths around RBA meetings, CPI releases, and labour force publications. Hover to inspect each scrape and use the scroll wheel or pinch gesture to zoom the timeline.
   </p>'
 }
 
