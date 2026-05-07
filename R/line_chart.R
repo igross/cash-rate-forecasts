@@ -831,35 +831,38 @@ release_segments <- relevant_releases %>%
 # Convert base probability chart to Plotly first
 interactive_line <- ggplotly(line_int_base, tooltip = "text")
 
-# Add ABS release markers directly in Plotly (more reliable in published HTML)
+# Add ABS release markers directly in Plotly.
+# NOTE: add_segments()/add_markers() with formula mappings can interfere with
+# ggplotly traces in standalone widgets. Build explicit traces instead.
 if (nrow(release_segments) > 0) {
-  interactive_line <- interactive_line %>%
-    add_segments(
-      data = release_segments,
-      x = ~datetime,
-      xend = ~datetime,
-      y = ~y,
-      yend = ~yend,
-      color = ~dataset,
-      colors = abs_colors,
-      line = list(dash = "dash", width = 1),
-      text = ~text,
-      hovertemplate = "%{text}<extra></extra>",
-      inherit = FALSE,
-      showlegend = FALSE
-    ) %>%
-    add_markers(
-      data = release_segments,
-      x = ~datetime,
-      y = 0.98,
-      color = ~dataset,
-      colors = abs_colors,
-      text = ~text,
-      hovertemplate = "%{text}<extra></extra>",
-      marker = list(size = 8, symbol = "line-ns-open"),
-      inherit = FALSE,
-      showlegend = FALSE
-    )
+  for (i in seq_len(nrow(release_segments))) {
+    seg <- release_segments[i, ]
+    seg_col <- if (!is.null(abs_colors[[seg$dataset]])) abs_colors[[seg$dataset]] else "#808080"
+
+    interactive_line <- interactive_line %>%
+      add_trace(
+        type = "scatter",
+        mode = "lines",
+        x = c(seg$datetime, seg$datetime),
+        y = c(seg$y, seg$yend),
+        line = list(color = seg_col, dash = "dash", width = 1),
+        text = c(seg$text, seg$text),
+        hovertemplate = "%{text}<extra></extra>",
+        showlegend = FALSE,
+        inherit = FALSE
+      ) %>%
+      add_trace(
+        type = "scatter",
+        mode = "markers",
+        x = seg$datetime,
+        y = 0.98,
+        marker = list(size = 8, symbol = "line-ns-open", color = seg_col),
+        text = seg$text,
+        hovertemplate = "%{text}<extra></extra>",
+        showlegend = FALSE,
+        inherit = FALSE
+      )
+  }
 }
 
 interactive_line <- interactive_line %>%
