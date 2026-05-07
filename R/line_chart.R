@@ -814,11 +814,13 @@ line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
 relevant_releases <- abs_releases %>%
   filter(datetime >= start_xlim & datetime <= end_xlim)
 
-# Build release segment data for interactive plot
+# Build release marker data for interactive plot
 release_segments <- relevant_releases %>%
   transmute(
     dataset,
     datetime,
+    y = 0,
+    yend = 1,
     text = paste0(
       "<b>", dataset, "</b><br>",
       "Meeting: ", meeting_label, "<br>",
@@ -826,25 +828,41 @@ release_segments <- relevant_releases %>%
     )
   )
 
-# Combine probability lines with release markers
-line_int_complete <- line_int_base +
-  geom_segment(
-    data = release_segments,
-    aes(
-      x = .data$datetime,
-      xend = .data$datetime,
-      colour = .data$dataset,
-      text = .data$text
-    ),
-    y = 0,
-    yend = 1,
-    inherit.aes = FALSE,
-    linetype = "dashed",
-    linewidth = 1
-  )
+# Convert base probability chart to Plotly first
+interactive_line <- ggplotly(line_int_base, tooltip = "text")
 
-# Convert to Plotly
-interactive_line <- ggplotly(line_int_complete, tooltip = "text") %>%
+# Add ABS release markers directly in Plotly (more reliable in published HTML)
+if (nrow(release_segments) > 0) {
+  interactive_line <- interactive_line %>%
+    add_segments(
+      data = release_segments,
+      x = ~datetime,
+      xend = ~datetime,
+      y = ~y,
+      yend = ~yend,
+      color = ~dataset,
+      colors = abs_colors,
+      line = list(dash = "dash", width = 1),
+      text = ~text,
+      hovertemplate = "%{text}<extra></extra>",
+      inherit = FALSE,
+      showlegend = FALSE
+    ) %>%
+    add_markers(
+      data = release_segments,
+      x = ~datetime,
+      y = 0.98,
+      color = ~dataset,
+      colors = abs_colors,
+      text = ~text,
+      hovertemplate = "%{text}<extra></extra>",
+      marker = list(size = 8, symbol = "line-ns-open"),
+      inherit = FALSE,
+      showlegend = FALSE
+    )
+}
+
+interactive_line <- interactive_line %>%
   layout(
     hovermode = "x unified",
     legend = list(x = 1.02, y = 0.5, xanchor = "left"),
