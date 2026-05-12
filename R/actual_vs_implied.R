@@ -150,7 +150,14 @@ labour_force <- tribble(
   "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne")
 )
 
-events <- bind_rows(rba_meetings, cpi_releases, labour_force) %>%
+
+
+budget_release <- tribble(
+  ~event_type, ~event_time,
+  "Budget", ymd_hm("2026-05-12 19:00", tz = "Australia/Melbourne")
+)
+
+events <- bind_rows(rba_meetings, cpi_releases, labour_force, budget_release) %>%
   mutate(event_date = as.Date(event_time))
 
 # Helper: choose the first scrape on/after the event, otherwise the latest before
@@ -215,6 +222,7 @@ forecast_paths_window <- forecast_paths %>%
       event_type == "RBA meeting" ~ "RBA meeting (policy decision)",
       event_type == "CPI" ~ "Inflation print (CPI release)",
       event_type == "Labour Force" ~ "Labour Force / unemployment release",
+      event_type == "Budget" ~ "Federal budget release",
       TRUE ~ event_type
     ),
     tooltip_text = str_glue(
