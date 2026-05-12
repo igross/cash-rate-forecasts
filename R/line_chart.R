@@ -827,12 +827,41 @@ release_segments <- relevant_releases %>%
     )
   )
 
-# Convert base probability chart to Plotly first
-interactive_line <- ggplotly(line_int_base, tooltip = "text")
+# Build interactive chart directly in Plotly so probability traces always render
+interactive_line <- plot_ly()
+
+line_int_plot <- line_int_df %>%
+  mutate(
+    local_time = scrape_time + hours(hours_tz),
+    hover_text = paste0(
+      "Meeting: ", meeting_label, "<br>",
+      "Time: ", format(local_time, "%d %b %H:%M"), "<br>",
+      "Move: ", move, "<br>",
+      "Probability: ", percent(probability, accuracy = 1)
+    )
+  ) %>%
+  arrange(move, local_time)
+
+for (mv in unique(line_int_plot$move)) {
+  mv_data <- line_int_plot %>% filter(move == mv)
+
+  interactive_line <- interactive_line %>%
+    add_trace(
+      data = mv_data,
+      x = ~local_time,
+      y = ~probability,
+      type = "scatter",
+      mode = "lines+markers",
+      name = mv,
+      line = list(width = 1.2),
+      marker = list(size = 5),
+      text = ~hover_text,
+      hovertemplate = "%{text}<extra></extra>",
+      inherit = FALSE
+    )
+}
 
 # Add ABS release markers directly in Plotly.
-# NOTE: add_segments()/add_markers() with formula mappings can interfere with
-# ggplotly traces in standalone widgets. Build explicit traces instead.
 if (nrow(release_segments) > 0) {
   for (i in seq_len(nrow(release_segments))) {
     seg <- release_segments[i, ]
