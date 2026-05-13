@@ -830,7 +830,7 @@ release_segments <- relevant_releases %>%
 # Build interactive chart directly in Plotly so probability traces always render
 interactive_line <- plot_ly()
 
-line_int_plot <- line_int_df %>%
+line_int_plot <- top3_df %>%
   mutate(
     local_time = scrape_time + hours(hours_tz),
     hover_text = paste0(
