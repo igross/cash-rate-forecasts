@@ -76,6 +76,13 @@ jobs:
               (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
         run: Rscript -e 'source(here::here("R","actual_vs_implied.R"), echo = TRUE)'
 
+      - name: Build ASX volatility analysis and figures
+        if: |
+          ${{ github.event_name == 'push' ||
+              (github.event_name == 'schedule' && github.event.schedule != '*/5 * * * *') }}
+        run: Rscript -e 'source(here::here("R","asx_volatility_pipeline.R"), echo = TRUE)'
+
+
      
 
       # ── Always: rebuild index and commit ──────────────────────────────
