@@ -854,7 +854,10 @@ for (mv in unique(line_int_plot$move)) {
       type = "scatter",
       mode = "lines",
       name = mv,
-      line = list(width = 1.2),
+      line = list(
+        color = unname(move_colors[[mv]]),
+        width = 1.2
+      ),
       text = ~hover_text,
       hovertemplate = "%{text}<extra></extra>",
       inherit = FALSE
