@@ -819,7 +819,7 @@ release_segments <- relevant_releases %>%
     dataset,
     datetime,
     y = 0,
-    yend = 1,
+    yend = 100,
     text = paste0(
       "<b>", dataset, "</b><br>",
       "Meeting: ", meeting_label, "<br>",
@@ -833,6 +833,7 @@ interactive_line <- plot_ly()
 line_int_plot <- top3_df %>%
   mutate(
     local_time = scrape_time + hours(hours_tz),
+    probability_pct = probability * 100,
     hover_text = paste0(
       "Meeting: ", meeting_label, "<br>",
       "Time: ", format(local_time, "%d %b %H:%M"), "<br>",
@@ -849,12 +850,11 @@ for (mv in unique(line_int_plot$move)) {
     add_trace(
       data = mv_data,
       x = ~local_time,
-      y = ~probability,
+      y = ~probability_pct,
       type = "scatter",
-      mode = "lines+markers",
+      mode = "lines",
       name = mv,
       line = list(width = 1.2),
-      marker = list(size = 5),
       text = ~hover_text,
       hovertemplate = "%{text}<extra></extra>",
       inherit = FALSE
@@ -883,7 +883,7 @@ if (nrow(release_segments) > 0) {
         type = "scatter",
         mode = "markers",
         x = seg$datetime,
-        y = 0.98,
+        y = 98,
         marker = list(size = 8, symbol = "line-ns-open", color = seg_col),
         text = seg$text,
         hovertemplate = "%{text}<extra></extra>",
@@ -911,17 +911,32 @@ interactive_line <- interactive_line %>%
       type = "date",
       tickangle = 45,
       tickmode = "linear",
-      dtick = 24 * 60 * 60 * 1000,
+      dtick = 2 * 24 * 60 * 60 * 1000,
       tickformat = "%d %b",
       showticklabels = TRUE,
       showline = TRUE,
+      linecolor = "#333333",
+      linewidth = 1,
+      mirror = TRUE,
+      gridcolor = "#E5E5E5",
+      zeroline = FALSE,
       automargin = TRUE,
       range = c(plotly_start_xlim, plotly_end_xlim)
     ),
     yaxis = list(
-      title = "Probability",
-      tickformat = ".0%"
+      title = "Probability (%)",
+      tickformat = ",.0f",
+      range = c(0, 100),
+      showline = TRUE,
+      linecolor = "#333333",
+      linewidth = 1,
+      mirror = TRUE,
+      gridcolor = "#E5E5E5",
+      zeroline = FALSE
     ),
+    paper_bgcolor = "white",
+    plot_bgcolor = "white",
+    font = list(color = "#222222"),
     title = list(
       text = paste0(
         glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
