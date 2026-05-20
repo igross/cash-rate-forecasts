@@ -245,6 +245,28 @@ forecast_paths_window <- forecast_paths_window %>%
   filter(scrape_time %in% kept_scrapes) %>%
   arrange(scrape_time, expiry)
 
+path_start_anchors <- forecast_paths_window %>%
+  group_by(scrape_time, scrape_date) %>%
+  slice_min(expiry, n = 1, with_ties = FALSE) %>%
+  transmute(
+    scrape_time,
+    scrape_date,
+    expiry = scrape_date,
+    cash_rate,
+    event_reason,
+    tooltip_text = str_glue(
+      "Reason: {event_reason} on {format(event_time, '%d %b %Y')}<br>",
+      "Scrape: {format(scrape_time, '%d %b %Y %H:%M %Z')}<br>",
+      "Start date: {format(scrape_date, '%d %b %Y')}<br>",
+      "Implied rate: {scales::number(cash_rate, accuracy = 0.001)}%"
+    )
+  )
+
+forecast_paths_window <- forecast_paths_window %>%
+  bind_rows(path_start_anchors) %>%
+  arrange(scrape_time, expiry) %>%
+  distinct(scrape_time, expiry, .keep_all = TRUE)
+
 latest_path <- forecast_paths_window %>%
   filter(scrape_time == max(scrape_time))
 
