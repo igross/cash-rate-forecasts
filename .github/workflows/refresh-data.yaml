@@ -4,7 +4,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # Every 5 minutes - data + line chart only
+    - cron: '*/10 * * * *'   # Every 5 minutes - data + line chart only
     - cron: '0 3 * * *'     # Daily at 3am UTC - all charts
     - cron: '0 0 1 * *'     # Monthly on 1st - includes RMSEs
   push:
