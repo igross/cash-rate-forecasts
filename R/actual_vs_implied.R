@@ -196,6 +196,21 @@ forecast_snapshots <- events %>%
   ) %>%
   distinct(event_type, event_label, scrape_time, event_time)
 
+# Event-driven snapshots can leave the chart unchanged for weeks when no
+# scheduled release has occurred.  Always include the newest scrape so the
+# latest forecast vintage (and the chart window/subtitle derived from it) moves
+# forward whenever fresh futures data arrives.
+latest_snapshot <- tibble(
+  event_type = "Latest scrape",
+  event_label = str_c("Latest scrape: ", format(max_scrape_time, "%d %b %Y")),
+  scrape_time = max_scrape_time,
+  event_time = max_scrape_time
+)
+
+forecast_snapshots <- forecast_snapshots %>%
+  bind_rows(latest_snapshot) %>%
+  distinct(scrape_time, .keep_all = TRUE)
+
 forecast_paths <- forecast_snapshots %>%
   inner_join(cash_rate, by = "scrape_time") %>%
   mutate(expiry = as.Date(date)) %>%
@@ -223,6 +238,7 @@ forecast_paths_window <- forecast_paths %>%
       event_type == "CPI" ~ "Inflation print (CPI release)",
       event_type == "Labour Force" ~ "Labour Force / unemployment release",
       event_type == "Budget" ~ "Federal budget release",
+      event_type == "Latest scrape" ~ "Most recent available futures data",
       TRUE ~ event_type
     ),
     tooltip_text = str_glue(
