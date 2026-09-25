@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "source": "igross/cash-rate-forecasts",
+  "sourceUrl": "https://github.com/igross/cash-rate-forecasts",
+  "definition": "ASX cash-rate futures-implied monthly average (100 minus contract price)",
+  "scrapedAt": "2026-09-25T20:46:40Z",
+  "quoteDate": "2026-09-25",
+  "points": [
+    {
+      "month": "2026-09",
+      "ratePct": 4.355000000000004
+    },
+    {
+      "month": "2026-10",
+      "ratePct": 4.575000000000003
+    },
+    {
+      "month": "2026-11",
+      "ratePct": 4.704999999999998
+    },
+    {
+      "month": "2026-12",
+      "ratePct": 4.734999999999999
+    },
+    {
+      "month": "2027-01",
+      "ratePct": 4.7450000000000045
+    },
+    {
+      "month": "2027-02",
+      "ratePct": 4.819999999999993
+    },
+    {
+      "month": "2027-03",
+      "ratePct": 4.8700000000000045
+    },
+    {
+      "month": "2027-04",
+      "ratePct": 4.909999999999997
+    },
+    {
+      "month": "2027-05",
+      "ratePct": 4.969999999999999
+    },
+    {
+      "month": "2027-06",
+      "ratePct": 4.980000000000004
+    },
+    {
+      "month": "2027-07",
+      "ratePct": 4.9950000000000045
+    },
+    {
+      "month": "2027-08",
+      "ratePct": 4.9950000000000045
+    },
+    {
+      "month": "2027-09",
+      "ratePct": 5.0
+    },
+    {
+      "month": "2027-10",
+      "ratePct": 5.0049999999999955
+    },
+    {
+      "month": "2027-11",
+      "ratePct": 5.0
+    },
+    {
+      "month": "2027-12",
+      "ratePct": 4.989999999999995
+    },
+    {
+      "month": "2028-01",
+      "ratePct": 4.980000000000004
+    },
+    {
+      "month": "2028-02",
+      "ratePct": 4.950000000000003
+    }
+  ]
+}

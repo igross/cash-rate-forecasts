@@ -78,6 +78,27 @@ out_file <- file.path(
 # 5. Write the CSV once
 write_csv(new_data, out_file)
 
+# Compact public feed for the main website's market-rate reference line.
+# Preserve the ASX monthly-average rate definition; do not extend the horizon.
+market_points <- new_data %>%
+  filter(!is.na(date), is.finite(cash_rate)) %>%
+  arrange(date) %>%
+  transmute(month = format(date, "%Y-%m"), ratePct = cash_rate)
+stopifnot(nrow(market_points) >= 2, !anyDuplicated(market_points$month))
+market_feed <- list(
+  schemaVersion = 1L,
+  source = "igross/cash-rate-forecasts",
+  sourceUrl = "https://github.com/igross/cash-rate-forecasts",
+  definition = "ASX cash-rate futures-implied monthly average (100 minus contract price)",
+  scrapedAt = format(max(new_data$scrape_time), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+  quoteDate = format(max(c(ymd(new_data$dateLastTrade), new_data$scrape_date), na.rm = TRUE), "%Y-%m-%d"),
+  points = market_points
+)
+dir.create("docs/data", recursive = TRUE, showWarnings = FALSE)
+jsonlite::write_json(market_feed, "docs/data/cash-rate-latest.json",
+                     auto_unbox = TRUE, dataframe = "rows", digits = 15,
+                     pretty = TRUE, na = "null")
+
 
 library(purrr)
 library(readr)
