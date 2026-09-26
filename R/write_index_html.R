@@ -127,7 +127,7 @@ interactive_line_section <- ""
 if (file.exists("docs/plots/line_charts/line.png")) {
   interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
-    Forecasts for the Next RBA Meeting Derived from ASX Futures
+    Next RBA meeting
   </h1>
   <div style="
       display: flex;
@@ -154,7 +154,7 @@ if (file.exists("docs/plots/line_charts/line.png")) {
   # Fallback to interactive version if static PNG doesn't exist
   interactive_line_section <- '
   <h1 style="margin-top:60px; text-align:center;">
-    Forecasts for the Next RBA Meeting Derived from ASX Futures
+    Next RBA meeting
   </h1>
   <div style="
       display: flex;
@@ -183,7 +183,7 @@ forecast_paths_section <- ""
 if (file.exists("docs/plots/forecast_paths/cash_rate_forecast_paths.png")) {
   forecast_paths_section <- '
   <h1 style="margin-top:60px; text-align:center;">
-    Cash Rate Forecast Paths Around Key Events
+    Cash-rate paths around key events
   </h1>
   <div style="
       display: flex;
@@ -211,7 +211,7 @@ if (file.exists("docs/plots/forecast_paths/cash_rate_forecast_paths.png")) {
 } else if (file.exists("docs/cash_rate_forecast_paths.html")) {
   forecast_paths_section <- '
   <h1 style="margin-top:60px; text-align:center;">
-    Cash Rate Forecast Paths Around Key Events
+    Cash-rate paths around key events
   </h1>
   <div style="
       display: flex;
@@ -305,7 +305,7 @@ line_tab <- if (length(future_line_cards) > 0) {
 
 future_meeting_section <- sprintf('
   <section>
-    <h1>Cash Rate Target Probabilities By RBA Meeting</h1>
+    <h1>Meeting probabilities</h1>
     <div class="tab-buttons" role="tablist">
       <button class="tab-button active" data-target="heatmap" aria-pressed="true">Heatmaps</button>
       <button class="tab-button" data-target="line" aria-pressed="false">Line Charts</button>
@@ -578,5 +578,7 @@ html <- sprintf('
 )
 
 # Write output
+source("R/site_theme.R")
+html <- apply_site_theme(html, "cash")
 writeLines(html, "docs/index.html")
 message("✅ index.html written with ", length(future_cards), " upcoming meeting charts and ", length(past_cards), " past meeting charts.")
