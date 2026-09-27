@@ -68,7 +68,7 @@ async function styleFrame(frame) {
         }
         if(source.annotations) patch.annotations=source.annotations.map(a=>{
           const out={...a,font:{...a.font,family:'Arial',size:small?9:11,color:'#536575'}};
-          if(a.yref==='paper' && a.y<0) {out.y=-.3;out.x=0;out.xanchor='left';
+          if(a.yref==='paper' && a.y<0) {out.y=frame.getAttribute('src').includes('cash_rate_forecast_paths')?-.17:-.3;out.x=0;out.xanchor='left';
             if(small && typeof a.text==='string') out.text=a.text.replace(/(.{1,46})(?:\s|$)/g,'$1<br>');}
           return out;
         });

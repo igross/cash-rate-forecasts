@@ -124,7 +124,7 @@ past_cards <- vapply(
 
 # Prefer the existing interactive charts so the shared chart theme is responsive.
 interactive_line_section <- '<h1>Next RBA meeting</h1><div><iframe src="line_interactive.html" title="Next RBA meeting probabilities"></iframe></div>'
-forecast_paths_section <- '<h1>Cash-rate paths around key events</h1><div><iframe src="cash_rate_forecast_paths.html" title="Cash-rate forecast paths"></iframe></div>'
+forecast_paths_section <- '<h1>Cash-rate futures paths</h1><div><iframe src="cash_rate_forecast_paths.html" title="Cash-rate forecast paths"></iframe></div>'
 
 # Future meetings section
 # Line probability charts by meeting (future and past)

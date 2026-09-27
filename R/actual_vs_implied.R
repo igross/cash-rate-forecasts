@@ -77,9 +77,10 @@ actual_cash_rate <- read_rba(series_id = "FIRMMCRTD") %>%
     actual_rate = value
   )
 
-# Limit actual series to overlap with futures-derived data
+# Retain actual rates from the requested start, including months before the futures archive.
+chart_start <- as.Date("2022-01-01")
 plot_actual <- actual_cash_rate %>%
-  filter(date >= min(front_month$date, na.rm = TRUE))
+  filter(date >= chart_start)
 
 
 # ------------------------------------------------------------------------------
@@ -196,6 +197,20 @@ forecast_snapshots <- events %>%
   ) %>%
   distinct(event_type, event_label, scrape_time, event_time)
 
+# Before the maintained event calendar, show genuine weekly archive snapshots.
+# These are not labelled as ABS or RBA event observations.
+archive_snapshots <- tibble(scrape_time = target_scrapes) %>%
+  filter(as.Date(scrape_time) >= chart_start,
+         scrape_time < min(events$event_time)) %>%
+  mutate(scrape_week = floor_date(scrape_time, unit = "week")) %>%
+  group_by(scrape_week) %>%
+  slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  transmute(event_type = "Weekly archive", event_time = scrape_time,
+            event_label = str_c("Weekly archive: ", format(scrape_time, "%d %b %Y")),
+            scrape_time)
+forecast_snapshots <- bind_rows(archive_snapshots, forecast_snapshots)
+
 # Event-driven snapshots can leave the chart unchanged for weeks when no
 # scheduled release has occurred.  Always include the newest scrape so the
 # latest forecast vintage (and the chart window/subtitle derived from it) moves
@@ -224,7 +239,7 @@ latest_scrape_date <- forecast_paths %>%
   summarise(latest = max(as.Date(scrape_time), na.rm = TRUE)) %>%
   pull(latest)
 
-x_start <- latest_scrape_date - years(1)
+x_start <- chart_start
 x_end <- latest_scrape_date + months(18)
 
 plot_actual_filtered <- plot_actual %>%
@@ -239,6 +254,7 @@ forecast_paths_window <- forecast_paths %>%
       event_type == "Labour Force" ~ "Labour Force / unemployment release",
       event_type == "Budget" ~ "Federal budget release",
       event_type == "Latest scrape" ~ "Most recent available futures data",
+      event_type == "Weekly archive" ~ "Historical weekly futures snapshot",
       TRUE ~ event_type
     ),
     tooltip_text = str_glue(
@@ -316,9 +332,9 @@ latest_event_date <- forecast_snapshots %>%
 
 y_min <- min(c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate), na.rm = TRUE)
 y_max <- max(c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate), na.rm = TRUE)
-y_break_start <- floor((y_min - 0.10) / 0.25) * 0.25 + 0.10
-y_break_end <- ceiling((y_max - 0.10) / 0.25) * 0.25 + 0.10
-y_breaks <- seq(y_break_start, y_break_end, by = 0.25)
+y_break_start <- floor(y_min / 0.5) * 0.5
+y_break_end <- ceiling(y_max / 0.5) * 0.5
+y_breaks <- seq(y_break_start, y_break_end, by = 0.5)
 
   forecast_plot <- ggplot() +
     geom_line(
@@ -360,14 +376,14 @@ y_breaks <- seq(y_break_start, y_break_end, by = 0.25)
   ) +
   scale_x_date(
     limits = c(x_start, x_end),
-    date_labels = "%b %Y",
-    date_breaks = "2 months",
+    date_labels = "%Y",
+    date_breaks = "1 year",
     expand = c(0.01, 0)
   ) +
   labs(
     title = "Cash Rate Forecast Paths",
     subtitle = paste0(
-      "Weekly snapshots up to ",
+      "Historical and event snapshots up to ",
       format(latest_event_date, "%d %B %Y")
     ),
     x = "Futures contract expiry",
@@ -381,11 +397,13 @@ y_breaks <- seq(y_break_start, y_break_end, by = 0.25)
     plot.caption = element_text(margin = margin(t = 10))
   )
 
+coverage_note <- paste0("Actual cash rate from Jan 2022; futures archive from ",
+                        format(min(as.Date(target_scrapes)), "%d %b %Y"), ".")
 forecast_plot_interactive <- ggplotly(forecast_plot, tooltip = "text") %>%
   layout(showlegend = FALSE,
          annotations = list(
            list(
-             text = "Forecasts include a mix of previous settlement and last trade data which can create a non-linearity along the forecast path",
+             text = coverage_note,
              x = 0,
              xref = "paper",
              xanchor = "left",
