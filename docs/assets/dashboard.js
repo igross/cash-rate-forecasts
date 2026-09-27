@@ -1,4 +1,34 @@
 // Presentation only: keep source observations, intervals and model outputs intact.
+// Keep release identification outside the Plotly legend so it cannot be clipped
+// by a small screen or confused with the cash-rate outcome lines.
+function releaseKey(frame, traces) {
+  const releases=new Map();
+  for(const trace of traces) {
+    if(trace.mode!=='lines' || !trace.line?.dash || trace.line.dash==='solid' || trace.x?.length!==2 || trace.x[0]!==trace.x[1]) continue;
+    const text=Array.isArray(trace.text)?trace.text[0]:trace.text;
+    const match=typeof text==='string' && text.match(/^<b>(CPI|WPI|National Accounts|Labour Force)<\/b>/);
+    if(!match) continue;
+    const label=match[1], parts=text.split('<br>');
+    const date=parts.find(p=>/^\d{1,2} [A-Za-z]{3} \d{4}$/.test(p));
+    if(!releases.has(label))releases.set(label,{colour:trace.line.color,dates:new Set()});
+    if(date)releases.get(label).dates.add(date);
+  }
+  if(!releases.size)return;
+  let key=frame.nextElementSibling;
+  if(!key?.classList.contains('release-key')) {
+    key=document.createElement('div');key.className='release-key';key.setAttribute('role','group');key.setAttribute('aria-label','ABS data releases: dashed vertical lines');frame.after(key);
+  }
+  key.replaceChildren();
+  const heading=document.createElement('strong');heading.textContent='ABS releases · dashed vertical lines';key.append(heading);
+  for(const [label,{colour,dates}] of releases) {
+    const item=document.createElement('span'),swatch=document.createElement('i'),name=document.createElement('span');
+    swatch.style.borderColor=colour;swatch.setAttribute('aria-hidden','true');
+    name.textContent=label==='National Accounts'?'National Accounts (GDP)':label;
+    if(dates.size){const small=document.createElement('small');small.textContent=[...dates].join(' · ');name.append(small);}
+    item.append(swatch,name);key.append(item);
+  }
+}
+
 const originals = new WeakMap();
 async function styleFrame(frame) {
   try {
@@ -11,6 +41,7 @@ async function styleFrame(frame) {
     }
     for(const plot of doc.querySelectorAll('.js-plotly-plot')) {
       if(!plot.layout || !plot.data || plot.dataset.styling || plot.dataset.styledWidth===String(frame.clientWidth)) continue;
+      releaseKey(frame,plot.data);
       plot.dataset.styling='true';
       try {
         if(!originals.has(plot)) originals.set(plot, JSON.parse(JSON.stringify(plot.layout)));
