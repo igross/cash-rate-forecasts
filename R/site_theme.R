@@ -2,7 +2,7 @@
 apply_site_theme <- function(html, site) {
   read_asset <- function(name) paste(readLines(file.path("docs", "assets", name), warn = FALSE), collapse = "\n")
   html <- sub('<html lang="en">', '<html lang="en-AU">', html, fixed = TRUE)
-  html <- sub('</head>', paste0('<meta name="viewport" content="width=device-width, initial-scale=1">\n<link rel="icon" href="https://isaacgross.net/assets/favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="assets/site.css?v=20260927">\n<link rel="stylesheet" href="assets/dashboard.css?v=20260927g">\n<script src="assets/dashboard.js?v=20260927g" defer></script>\n</head>'), html, fixed = TRUE)
+  html <- sub('</head>', paste0('<meta name="viewport" content="width=device-width, initial-scale=1">\n<link rel="icon" href="https://isaacgross.net/assets/favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="assets/site.css?v=20260927">\n<link rel="stylesheet" href="assets/dashboard.css?v=20260927g">\n<script src="assets/dashboard.js?v=20260927h" defer></script>\n</head>'), html, fixed = TRUE)
   date <- ""
   if (site == "nairu") {
     match <- regmatches(html, regexec('NAIRU Model Results — ([^<]+)', html))[[1]]
@@ -23,5 +23,6 @@ apply_site_theme <- function(html, site) {
   html <- sub('<body>', paste0('<body class="dashboard">',read_asset('header.html'),'<main id="main" class="wrap">',hero), html, fixed = TRUE)
   html <- sub('</body>',paste0('</main>',read_asset('footer.html'),'</body>'),html,fixed=TRUE)
   html <- gsub('<iframe src="([^"]+)"', '<iframe loading="lazy" title="Interactive economic chart: \\1" src="\\1"', html)
+  html <- gsub('src="(meetings/[^"?]+[.]html)"', 'src="\\1?v=20260927h"', html)
   html
 }

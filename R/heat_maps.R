@@ -997,19 +997,8 @@ for (mt in meetings_to_process) {
           borderwidth = 1
         ),
         margin = list(r = 20, b = 60),
-        annotations = list(
-          list(
-            text = paste("Updated:", update_timestamp),
-            xref = "paper",
-            yref = "paper",
-            x = 1,
-            y = -0.15,
-            xanchor = "right",
-            yanchor = "top",
-            showarrow = FALSE,
-            font = list(size = 10, color = "gray")
-          )
-        )
+        meta = list(updated = paste("Updated:", update_timestamp)),
+        annotations = list()
       )
     
     # Save the interactive plot

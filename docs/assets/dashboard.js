@@ -39,8 +39,13 @@ function mobileChartText(frame,plot,source,small,win){
     frame.before(heading);frame.parentElement.append(footer);
     blocks={heading,footer};mobileBlocks.set(frame,blocks);
   }
-  blocks.heading.hidden=blocks.footer.hidden=!small;
-  if(!small)return;
+  blocks.heading.hidden=!small;
+  blocks.footer.hidden=!small && !source.meta?.updated;
+  if(!small){
+    blocks.footer.replaceChildren();
+    if(source.meta?.updated){const note=document.createElement('p');note.textContent=plainText(source.meta.updated);blocks.footer.append(note);}
+    return;
+  }
   blocks.heading.replaceChildren();blocks.footer.replaceChildren();
   const title=document.createElement('strong');title.textContent=plainText(source.title?.text||source.title);blocks.heading.append(title);
   const units=new Set(Object.entries(source).filter(([k])=>/^yaxis\d*$/.test(k)).map(([,a])=>plainText(a.title?.text||a.title)).filter(Boolean));
@@ -64,6 +69,7 @@ function mobileChartText(frame,plot,source,small,win){
     });
     if(legend.childElementCount)blocks.footer.append(legend);
   }
+  if(source.meta?.updated){const note=document.createElement('p');note.textContent=plainText(source.meta.updated);blocks.footer.append(note);}
   for(const a of source.annotations||[])if(a.yref==='paper'&&a.y<0&&a.annotationType!=='axis'){
     const note=document.createElement('p');note.textContent=plainText(a.text);blocks.footer.append(note);
   }
