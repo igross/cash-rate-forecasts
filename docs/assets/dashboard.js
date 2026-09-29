@@ -113,6 +113,27 @@ async function styleFrame(frame) {
             patch[key+'.ticktext']=axis.ticktext.filter((_,i)=>i%step===0);
           } else if(x && axis.type==='date') {patch[key+'.tickmode']='auto';patch[key+'.nticks']=small?4:9;}
         }
+        // Every cash-rate level is labelled at a 25 bp step, including on phones.
+        // Trim empty heatmap rows; retain every row with positive probability.
+        const rateAxis=Object.entries(source).find(([key,axis])=>key.startsWith('yaxis')&&/cash.?rate/i.test(plainText(axis.title)));
+        if(rateAxis){
+          const [key,axis]=rateAxis,heat=plot.data.find(t=>t.type==='heatmap');
+          let ticks,range;
+          if(axis.type==='category'&&heat){
+            const active=heat.y.map((_,i)=>i).filter(i=>heat.z[i]?.some(v=>Number.isFinite(v)&&v>0));
+            const lo=active.length?Math.min(...active):0,hi=active.length?Math.max(...active):heat.y.length-1;
+            ticks=heat.y.slice(lo,hi+1);range=[lo-.5,hi+.5];
+          }else if(axis.type!=='category'){
+            const vals=plot.data.flatMap(t=>t.y||[]).filter(v=>typeof v==='number'&&Number.isFinite(v));
+            if(vals.length){const a=Math.floor((Math.min(...vals)-.1)/.25+1e-8),b=Math.ceil((Math.max(...vals)-.1)/.25-1e-8);
+              ticks=Array.from({length:b-a+1},(_,i)=>Number((.1+(a+i)*.25).toFixed(2)));range=[ticks[0]-.035,ticks.at(-1)+.035];}
+          }
+          if(ticks?.length){
+            Object.assign(patch,{[key+'.tickmode']:'array',[key+'.tickvals']:ticks,[key+'.ticktext']:ticks.map(v=>parseFloat(v).toFixed(2)),[key+'.range']:range,[key+'.autorange']:false,[key+'.showticklabels']:true});
+            const height=Math.max(small?380:460,Number(source.height)||0,patch['margin.t']+patch['margin.b']+ticks.length*22);
+            patch.height=height;frame.style.setProperty('height',height+'px','important');
+          }
+        }
         if(source.annotations) patch.annotations=source.annotations.filter(a=>!small || !(a.annotationType==='axis'||(a.yref==='paper'&&a.y<0))).map(a=>{
           const out={...a,font:{...a.font,family:'Arial',size:small?9:11,color:'#536575'}};
           if(a.yref==='paper' && a.y<0) {out.y=frame.getAttribute('src').includes('cash_rate_forecast_paths')?-.17:-.3;out.x=0;out.xanchor='left';

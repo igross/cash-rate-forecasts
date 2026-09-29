@@ -332,9 +332,9 @@ latest_event_date <- forecast_snapshots %>%
 
 y_min <- min(c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate), na.rm = TRUE)
 y_max <- max(c(plot_actual_filtered$actual_rate, forecast_paths_window$cash_rate), na.rm = TRUE)
-y_break_start <- floor(y_min / 0.5) * 0.5
-y_break_end <- ceiling(y_max / 0.5) * 0.5
-y_breaks <- seq(y_break_start, y_break_end, by = 0.5)
+y_break_start <- 0.10 + floor((y_min - 0.10) / 0.25) * 0.25
+y_break_end <- 0.10 + ceiling((y_max - 0.10) / 0.25) * 0.25
+y_breaks <- seq(y_break_start, y_break_end, by = 0.25)
 
   forecast_plot <- ggplot() +
     geom_line(
@@ -372,6 +372,8 @@ y_breaks <- seq(y_break_start, y_break_end, by = 0.5)
     ) +
   scale_y_continuous(
     breaks = y_breaks,
+    limits = c(y_break_start - 0.035, y_break_end + 0.035),
+    expand = c(0, 0),
     labels = number_format(accuracy = 0.01)
   ) +
   scale_x_date(
@@ -401,6 +403,7 @@ coverage_note <- paste0("Actual cash rate from Jan 2022; futures archive from ",
                         format(min(as.Date(target_scrapes)), "%d %b %Y"), ".")
 forecast_plot_interactive <- ggplotly(forecast_plot, tooltip = "text") %>%
   layout(showlegend = FALSE,
+         height = max(600, 180 + 22 * length(y_breaks)),
          annotations = list(
            list(
              text = coverage_note,
@@ -431,7 +434,7 @@ ggsave(
   filename = forecast_path_png,
   plot = forecast_plot,
   width = 10,
-  height = 6,
+  height = max(6, length(y_breaks) / 4),
   dpi = 300
 )
 

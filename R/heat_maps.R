@@ -981,7 +981,7 @@ for (mt in meetings_to_process) {
         ),
         yaxis = list(
           title = "Cash Rate (%)",
-          type = "category"
+          type = "category", tickmode = "linear", tick0 = 0, dtick = 1
         ),
         hovermode = "closest",
         plot_bgcolor = "#FFFFFF",
@@ -997,6 +997,7 @@ for (mt in meetings_to_process) {
           borderwidth = 1
         ),
         margin = list(r = 20, b = 60),
+        height = max(650, 220 + 22 * ncol(heat_matrix)),
         meta = list(updated = paste("Updated:", update_timestamp)),
         annotations = list()
       )
