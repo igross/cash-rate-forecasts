@@ -6,6 +6,7 @@ for (clock in c('14:29:59','14:30:00','14:30:01')) {
  now_melb <- as.POSIXct(paste('2026-09-29',clock),tz='Australia/Melbourne')
  today_melb <- as.Date('2026-09-29')
  cutoff <- as.POSIXct('2026-09-29 14:30:00',tz='Australia/Melbourne')
+ policy_state <- list(nextMeeting=if(clock=='14:29:59') '2026-09-29' else '2026-11-03')
  eval(get_expr('next_meeting'))
  stopifnot(next_meeting==as.Date(if(clock=='14:29:59') '2026-09-29' else '2026-11-03'))
 }

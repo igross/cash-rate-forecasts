@@ -36,7 +36,8 @@ print(head(rmse_days$finalrmse, 30))
 
 # Configuration parameters
 spread <- 0.00  # Spread adjustment for cash rate
-override <- 4.35  # Manual override for current rate (if needed)
+source("R/rba_policy_state.R")
+policy_state <- rba_policy_state()
 
 # Apply spread adjustment
 cash_rate$cash_rate <- cash_rate$cash_rate + spread
@@ -85,21 +86,7 @@ now_melb <- now(tzone = "Australia/Melbourne")
 today_melb <- as.Date(now_melb, tz = "Australia/Melbourne")
 cutoff <- ymd_hm(paste0(today_melb, " 14:30"), tz = "Australia/Melbourne")
 
-next_meeting <- if (today_melb %in% meeting_schedule$meeting_date) {
-  if (now_melb < cutoff) {
-    today_melb
-  } else {
-    meeting_schedule %>%
-      filter(meeting_date > today_melb) %>%
-      slice_min(meeting_date) %>%
-      pull(meeting_date)
-  }
-} else {
-  meeting_schedule %>%
-    filter(meeting_date > today_melb) %>%
-    slice_min(meeting_date) %>%
-    pull(meeting_date)
-}
+next_meeting <- as.Date(policy_state$nextMeeting)
 
 print(paste("Next meeting:", next_meeting))
 
@@ -199,25 +186,10 @@ last_meeting <- max(meeting_schedule$meeting_date[
   meeting_schedule$meeting_date <= Sys.Date()
 ])
 
-# Determine whether to use manual override or live RBA data
-use_override <- !is.null(override) && (Sys.Date() - last_meeting <= 1)
-
-# Get current rate (either from override or latest RBA publication)
-if (use_override) {
-  initial_rt <- override
-  current_rate <- override
-} else {
-  latest_rt <- read_rba(series_id = "FIRMMCRTD") %>%
-    slice_max(date, n = 1, with_ties = FALSE) %>%
-    pull(value)
-  initial_rt <- latest_rt
-  current_rate <- latest_rt
-}
-
-# Print diagnostics
-print(paste("Last meeting:", last_meeting))
-print(paste("Using override:", use_override))
-print(paste("Initial rate:", initial_rt))
+# Use the announced target immediately; retain workbook rates only for history.
+initial_rt <- current_rate <- policy_state$rate
+rba_historical <- read_rba(series_id = "FIRMMCRTD")
+message("Announced cash-rate target: ", current_rate, "; next decision: ", next_meeting)
 
 # ------------------------------------------------------------------------------
 # 7. FILTER SCRAPES BASED ON TIME CUTOFF
@@ -244,7 +216,8 @@ print(tail(scrapes))
 # For each scrape time, calculate the implied rate for each future meeting
 all_list <- map(scrapes, function(scr) {
   
-  scr_date <- as.Date(scr)
+  scr_date <- as.Date(scr, tz = "Australia/Sydney")
+  snapshot_rate <- rba_rate_at_snapshot(scr, policy_state, rba_historical)
   
   # Get the most recent futures price for each contract expiry at this scrape
   df_rates <- cash_rate %>% 
@@ -263,7 +236,7 @@ all_list <- map(scrapes, function(scr) {
     arrange(expiry)
   
   # Remove contracts with no price data yet
-  df <- df %>% filter(!is.na(forecast_rate))
+  df <- df %>% filter(!is.na(forecast_rate), as.POSIXct(paste(meeting_date, "14:30:00"), tz = "Australia/Sydney") > scr)
   if (nrow(df) == 0) return(NULL)
   
   # Calculate implied rates iteratively
@@ -274,7 +247,7 @@ all_list <- map(scrapes, function(scr) {
     row <- df[i, ]
     
     # Starting rate is either initial rate or previous meeting's implied rate
-    rt_in <- if (is.na(prev_implied)) initial_rt else prev_implied
+    rt_in <- if (is.na(prev_implied)) snapshot_rate else prev_implied
     
     # Calculate implied rate for this meeting
     # If meeting is before contract expiry, use contract rate directly

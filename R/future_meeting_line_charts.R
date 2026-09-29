@@ -23,7 +23,8 @@ suppressPackageStartupMessages({
 # Configuration
 # ----------------------------------------------------------------------------
 spread <- 0.00
-override <- 3.60
+source("R/rba_policy_state.R")
+policy_state <- rba_policy_state()
 
 # ----------------------------------------------------------------------------
 # Data loading
@@ -73,18 +74,8 @@ last_meeting <- max(meeting_schedule$meeting_date[
   meeting_schedule$meeting_date <= Sys.Date()
 ])
 
-use_override <- !is.null(override) && (Sys.Date() - last_meeting <= 1)
-
-if (use_override) {
-  initial_rt <- override
-  current_rate <- override
-} else {
-  latest_rt <- read_rba(series_id = "FIRMMCRTD") %>%
-    slice_max(date, n = 1, with_ties = FALSE) %>%
-    pull(value)
-  initial_rt <- latest_rt
-  current_rate <- latest_rt
-}
+initial_rt <- current_rate <- policy_state$rate
+rba_historical <- read_rba(series_id = "FIRMMCRTD")
 
 cutoff_time <- ymd_hm(paste0(Sys.Date(), " 14:30"), tz = "Australia/Melbourne")
 now_melb <- now(tzone = "Australia/Melbourne")
@@ -101,7 +92,8 @@ scrapes <- all_times
 # Implied rate calculations for every scrape × meeting
 # ----------------------------------------------------------------------------
 all_list <- map(scrapes, function(scr) {
-  scr_date <- as.Date(scr)
+  scr_date <- as.Date(scr, tz = "Australia/Sydney")
+  snapshot_rate <- rba_rate_at_snapshot(scr, policy_state, rba_historical)
 
   df_rates <- cash_rate %>%
     filter(scrape_time == scr) %>%
@@ -113,7 +105,7 @@ all_list <- map(scrapes, function(scr) {
     left_join(df_rates, by = "expiry") %>%
     arrange(expiry)
 
-  df <- df %>% filter(!is.na(forecast_rate))
+  df <- df %>% filter(!is.na(forecast_rate), as.POSIXct(paste(meeting_date, "14:30:00"), tz = "Australia/Sydney") > scr)
   if (nrow(df) == 0) return(NULL)
 
   prev_implied <- NA_real_
@@ -121,7 +113,7 @@ all_list <- map(scrapes, function(scr) {
 
   for (i in seq_len(nrow(df))) {
     row <- df[i, ]
-    rt_in <- if (is.na(prev_implied)) initial_rt else prev_implied
+    rt_in <- if (is.na(prev_implied)) snapshot_rate else prev_implied
 
     r_tp1 <- if (row$meeting_date < row$expiry) {
       row$forecast_rate
@@ -224,7 +216,7 @@ for (i in seq_len(nrow(all_estimates))) {
 }
 
 all_estimates_buckets <- bind_rows(bucket_list)
-future_meetings <- meeting_schedule$meeting_date[meeting_schedule$meeting_date > Sys.Date()]
+future_meetings <- meeting_schedule$meeting_date[meeting_schedule$meeting_date >= as.Date(policy_state$nextMeeting)]
 as_of_time <- with_tz(as.POSIXct(max(all_estimates_buckets$scrape_time)), tz = "Australia/Sydney")
 
 # ----------------------------------------------------------------------------
@@ -243,7 +235,7 @@ move_palette <- c(
   "+75 bp hike" = "#99000d"
 )
 
-for (mt in future_meetings) {
+for (mt in as.character(future_meetings)) {
   meeting_df <- all_estimates_buckets %>%
     filter(meeting_date == mt) %>%
     mutate(

@@ -11,8 +11,6 @@ suppressPackageStartupMessages({
   library(plotly)
   library(readrba)
   library(scales)
-  library(ggpattern)
-  library(ggtext)
   library(zoo)  # Added for na.locf
 })
 
@@ -86,7 +84,7 @@ cash_rate_daily <- cash_rate %>%
   group_by(scrape_date, date) %>%
   slice_max(scrape_time, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
-  select(scrape_date, date, cash_rate)
+  select(scrape_date, date, cash_rate, scrape_time)
 
 cat("Daily consolidation complete:\n")
 cat("  Original rows:", nrow(cash_rate), "\n")
@@ -97,9 +95,9 @@ blend_weight <- function(days_to_meeting) {
   pmax(0, pmin(1, 1 - days_to_meeting / 30))
 }
 
-latest_rt <- read_rba(series_id = "FIRMMCRTD") |>
-             slice_max(date, n = 1, with_ties = FALSE) |>
-             pull(value)
+source("R/rba_policy_state.R")
+policy_state <- rba_policy_state()
+latest_rt <- policy_state$rate
 
 spread <- 0.00
 cash_rate_daily$cash_rate <- cash_rate_daily$cash_rate + spread
@@ -201,9 +199,7 @@ abs_releases <- tribble(
 last_meeting <- max(meeting_schedule$meeting_date[meeting_schedule$meeting_date < Sys.Date()])
 print(last_meeting)
 
-current_rate <- read_rba(series_id = "FIRMMCRTD") %>%
-  filter(date == max(date)) %>%
-  pull(value)
+current_rate <- policy_state$rate
 
 initial_rt <- latest_rt
 all_dates <- sort(unique(cash_rate_daily$scrape_date))
@@ -223,7 +219,8 @@ all_list_area <- map(all_dates, function(scr_date) {
     slice_max(date, n = 1, with_ties = FALSE) %>%
     pull(value)
   
-  initial_rt_at_scrape <- if(length(historical_rate) > 0) historical_rate else latest_rt
+  snapshot_time <- max(cash_rate_daily$scrape_time[cash_rate_daily$scrape_date == scr_date])
+  initial_rt_at_scrape <- rba_rate_at_snapshot(snapshot_time, policy_state, rba_historical)
   
   df_rates <- cash_rate_daily %>% 
     filter(scrape_date == scr_date) %>%
@@ -234,7 +231,7 @@ all_list_area <- map(all_dates, function(scr_date) {
     mutate(scrape_date = scr_date) %>%
     left_join(df_rates, by = "expiry") %>%
     arrange(expiry) %>%
-    filter(!is.na(forecast_rate))
+    filter(!is.na(forecast_rate), as.POSIXct(paste(meeting_date, "14:30:00"), tz = "Australia/Sydney") > snapshot_time)
   
   if (nrow(df) == 0) return(NULL)
   
@@ -373,14 +370,14 @@ fmt_file <- function(x) format(as.Date(x), "%Y-%m-%d")
 
 # Process only future (and today) meetings on each run
 cat("\nProcessing heatmaps for future meetings only.\n")
-meetings_to_process <- sort(unique(meeting_schedule$meeting_date[meeting_schedule$meeting_date >= Sys.Date()]))
+meetings_to_process <- sort(unique(meeting_schedule$meeting_date[meeting_schedule$meeting_date >= as.Date(policy_state$nextMeeting)]))
 cat("Total meetings to process:", length(meetings_to_process), "\n\n")
 
 # =============================================
 # FIXED STATIC HEATMAP VISUALIZATIONS
 # =============================================
 
-for (mt in meetings_to_process) {
+for (mt in as.character(meetings_to_process)) {
   cat("\n=== Processing heatmap for meeting:", as.character(as.Date(mt)), "===\n")
   
   df_mt_heat <- all_estimates_buckets_ext %>%
@@ -410,7 +407,7 @@ for (mt in meetings_to_process) {
   
   if (nrow(df_mt_heat) == 0) next
   
-  meeting_date_proper <- as.Date(mt) - days(1)
+  meeting_date_proper <- as.Date(mt)
   start_xlim_mt <- min(df_mt_heat$scrape_date, na.rm = TRUE)
   end_xlim_mt <- meeting_date_proper
   
@@ -677,7 +674,7 @@ cat("\nHeatmap visualizations completed!\n")
 # FIXED INTERACTIVE PLOTLY HEATMAP VISUALIZATIONS
 # =============================================
 
-for (mt in meetings_to_process) {
+for (mt in as.character(meetings_to_process)) {
   cat("\n=== Processing interactive heatmap for meeting:", as.character(as.Date(mt)), "===\n")
   
   df_mt_heat <- all_estimates_buckets_ext %>%
@@ -708,7 +705,7 @@ for (mt in meetings_to_process) {
   
   if (nrow(df_mt_heat) == 0) next
   
-  meeting_date_proper <- as.Date(mt) - days(1)
+  meeting_date_proper <- as.Date(mt)
   start_xlim_mt <- min(df_mt_heat$scrape_date, na.rm = TRUE)
   end_xlim_mt <- meeting_date_proper
   
@@ -1020,3 +1017,14 @@ cat("\nInteractive heatmap visualizations completed!\n")
 cat("\nInteractive heatmap visualizations completed!\n")
 
 cat("\nInteractive heatmap visualizations completed!\n")
+
+# Remove obsolete one-day-early filenames only after their corrected replacements exist.
+for (meeting in as.character(meetings_to_process)) {
+  old_date <- as.Date(meeting) - 1
+  if (old_date %in% as.Date(meeting_schedule$meeting_date)) next
+  for (extension in c('html','png')) {
+    corrected <- file.path('docs/meetings',paste0('daily_heatmap_',meeting,'.',extension))
+    obsolete <- file.path('docs/meetings',paste0('daily_heatmap_',old_date,'.',extension))
+    if (file.exists(corrected) && file.exists(obsolete)) unlink(obsolete)
+  }
+}

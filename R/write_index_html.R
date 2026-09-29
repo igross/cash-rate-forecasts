@@ -43,7 +43,10 @@ html_basenames <- list.files(
 )
 
 # Get current date
-current_date <- Sys.Date()
+current_date <- as.Date(Sys.time(), tz = "Australia/Sydney")
+next_decision_date <- if (file.exists("docs/data/rba-policy-state.json")) {
+  as.Date(jsonlite::read_json("docs/data/rba-policy-state.json", simplifyVector = TRUE)$nextMeeting)
+} else current_date
 
 # Sort and separate into future and past meetings
 future_cards <- character(0)
@@ -54,8 +57,8 @@ if (length(html_basenames) > 0) {
   dates_obj <- as.Date(dates_chr, format = "%Y-%m-%d")
   
   # Separate future and past
-  future_idx <- dates_obj >= current_date
-  past_idx <- dates_obj < current_date
+  future_idx <- dates_obj >= next_decision_date
+  past_idx <- dates_obj < next_decision_date
   
 # Sort future meetings (earliest first)
   if (any(future_idx)) {
@@ -123,7 +126,15 @@ past_cards <- vapply(
 }
 
 # Prefer the existing interactive charts so the shared chart theme is responsive.
-interactive_line_section <- '<h1>Next RBA meeting</h1><div><iframe src="line_interactive.html?v=20260929-rollover" title="Next RBA meeting probabilities"></iframe></div>'
+policy_note <- ""
+if (file.exists("docs/data/rba-policy-state.json")) {
+  policy <- jsonlite::read_json("docs/data/rba-policy-state.json", simplifyVector = TRUE)
+  policy_note <- sprintf('<p class="refresh-date">Announced cash-rate target: %.2f%% · Effective %s · Next decision: %s</p>',
+    policy$rate, format(as.Date(policy$effectiveDate), "%d %b %Y"),
+    format(as.Date(policy$nextMeeting), "%d %b %Y"))
+}
+interactive_line_section <- '<h1>Next RBA meeting</h1><div><iframe src="line_interactive.html?v=20260929-announcement" title="Next RBA meeting probabilities"></iframe></div>'
+interactive_line_section <- paste0(policy_note, interactive_line_section)
 forecast_paths_section <- '<h1>Cash-rate futures paths</h1><div><iframe src="cash_rate_forecast_paths.html" title="Cash-rate forecast paths"></iframe></div>'
 
 # Future meetings section
@@ -146,7 +157,7 @@ if (length(line_prob_files) > 0) {
   line_prob_dates_obj <- line_prob_dates_obj[order_idx]
 
   future_line_cards <- vapply(
-    which(line_prob_dates_obj >= current_date),
+    which(line_prob_dates_obj >= next_decision_date),
     function(i) {
       png_path <- file.path("meeting_lines", line_prob_files[i])
       date_label <- format(line_prob_dates_obj[i], "%d %B %Y")
@@ -163,7 +174,7 @@ if (length(line_prob_files) > 0) {
   )
 
   past_line_cards <- vapply(
-    which(line_prob_dates_obj < current_date),
+    which(line_prob_dates_obj < next_decision_date),
     function(i) {
       png_path <- file.path("meeting_lines", line_prob_files[i])
       date_label <- format(line_prob_dates_obj[i], "%d %B %Y")
