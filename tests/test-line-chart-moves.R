@@ -7,15 +7,15 @@ assignment <- function(name) {
   stopifnot(length(found) == 1L)
   found[[1]]
 }
-for (offsets in list(c(-.75, -.25, 0, .75), c(-1.25, -.25, 0, 1), c(0, .25, .5, 1.25))) {
+for (n_times in c(1L, 2L)) for (offsets in list(c(-.75, -.25, 0, .75), c(-1.25, -.25, 0, 1), c(0, .25, .5, 1.25))) {
   env <- new.env(parent = globalenv())
   env$current_center <- 4.35
   env$next_meeting <- as.Date('2026-09-29')
   env$all_estimates_buckets <- data.frame(
     meeting_date = env$next_meeting,
-    bucket = rep(env$current_center + offsets, each = 2),
-    scrape_time = rep(as.POSIXct(c('2026-09-27','2026-09-28'), tz='UTC'),4),
-    probability = rep(c(.1,.2,.3,.4),each=2)
+    bucket = rep(env$current_center + offsets, each = n_times),
+    scrape_time = rep(as.POSIXct(c('2026-09-27','2026-09-28'), tz='UTC')[seq_len(n_times)],4),
+    probability = rep(c(.1,.2,.3,.4),each=n_times)
   )
   for (name in c('buckets_with_moves','move_levels','top3_buckets','top3_df','move_colors','extra_moves')) {
     eval(assignment(name), env)
@@ -38,7 +38,8 @@ for (offsets in list(c(-.75, -.25, 0, .75), c(-1.25, -.25, 0, 1), c(0, .25, .5, 
   eval(loop[[1]],env)
   traces <- plotly_build(env$interactive_line)$x$data
   stopifnot(length(traces)==4L)
-  for (t in traces) stopifnot(length(t$x)==2L,
+  for (t in traces) stopifnot(length(t$x)==n_times,
+    identical(t$mode, if(n_times==1L) 'lines+markers' else 'lines'),
     identical(t$line$color,unname(env$move_colors[[t$name]])))
 }
 cat('PASS: standard, large-cut and large-hike outcomes retain labels and Plotly colours\n')

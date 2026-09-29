@@ -24,7 +24,6 @@ suppressPackageStartupMessages({
 # ----------------------------------------------------------------------------
 spread <- 0.00
 override <- 3.60
-hours_tz <- 11
 
 # ----------------------------------------------------------------------------
 # Data loading
@@ -226,7 +225,7 @@ for (i in seq_len(nrow(all_estimates))) {
 
 all_estimates_buckets <- bind_rows(bucket_list)
 future_meetings <- meeting_schedule$meeting_date[meeting_schedule$meeting_date > Sys.Date()]
-as_of_time <- with_tz(as.POSIXct(max(all_estimates_buckets$scrape_time)) + hours(hours_tz), tz = "Australia/Sydney")
+as_of_time <- with_tz(as.POSIXct(max(all_estimates_buckets$scrape_time)), tz = "Australia/Sydney")
 
 # ----------------------------------------------------------------------------
 # Line charts for every future meeting (thresholded at 10% peak probability)
@@ -276,9 +275,9 @@ for (mt in future_meetings) {
   end_time <- max(meeting_df$scrape_time)
   start_time <- min(meeting_df$scrape_time)
   six_months_back <- as.POSIXct(Sys.Date() %m-% months(3), tz = "Australia/Melbourne")
-  axis_start <- max(start_time + hours(hours_tz), six_months_back)
+  axis_start <- max(start_time, six_months_back)
 
-  line_plot <- ggplot(meeting_df, aes(x = scrape_time + hours(hours_tz), y = probability, color = move)) +
+  line_plot <- ggplot(meeting_df, aes(x = scrape_time, y = probability, color = move)) +
     geom_line(linewidth = 1) +
     scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
     scale_color_manual(values = move_palette, drop = TRUE) +
@@ -290,7 +289,7 @@ for (mt in future_meetings) {
       color = "Move",
       caption = "Probabilities may not add up to 100% because moves with small probabilities are not included."
     ) +
-    coord_cartesian(xlim = c(axis_start, end_time + hours(hours_tz))) +
+    coord_cartesian(xlim = c(axis_start, end_time)) +
     theme_minimal() +
     theme(
       legend.position = "bottom",

@@ -119,9 +119,13 @@ df_list <- files %>% map(function(f) {
     # create a POSIXct NA in Melbourne time
     df$scrape_time <- as.POSIXct(NA, tz = "Australia/Melbourne")
   } else {
-    # parse any existing scrape_time strings into POSIXct in Melbourne time
-    df <- df %>%
-      mutate(scrape_time = ymd_hms(scrape_time, tz = "Australia/Melbourne"))
+    # read_csv already parses ISO timestamps as instants. Reparsing their UTC
+    # clock text as Melbourne time shifts observations by 10/11 hours.
+    if (inherits(df$scrape_time, "POSIXt")) {
+      df$scrape_time <- with_tz(df$scrape_time, "Australia/Melbourne")
+    } else {
+      df$scrape_time <- ymd_hms(df$scrape_time, tz = "Australia/Melbourne")
+    }
   }
 
   df

@@ -44,7 +44,6 @@ cash_rate$cash_rate <- cash_rate$cash_rate + spread
 # Create output directory structure
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 
-hours_tz <- 11
 
 
 # ------------------------------------------------------------------------------
@@ -83,7 +82,7 @@ meeting_schedule <- tibble(
   select(expiry, meeting_date)
 
 now_melb <- now(tzone = "Australia/Melbourne")
-today_melb <- as.Date(now_melb)
+today_melb <- as.Date(now_melb, tz = "Australia/Melbourne")
 cutoff <- ymd_hm(paste0(today_melb, " 14:30"), tz = "Australia/Melbourne")
 
 next_meeting <- if (today_melb %in% meeting_schedule$meeting_date) {
@@ -224,23 +223,16 @@ print(paste("Initial rate:", initial_rt))
 # 7. FILTER SCRAPES BASED ON TIME CUTOFF
 # ------------------------------------------------------------------------------
 
-# Determine which scrapes to include based on 2:30 PM AEST cutoff
-now_melb <- now(tzone = "Australia/Melbourne")
-cutoff_time <- ymd_hm(paste0(Sys.Date(), " 14:30"), tz = "Australia/Melbourne")
-
-# If before 2:30 PM, include yesterday's data; otherwise only today's
-cutoff_date <- if (now_melb < cutoff_time) {
-  Sys.Date() - 1
-} else {
-  Sys.Date()
-}
-
-print(paste("Current time (Melbourne):", now_melb))
-print(paste("Cutoff time:", cutoff_time))
-
-# Get all scrape times and filter based on cutoff
-all_times <- sort(unique(cash_rate$scrape_time))
-scrapes <- all_times[all_times >= cutoff_date | all_times > last_meeting]
+# Use Melbourne midnight at the previous meeting, including today's snapshots
+# immediately after rollover. Date-to-POSIXct comparisons otherwise use UTC.
+previous_meeting <- max(meeting_schedule$meeting_date[meeting_schedule$meeting_date < next_meeting])
+window_start <- as.POSIXct(paste(previous_meeting, "00:00:00"), tz = "Australia/Melbourne")
+all_times <- sort(unique(cash_rate$scrape_time[!is.na(cash_rate$scrape_time)]))
+scrapes <- all_times[all_times >= window_start]
+# A refresh just after rollover may precede the first new scrape. Retain the
+# latest observed snapshot rather than drawing an empty chart or inventing data.
+if (!length(scrapes) && length(all_times)) scrapes <- tail(all_times, 1)
+if (!length(scrapes)) stop("No cash-rate snapshots available.")
 
 print("Latest scrapes:")
 print(tail(scrapes))
@@ -412,7 +404,7 @@ all_estimates_buckets <- bind_rows(bucket_list)
 future_meetings <- meeting_schedule$meeting_date[
   meeting_schedule$meeting_date > Sys.Date()
 ]
-latest_scrape <- max(all_estimates_buckets$scrape_time) + hours(hours_tz)
+latest_scrape <- max(all_estimates_buckets$scrape_time)
 
 print(paste("Latest scrape:", latest_scrape))
 
@@ -443,7 +435,7 @@ for (mt in as.character(future_meetings)) {
       subtitle = paste(
         "As of", 
         format(
-          with_tz(as.POSIXct(latest_scrape) + hours(hours_tz), 
+          with_tz(as.POSIXct(latest_scrape),
                  tzone = "Australia/Sydney"),
           "%d %B %Y, %I:%M %p AEST"
         )
@@ -537,8 +529,8 @@ previous_meeting <- meeting_schedule %>%
   slice_max(meeting_date, n = 1, with_ties = FALSE) %>%
   pull(meeting_date)
 
-start_xlim <- as.POSIXct(previous_meeting, tz = "Australia/Melbourne") + hours(hours_tz)
-end_xlim <- as.POSIXct(next_meeting, tz = "Australia/Melbourne") + hours(hours_tz + 7)
+start_xlim <- min(window_start, min(top3_df$scrape_time)) - minutes(30)
+end_xlim <- as.POSIXct(paste(next_meeting, "18:00:00"), tz = "Australia/Melbourne")
 cat("Line chart x-axis limits:", as.character(start_xlim), "to", as.character(end_xlim), "\n")
 
 # ==============================================================================
@@ -554,7 +546,7 @@ top3_summary <- top3_df %>%
 
 # Create summary data object
 rba_summary_data <- list(
-  scrape_date = as.Date(latest_scrape + hours(hours_tz)),
+  scrape_date = as.Date(latest_scrape, tz = "Australia/Melbourne"),
   next_meeting = next_meeting,
   top3_moves = top3_summary$move,
   top3_probabilities = top3_summary$probability
@@ -629,11 +621,12 @@ lin_df <- top3_df_long %>%
 
 
 # Create static line plot
-line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
+line <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbourne"),
                             y = probability,
                             colour = move,
                             group = move)) +
   geom_line(linewidth = 1.2) +
+  geom_point(size = 1.5) +
   scale_colour_manual(
     values = combined_colors,
     name = ""
@@ -651,7 +644,7 @@ line <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape, tz = 'Australia/Melbourne'), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
@@ -694,11 +687,14 @@ print(top3_df, n = 50)
 
 
 line_dual <- ggplot() +
+  geom_point(data = top3_df_long,
+    aes(x = with_tz(scrape_time, "Australia/Melbourne"), y = probability_value,
+        colour = move), size = 1.5) +
   # Standard probability model (solid)
   geom_line(
     data = std_df,
     aes(
-      x = scrape_time + hours(hours_tz),
+      x = with_tz(scrape_time, "Australia/Melbourne"),
       y = probability_value,
       colour = move,
       group = move,
@@ -710,7 +706,7 @@ line_dual <- ggplot() +
   geom_line(
     data = lin_df,
     aes(
-      x = scrape_time + hours(hours_tz),
+      x = with_tz(scrape_time, "Australia/Melbourne"),
       y = probability_value,
       colour = move,
       group = move,
@@ -743,7 +739,7 @@ line_dual <- ggplot() +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
     subtitle = glue(
-      "Comparing standard probabilities with two-outcome linear model as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"
+      "Comparing standard probabilities with two-outcome linear model as of {format(as.Date(latest_scrape, tz = 'Australia/Melbourne'), '%d %b %Y')}"
     ),
     x = "Forecast date",
     y = "Probability"
@@ -782,11 +778,12 @@ ggsave(
 # Create base plot WITHOUT any vertical lines
 meeting_label <- format(next_meeting, "%d %b %Y")
 
-line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
+line_int_base <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbourne"),
                                       y = probability,
                                       colour = move,
                                       group = move)) +
   geom_line(linewidth = 1.2) +
+  geom_point(size = 1.5) +
   scale_colour_manual(
     values = combined_colors,
     name = ""
@@ -804,13 +801,13 @@ line_int_base <- ggplot(top3_df, aes(x = scrape_time + hours(hours_tz),
   ) +
   labs(
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
-    subtitle = glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"),
+    subtitle = glue("as of {format(as.Date(latest_scrape, tz = 'Australia/Melbourne'), '%d %b %Y')}"),
     x = "Forecast date",
     y = "Probability"
   ) +
   aes(text = paste0(
     "Meeting: ", meeting_label, "<br>",
-    "Time: ", format(scrape_time + hours(hours_tz), "%d %b %H:%M"), "<br>",
+    "Time: ", format(with_tz(scrape_time, "Australia/Melbourne"), "%d %b %H:%M"), "<br>",
     "Move: ", move, "<br>",
     "Probability: ", percent(probability, accuracy = 1)
   )) +
@@ -847,7 +844,7 @@ interactive_line <- plot_ly()
 
 line_int_plot <- top3_df %>%
   mutate(
-    local_time = scrape_time + hours(hours_tz),
+    local_time = with_tz(scrape_time, "Australia/Melbourne"),
     probability_pct = probability * 100,
     hover_text = paste0(
       "Meeting: ", meeting_label, "<br>",
@@ -867,7 +864,8 @@ for (mv in unique(as.character(line_int_plot$move))) {
       x = ~local_time,
       y = ~probability_pct,
       type = "scatter",
-      mode = "lines",
+      mode = if (dplyr::n_distinct(mv_data$local_time) < 2L) "lines+markers" else "lines",
+      marker = if (dplyr::n_distinct(mv_data$local_time) < 2L) list(color = unname(move_colors[[mv]]), size = 7) else NULL,
       name = mv,
       line = list(
         color = unname(move_colors[[mv]]),
@@ -959,7 +957,7 @@ interactive_line <- interactive_line %>%
       text = paste0(
         glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
         "<br>",
-        "<sub>", glue("as of {format(as.Date(latest_scrape + hours(hours_tz)), '%d %b %Y')}"), "</sub>"
+        "<sub>", glue("as of {format(as.Date(latest_scrape, tz = 'Australia/Melbourne'), '%d %b %Y')}"), "</sub>"
       )
     )
   )
