@@ -417,7 +417,7 @@ latest_scrape <- max(all_estimates_buckets$scrape_time) + hours(hours_tz)
 print(paste("Latest scrape:", latest_scrape))
 
 # Generate a bar chart for each upcoming meeting
-for (mt in future_meetings) {
+for (mt in as.character(future_meetings)) {
   
   # Filter data for this specific meeting and latest scrape
   bar_df <- all_estimates_buckets %>%
@@ -506,14 +506,20 @@ top3_buckets <- buckets_with_moves %>%
   slice_max(order_by = probability, n = 4, with_ties = FALSE) %>% 
   pull(bucket)
 
+# Retain every labelled bucket, including moves beyond +/-75 bp.
+move_levels <- buckets_with_moves %>%
+  distinct(diff_center, move) %>%
+  arrange(diff_center) %>%
+  pull(move) %>%
+  unique()
+
 # Filter to top outcomes
 top3_df <- buckets_with_moves %>%
   filter(bucket %in% top3_buckets) %>%
   mutate(
     move = factor(
       move,
-      levels = c("-75 bp cut", "-50 bp cut", "-25 bp cut", "No change",
-                 "+25 bp hike", "+50 bp hike", "+75 bp hike")
+      levels = move_levels
     )
   ) %>%
   arrange(move, scrape_time) %>%
@@ -573,6 +579,15 @@ move_colors <- c(
   "+50 bp hike" = "#B50000",
   "+75 bp hike" = "#800000"
 )
+
+# Preserve the familiar colours and extend the palette for larger moves.
+extra_moves <- setdiff(move_levels, names(move_colors))
+if (length(extra_moves)) {
+  move_colors <- c(move_colors, setNames(
+    grDevices::hcl.colors(length(extra_moves), palette = "Dark 3"), extra_moves
+  ))
+}
+stopifnot(!anyNA(top3_df$move), all(as.character(top3_df$move) %in% names(move_colors)))
 
 abs_colors <- c(
   "CPI" = "#FF6B6B",
@@ -843,7 +858,7 @@ line_int_plot <- top3_df %>%
   ) %>%
   arrange(move, local_time)
 
-for (mv in unique(line_int_plot$move)) {
+for (mv in unique(as.character(line_int_plot$move))) {
   mv_data <- line_int_plot %>% filter(move == mv)
 
   interactive_line <- interactive_line %>%
