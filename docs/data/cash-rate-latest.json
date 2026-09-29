@@ -3,7 +3,7 @@
   "source": "igross/cash-rate-forecasts",
   "sourceUrl": "https://github.com/igross/cash-rate-forecasts",
   "definition": "ASX cash-rate futures-implied monthly average (100 minus contract price)",
-  "scrapedAt": "2026-09-29T06:08:27Z",
+  "scrapedAt": "2026-09-29T07:06:35Z",
   "quoteDate": "2026-09-29",
   "points": [
     {
@@ -12,7 +12,7 @@
     },
     {
       "month": "2026-11",
-      "ratePct": 4.704999999999998
+      "ratePct": 4.694999999999993
     },
     {
       "month": "2026-12",
@@ -20,59 +20,59 @@
     },
     {
       "month": "2027-01",
-      "ratePct": 4.760000000000005
+      "ratePct": 4.745000000000005
     },
     {
       "month": "2027-02",
-      "ratePct": 4.834999999999994
+      "ratePct": 4.810000000000002
     },
     {
       "month": "2027-03",
-      "ratePct": 4.890000000000001
+      "ratePct": 4.855000000000004
     },
     {
       "month": "2027-04",
-      "ratePct": 4.929999999999993
+      "ratePct": 4.885000000000005
     },
     {
       "month": "2027-05",
-      "ratePct": 4.989999999999995
+      "ratePct": 4.939999999999998
     },
     {
       "month": "2027-06",
-      "ratePct": 5.004999999999995
+      "ratePct": 4.950000000000003
     },
     {
       "month": "2027-07",
-      "ratePct": 5.024999999999991
+      "ratePct": 4.954999999999998
     },
     {
       "month": "2027-08",
-      "ratePct": 5.030000000000001
+      "ratePct": 4.959999999999994
     },
     {
       "month": "2027-09",
-      "ratePct": 5.030000000000001
+      "ratePct": 4.959999999999994
     },
     {
       "month": "2027-10",
-      "ratePct": 5.024999999999991
+      "ratePct": 4.959999999999994
     },
     {
       "month": "2027-11",
-      "ratePct": 5.024999999999991
+      "ratePct": 4.950000000000003
     },
     {
       "month": "2027-12",
-      "ratePct": 5.015000000000001
+      "ratePct": 4.935000000000002
     },
     {
       "month": "2028-01",
-      "ratePct": 5
+      "ratePct": 4.920000000000002
     },
     {
       "month": "2028-02",
-      "ratePct": 4.980000000000004
+      "ratePct": 4.890000000000001
     }
   ]
 }
