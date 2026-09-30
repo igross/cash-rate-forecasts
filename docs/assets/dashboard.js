@@ -183,19 +183,3 @@ for(const frame of document.querySelectorAll('iframe')) {
 for(const button of document.querySelectorAll('.tab-button')) button.addEventListener('click',()=>requestAnimationFrame(()=>document.querySelectorAll('.tab-content.active iframe').forEach(styleFrame)));
 let resizeTimer;
 window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>document.querySelectorAll('iframe').forEach(styleFrame),200);});
-
-// A unique URL reloads the page and embedded charts after a published rebuild.
-const refreshToken = new URL(location.href).searchParams.get('refresh');
-if (refreshToken) {
-  document.querySelectorAll('iframe[src], main img[src]').forEach(element => {
-    const url = new URL(element.getAttribute('src'), location.href);
-    if (url.origin !== location.origin) return;
-    url.searchParams.set('refresh', refreshToken);
-    element.src = url.href;
-  });
-}
-document.getElementById('refresh-charts')?.addEventListener('click', () => {
-  const url = new URL(location.href);
-  url.searchParams.set('refresh', Date.now().toString());
-  location.assign(url.href);
-});
