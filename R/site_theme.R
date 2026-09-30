@@ -2,7 +2,7 @@
 apply_site_theme <- function(html, site) {
   read_asset <- function(name) paste(readLines(file.path("docs", "assets", name), warn = FALSE), collapse = "\n")
   html <- sub('<html lang="en">', '<html lang="en-AU">', html, fixed = TRUE)
-  html <- sub('</head>', paste0('<meta name="viewport" content="width=device-width, initial-scale=1">\n<link rel="icon" href="https://isaacgross.net/assets/favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="assets/site.css?v=20260927">\n<link rel="stylesheet" href="assets/dashboard.css?v=20260927g">\n<script src="assets/dashboard.js?v=20260929a" defer></script>\n</head>'), html, fixed = TRUE)
+  html <- sub('</head>', paste0('<meta name="viewport" content="width=device-width, initial-scale=1">\n<link rel="icon" href="https://isaacgross.net/assets/favicon.svg" type="image/svg+xml">\n<link rel="stylesheet" href="assets/site.css?v=20260927">\n<link rel="stylesheet" href="assets/dashboard.css?v=20260930">\n<script src="assets/dashboard.js?v=20260930" defer></script>\n</head>'), html, fixed = TRUE)
   date <- ""
   if (site == "nairu") {
     match <- regmatches(html, regexec('NAIRU Model Results — ([^<]+)', html))[[1]]
@@ -20,6 +20,10 @@ apply_site_theme <- function(html, site) {
     '<a href="https://isaacgross.net/scenario-analysis/">Scenario Analysis</a>',
     '<a href="https://isaacgross.net/optimal-policy/">Optimal Policy</a></nav>')
   hero <- paste0('<header class="page-heading"><p class="eyebrow">Australian Economic Analysis</p><h1>',title,'<span class="period">.</span></h1>',date,'</header>',tools)
+  if (site == "cash") hero <- paste0(hero,
+    '<div class="refresh-controls"><button type="button" id="refresh-charts">Refresh charts</button>',
+    '<a href="https://github.com/igross/cash-rate-forecasts/actions/workflows/refresh-data.yaml" target="_blank" rel="noopener noreferrer">Rebuild on GitHub ↗</a>',
+    '<small>For new data, choose Run workflow on GitHub.</small></div>')
   html <- sub('<body>', paste0('<body class="dashboard">',read_asset('header.html'),'<main id="main" class="wrap">',hero), html, fixed = TRUE)
   html <- sub('</body>',paste0('</main>',read_asset('footer.html'),'</body>'),html,fixed=TRUE)
   html <- gsub('<iframe src="([^"]+)"', '<iframe loading="lazy" title="Interactive economic chart: \\1" src="\\1"', html)
