@@ -23,7 +23,7 @@ apply_site_theme <- function(html, site) {
   if (site == "cash") hero <- paste0(hero,
     '<div class="refresh-controls"><button type="button" id="refresh-charts">Refresh charts</button>',
     '<a href="https://github.com/igross/cash-rate-forecasts/actions/workflows/refresh-data.yaml" target="_blank" rel="noopener noreferrer">Rebuild on GitHub ↗</a>',
-    '<small>For new data, choose Run workflow on GitHub.</small></div>')
+    '<small>Choose Run workflow on GitHub. Takes about 10 minutes.</small></div>')
   html <- sub('<body>', paste0('<body class="dashboard">',read_asset('header.html'),'<main id="main" class="wrap">',hero), html, fixed = TRUE)
   html <- sub('</body>',paste0('</main>',read_asset('footer.html'),'</body>'),html,fixed=TRUE)
   html <- gsub('<iframe src="([^"]+)"', '<iframe loading="lazy" title="Interactive economic chart: \\1" src="\\1"', html)
