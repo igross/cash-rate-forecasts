@@ -3,7 +3,7 @@
   "source": "igross/cash-rate-forecasts",
   "sourceUrl": "https://github.com/igross/cash-rate-forecasts",
   "definition": "ASX cash-rate futures-implied monthly average (100 minus contract price)",
-  "scrapedAt": "2026-10-04T02:37:08Z",
+  "scrapedAt": "2026-10-04T08:48:24Z",
   "quoteDate": "2026-10-02",
   "points": [
     {
