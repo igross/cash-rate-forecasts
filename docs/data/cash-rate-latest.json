@@ -3,12 +3,12 @@
   "source": "igross/cash-rate-forecasts",
   "sourceUrl": "https://github.com/igross/cash-rate-forecasts",
   "definition": "ASX cash-rate futures-implied monthly average (100 minus contract price)",
-  "scrapedAt": "2026-10-20T05:28:22Z",
+  "scrapedAt": "2026-10-20T08:05:45Z",
   "quoteDate": "2026-10-20",
   "points": [
     {
       "month": "2026-10",
-      "ratePct": 4.599999999999994
+      "ratePct": 4.594999999999999
     },
     {
       "month": "2026-11",
@@ -20,15 +20,15 @@
     },
     {
       "month": "2027-01",
-      "ratePct": 4.709999999999994
+      "ratePct": 4.724999999999994
     },
     {
       "month": "2027-02",
-      "ratePct": 4.75
+      "ratePct": 4.765000000000001
     },
     {
       "month": "2027-03",
-      "ratePct": 4.784999999999997
+      "ratePct": 4.789999999999992
     },
     {
       "month": "2027-04",
@@ -36,19 +36,19 @@
     },
     {
       "month": "2027-05",
-      "ratePct": 4.844999999999999
+      "ratePct": 4.819999999999993
     },
     {
       "month": "2027-06",
-      "ratePct": 4.829999999999998
+      "ratePct": 4.819999999999993
     },
     {
       "month": "2027-07",
-      "ratePct": 4.814999999999998
+      "ratePct": 4.810000000000002
     },
     {
       "month": "2027-08",
-      "ratePct": 4.804999999999993
+      "ratePct": 4.799999999999997
     },
     {
       "month": "2027-09",
@@ -56,27 +56,27 @@
     },
     {
       "month": "2027-10",
-      "ratePct": 4.799999999999997
+      "ratePct": 4.789999999999992
     },
     {
       "month": "2027-11",
-      "ratePct": 4.784999999999997
+      "ratePct": 4.774999999999991
     },
     {
       "month": "2027-12",
-      "ratePct": 4.765000000000001
-    },
-    {
-      "month": "2028-01",
       "ratePct": 4.760000000000005
     },
     {
+      "month": "2028-01",
+      "ratePct": 4.754999999999995
+    },
+    {
       "month": "2028-02",
-      "ratePct": 4.724999999999994
+      "ratePct": 4.730000000000004
     },
     {
       "month": "2028-03",
-      "ratePct": 4.719999999999999
+      "ratePct": 4.724999999999994
     }
   ]
 }
