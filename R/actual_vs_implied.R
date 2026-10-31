@@ -240,7 +240,8 @@ latest_scrape_date <- forecast_paths %>%
   pull(latest)
 
 x_start <- chart_start
-x_end <- latest_scrape_date + months(18)
+# Roll back to month-end when the target month has fewer days (e.g. 31 Oct).
+x_end <- latest_scrape_date %m+% months(18)
 
 plot_actual_filtered <- plot_actual %>%
   filter(date >= x_start)
