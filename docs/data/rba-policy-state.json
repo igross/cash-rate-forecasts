@@ -1,9 +1,9 @@
 {
-  "rate": 4.6,
-  "effectiveDate": "2026-09-30",
-  "announcedAt": "2026-09-29T04:30:00Z",
-  "nextMeeting": "2026-11-03",
+  "rate": 4.85,
+  "effectiveDate": "2026-11-04",
+  "announcedAt": "2026-11-03T03:30:00Z",
+  "nextMeeting": "2026-12-08",
   "source": "https://www.rba.gov.au/cash-rate-target-overview.html",
-  "decisionUrl": "https://www.rba.gov.au/media-releases/2026/mr-26-27.html",
-  "fetchedAt": "2026-11-02T23:01:39Z"
+  "decisionUrl": "https://www.rba.gov.au/media-releases/2026/mr-26-30.html",
+  "fetchedAt": "2026-11-03T03:54:59Z"
 }
