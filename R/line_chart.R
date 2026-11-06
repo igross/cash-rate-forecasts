@@ -471,6 +471,12 @@ top3_buckets <- buckets_with_moves %>%
   slice_max(order_by = probability, n = 4, with_ties = FALSE) %>% 
   pull(bucket)
 
+# Include all outcomes used by the linear comparison over the displayed history.
+comparison_buckets <- buckets_with_moves %>%
+  filter(probability_linear > 1e-10) %>%
+  pull(bucket) %>% unique()
+display_buckets <- union(top3_buckets, comparison_buckets)
+
 # Retain every labelled bucket, including moves beyond +/-75 bp.
 move_levels <- buckets_with_moves %>%
   distinct(diff_center, move) %>%
@@ -480,7 +486,7 @@ move_levels <- buckets_with_moves %>%
 
 # Filter to top outcomes
 top3_df <- buckets_with_moves %>%
-  filter(bucket %in% top3_buckets) %>%
+  filter(bucket %in% display_buckets) %>%
   mutate(
     move = factor(
       move,
@@ -511,7 +517,7 @@ cat("Line chart x-axis limits:", as.character(start_xlim), "to", as.character(en
 # ==============================================================================
 # Get top 3 probabilities for latest scrape
 top3_summary <- top3_df %>%
-  filter(scrape_time == latest_scrape) %>%
+  filter(scrape_time == latest_scrape, bucket %in% top3_buckets) %>%
   group_by(move) %>%
   summarise(probability = mean(probability, na.rm = TRUE), .groups = "drop") %>%
   arrange(desc(probability)) %>%
@@ -598,6 +604,9 @@ line <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbourne"),
                             y = probability,
                             colour = move,
                             group = move)) +
+  geom_line(aes(y = probability_linear), linewidth = 0.85,
+            alpha = 0.45, linetype = "dashed") +
+  geom_point(aes(y = probability_linear), size = 1, alpha = 0.45) +
   geom_line(linewidth = 1.2) +
   geom_point(size = 1.5) +
   scale_colour_manual(
@@ -619,7 +628,8 @@ line <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbourne"),
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
     subtitle = glue("as of {format(as.Date(latest_scrape, tz = 'Australia/Melbourne'), '%d %b %Y')}"),
     x = "Forecast date",
-    y = "Probability"
+    y = "Probability",
+    caption = "Lighter dashed lines: two-outcome linear probabilities (no historical-error distribution)."
   ) +
   # Add vertical lines for ABS data releases
   geom_vline(
@@ -675,7 +685,7 @@ line_dual <- ggplot() +
     ),
     linewidth = 1.1
   ) +
-  # Two-outcome linear model (dotted)
+  # Two-outcome linear model (lighter dashed)
   geom_line(
     data = lin_df,
     aes(
@@ -685,7 +695,7 @@ line_dual <- ggplot() +
       group = move,
       linetype = "Linear probability model"
     ),
-    linewidth = 1.1
+    linewidth = 0.85, alpha = 0.45
   ) +
   scale_colour_manual(
     values = combined_colors,
@@ -694,7 +704,7 @@ line_dual <- ggplot() +
   scale_linetype_manual(
     values = c(
       "Standard probabilities" = "solid",
-      "Linear probability model" = "dotted"
+      "Linear probability model" = "dashed"
     ),
     name = "Model"
   ) +
@@ -715,7 +725,8 @@ line_dual <- ggplot() +
       "Comparing standard probabilities with two-outcome linear model as of {format(as.Date(latest_scrape, tz = 'Australia/Melbourne'), '%d %b %Y')}"
     ),
     x = "Forecast date",
-    y = "Probability"
+    y = "Probability",
+    caption = "Lighter dashed lines: two-outcome linear probabilities (no historical-error distribution)."
   ) +
   geom_vline(
     data = abs_releases,
@@ -755,6 +766,9 @@ line_int_base <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbour
                                       y = probability,
                                       colour = move,
                                       group = move)) +
+  geom_line(aes(y = probability_linear), linewidth = 0.85,
+            alpha = 0.45, linetype = "dashed") +
+  geom_point(aes(y = probability_linear), size = 1, alpha = 0.45) +
   geom_line(linewidth = 1.2) +
   geom_point(size = 1.5) +
   scale_colour_manual(
@@ -776,7 +790,8 @@ line_int_base <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbour
     title = glue("Cash-Rate Moves for the Next Meeting on {format(next_meeting, '%d %b %Y')}"),
     subtitle = glue("as of {format(as.Date(latest_scrape, tz = 'Australia/Melbourne'), '%d %b %Y')}"),
     x = "Forecast date",
-    y = "Probability"
+    y = "Probability",
+    caption = "Lighter dashed lines: two-outcome linear probabilities (no historical-error distribution)."
   ) +
   aes(text = paste0(
     "Meeting: ", meeting_label, "<br>",
@@ -819,11 +834,18 @@ line_int_plot <- top3_df %>%
   mutate(
     local_time = with_tz(scrape_time, "Australia/Melbourne"),
     probability_pct = probability * 100,
+    linear_pct = probability_linear * 100,
     hover_text = paste0(
       "Meeting: ", meeting_label, "<br>",
       "Time: ", format(local_time, "%d %b %H:%M"), "<br>",
       "Move: ", move, "<br>",
-      "Probability: ", percent(probability, accuracy = 1)
+      "Standard model: ", percent(probability, accuracy = 1)
+    ),
+    linear_hover = paste0(
+      "Meeting: ", meeting_label, "<br>",
+      "Time: ", format(local_time, "%d %b %H:%M"), "<br>",
+      "Move: ", move, "<br>",
+      "Two-outcome linear: ", percent(probability_linear, accuracy = 1)
     )
   ) %>%
   arrange(move, local_time)
@@ -840,12 +862,26 @@ for (mv in unique(as.character(line_int_plot$move))) {
       mode = if (dplyr::n_distinct(mv_data$local_time) < 2L) "lines+markers" else "lines",
       marker = if (dplyr::n_distinct(mv_data$local_time) < 2L) list(color = unname(move_colors[[mv]]), size = 7) else NULL,
       name = mv,
+      legendgroup = mv,
       line = list(
         color = unname(move_colors[[mv]]),
         width = 1.2
       ),
       text = ~hover_text,
       hovertemplate = "%{text}<extra></extra>",
+      inherit = FALSE
+    )
+
+  interactive_line <- interactive_line %>%
+    add_trace(
+      data = mv_data, x = ~local_time, y = ~linear_pct,
+      type = "scatter",
+      mode = if (dplyr::n_distinct(mv_data$local_time) < 2L) "lines+markers" else "lines",
+      name = paste0(mv, " (linear)"), legendgroup = mv, showlegend = FALSE,
+      opacity = 0.45,
+      line = list(color = unname(move_colors[[mv]]), width = 1, dash = "dash"),
+      marker = if (dplyr::n_distinct(mv_data$local_time) < 2L) list(color = unname(move_colors[[mv]]), size = 6) else NULL,
+      text = ~linear_hover, hovertemplate = "%{text}<extra></extra>",
       inherit = FALSE
     )
 }

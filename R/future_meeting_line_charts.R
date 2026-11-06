@@ -253,7 +253,7 @@ for (mt in as.character(future_meetings)) {
     ) %>%
     filter(!is.na(move)) %>%
     group_by(move) %>%
-    mutate(peak_probability = max(probability, na.rm = TRUE)) %>%
+    mutate(peak_probability = max(probability, probability_linear, na.rm = TRUE)) %>%
     ungroup() %>%
     filter(peak_probability >= 0.05) %>%
     mutate(move = factor(move, levels = move_levels)) %>%
@@ -270,6 +270,8 @@ for (mt in as.character(future_meetings)) {
   axis_start <- max(start_time, six_months_back)
 
   line_plot <- ggplot(meeting_df, aes(x = scrape_time, y = probability, color = move)) +
+    geom_line(aes(y = probability_linear), linewidth = 0.8, alpha = 0.45,
+              linetype = "dashed") +
     geom_line(linewidth = 1) +
     scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
     scale_color_manual(values = move_palette, drop = TRUE) +
@@ -279,7 +281,7 @@ for (mt in as.character(future_meetings)) {
       x = "Scrape time (AEST)",
       y = "Probability",
       color = "Move",
-      caption = "Probabilities may not add up to 100% because moves with small probabilities are not included."
+      caption = "Lighter dashed lines: two-outcome linear probabilities, without historical errors.\nSmall-probability moves may be omitted; displayed probabilities may not sum to 100%."
     ) +
     coord_cartesian(xlim = c(axis_start, end_time)) +
     theme_minimal() +

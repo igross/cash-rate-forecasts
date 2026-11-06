@@ -160,9 +160,10 @@ async function styleFrame(frame) {
             if(colour==='rgba(255,0,0,1)') update['line.color']='#287863';
             if(colour==='rgba(0,0,255,1)') update['line.color']='#175da0';
           }
-          if(trace.name==='No change') update['line.color']='#657583';
-          if(trace.name==='-25 bp cut') update['line.color']='#175da0';
-          if(trace.name==='+25 bp hike') update['line.color']='#bd554f';
+          const moveName=trace.legendgroup||trace.name;
+          if(moveName==='No change') update['line.color']='#657583';
+          if(moveName==='-25 bp cut') update['line.color']='#175da0';
+          if(moveName==='+25 bp hike') update['line.color']='#bd554f';
           if(Object.keys(update).length) await win.Plotly.restyle(plot,update,[i]);
         }
         if(small&&plot.data.some(t=>t.type==='heatmap'))patch['margin.r']=65;

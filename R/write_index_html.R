@@ -133,7 +133,7 @@ if (file.exists("docs/data/rba-policy-state.json")) {
     policy$rate, format(as.Date(policy$effectiveDate), "%d %b %Y"),
     format(as.Date(policy$nextMeeting), "%d %b %Y"))
 }
-interactive_line_section <- '<h1>Next RBA meeting</h1><div><iframe src="line_interactive.html?v=20260929-announcement" title="Next RBA meeting probabilities"></iframe></div>'
+interactive_line_section <- '<h1>Next RBA meeting</h1><p>Lighter dashed lines show two-outcome linear probabilities: the futures-implied rate is split between the adjacent 25 bp outcomes, without a historical-error distribution. Solid lines show the existing model.</p><div><iframe src="line_interactive.html?v=20261106-linear" title="Next RBA meeting probabilities"></iframe></div>'
 interactive_line_section <- paste0(policy_note, interactive_line_section)
 forecast_paths_section <- '<h1>Cash-rate futures paths</h1><div><iframe src="cash_rate_forecast_paths.html" title="Cash-rate forecast paths"></iframe></div>'
 
