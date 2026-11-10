@@ -3,16 +3,16 @@
   "source": "igross/cash-rate-forecasts",
   "sourceUrl": "https://github.com/igross/cash-rate-forecasts",
   "definition": "ASX cash-rate futures-implied monthly average (100 minus contract price)",
-  "scrapedAt": "2026-11-10T03:51:12Z",
+  "scrapedAt": "2026-11-10T10:41:08Z",
   "quoteDate": "2026-11-10",
   "points": [
     {
       "month": "2026-11",
-      "ratePct": 4.819999999999993
+      "ratePct": 4.825000000000003
     },
     {
       "month": "2026-12",
-      "ratePct": 4.849999999999994
+      "ratePct": 4.855000000000004
     },
     {
       "month": "2027-01",
@@ -28,11 +28,11 @@
     },
     {
       "month": "2027-04",
-      "ratePct": 4.870000000000005
+      "ratePct": 4.879999999999995
     },
     {
       "month": "2027-05",
-      "ratePct": 4.844999999999999
+      "ratePct": 4.849999999999994
     },
     {
       "month": "2027-06",
@@ -40,43 +40,43 @@
     },
     {
       "month": "2027-07",
-      "ratePct": 4.795000000000002
+      "ratePct": 4.784999999999997
     },
     {
       "month": "2027-08",
-      "ratePct": 4.745000000000005
+      "ratePct": 4.739999999999995
     },
     {
       "month": "2027-09",
-      "ratePct": 4.709999999999994
+      "ratePct": 4.704999999999998
     },
     {
       "month": "2027-10",
-      "ratePct": 4.685000000000002
+      "ratePct": 4.670000000000002
     },
     {
       "month": "2027-11",
-      "ratePct": 4.629999999999995
+      "ratePct": 4.614999999999995
     },
     {
       "month": "2027-12",
-      "ratePct": 4.599999999999994
+      "ratePct": 4.584999999999994
     },
     {
       "month": "2028-01",
-      "ratePct": 4.590000000000003
+      "ratePct": 4.575000000000003
     },
     {
       "month": "2028-02",
-      "ratePct": 4.539999999999992
+      "ratePct": 4.524999999999991
     },
     {
       "month": "2028-03",
-      "ratePct": 4.534999999999997
+      "ratePct": 4.519999999999996
     },
     {
       "month": "2028-04",
-      "ratePct": 4.5
+      "ratePct": 4.480000000000004
     }
   ]
 }
