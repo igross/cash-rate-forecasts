@@ -3,12 +3,12 @@
   "source": "igross/cash-rate-forecasts",
   "sourceUrl": "https://github.com/igross/cash-rate-forecasts",
   "definition": "ASX cash-rate futures-implied monthly average (100 minus contract price)",
-  "scrapedAt": "2026-11-19T23:57:40Z",
-  "quoteDate": "2026-11-19",
+  "scrapedAt": "2026-11-20T06:48:15Z",
+  "quoteDate": "2026-11-20",
   "points": [
     {
       "month": "2026-11",
-      "ratePct": 4.825000000000003
+      "ratePct": 4.819999999999993
     },
     {
       "month": "2026-12",
@@ -16,67 +16,67 @@
     },
     {
       "month": "2027-01",
-      "ratePct": 4.844999999999999
+      "ratePct": 4.840000000000003
     },
     {
       "month": "2027-02",
-      "ratePct": 4.849999999999994
+      "ratePct": 4.825000000000003
     },
     {
       "month": "2027-03",
-      "ratePct": 4.829999999999998
+      "ratePct": 4.810000000000002
     },
     {
       "month": "2027-04",
-      "ratePct": 4.804999999999993
+      "ratePct": 4.780000000000001
     },
     {
       "month": "2027-05",
-      "ratePct": 4.734999999999999
+      "ratePct": 4.730000000000004
     },
     {
       "month": "2027-06",
-      "ratePct": 4.734999999999999
+      "ratePct": 4.700000000000003
     },
     {
       "month": "2027-07",
-      "ratePct": 4.694999999999993
+      "ratePct": 4.670000000000002
     },
     {
       "month": "2027-08",
-      "ratePct": 4.640000000000001
+      "ratePct": 4.625
     },
     {
       "month": "2027-09",
-      "ratePct": 4.614999999999995
+      "ratePct": 4.594999999999999
     },
     {
       "month": "2027-10",
-      "ratePct": 4.575000000000003
+      "ratePct": 4.549999999999997
     },
     {
       "month": "2027-11",
-      "ratePct": 4.5
+      "ratePct": 4.484999999999999
     },
     {
       "month": "2027-12",
-      "ratePct": 4.474999999999994
-    },
-    {
-      "month": "2028-01",
       "ratePct": 4.459999999999994
     },
     {
+      "month": "2028-01",
+      "ratePct": 4.444999999999993
+    },
+    {
       "month": "2028-02",
-      "ratePct": 4.409999999999997
+      "ratePct": 4.399999999999991
     },
     {
       "month": "2028-03",
-      "ratePct": 4.405000000000001
+      "ratePct": 4.390000000000001
     },
     {
       "month": "2028-04",
-      "ratePct": 4.364999999999995
+      "ratePct": 4.349999999999994
     }
   ]
 }
