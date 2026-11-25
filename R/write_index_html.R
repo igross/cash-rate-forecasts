@@ -35,6 +35,18 @@ analytics_snippet <- sprintf('
 if (!dir.exists("docs/meetings")) dir.create("docs/meetings", recursive = TRUE)
 if (!dir.exists("docs/meeting_lines")) dir.create("docs/meeting_lines", recursive = TRUE)
 
+# The archive contains some charts generated with a first-day filename and
+# obsolete tentative 2027 dates. Keep archive files, but show official
+# announcement dates and never relabel a tentative forecast as a real meeting.
+archived_first_day <- c(
+  "2026-09-28" = "2026-09-29",
+  "2026-08-10" = "2026-08-11",
+  "2026-06-15" = "2026-06-16",
+  "2026-05-04" = "2026-05-05",
+  "2026-03-16" = "2026-03-17"
+)
+retired_decision_dates <- c("2027-02-03", "2027-03-17", "2027-09-21")
+
 # Find meeting HTMLs (interactive heatmaps)
 html_basenames <- list.files(
   "docs/meetings",
@@ -54,7 +66,13 @@ past_cards <- character(0)
 
 if (length(html_basenames) > 0) {
   dates_chr <- str_match(html_basenames, "daily_heatmap_(\\d{4}-\\d{2}-\\d{2})\\.html")[, 2]
-  dates_obj <- as.Date(dates_chr, format = "%Y-%m-%d")
+  canonical <- unname(archived_first_day[dates_chr])
+  dates_obj <- as.Date(ifelse(is.na(canonical), dates_chr, canonical))
+  # If a correct-date chart exists, prefer it over the first-day archive.
+  keep <- !(dates_chr %in% retired_decision_dates) &
+    (is.na(canonical) | !(canonical %in% dates_chr))
+  html_basenames <- html_basenames[keep]
+  dates_obj <- dates_obj[keep]
   
   # Separate future and past
   future_idx <- dates_obj >= next_decision_date
@@ -152,6 +170,9 @@ if (length(line_prob_files) > 0) {
   line_prob_dates <- str_match(line_prob_files, "line_probabilities_meeting_(\\d{4}-\\d{2}-\\d{2})\\.png")[, 2]
   line_prob_dates_obj <- as.Date(line_prob_dates, format = "%Y-%m-%d")
 
+  keep <- !(line_prob_dates %in% retired_decision_dates)
+  line_prob_files <- line_prob_files[keep]
+  line_prob_dates_obj <- line_prob_dates_obj[keep]
   order_idx <- order(line_prob_dates_obj, decreasing = FALSE, na.last = TRUE)
   line_prob_files <- line_prob_files[order_idx]
   line_prob_dates_obj <- line_prob_dates_obj[order_idx]
