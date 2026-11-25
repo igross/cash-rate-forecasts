@@ -79,7 +79,7 @@ meeting_schedule <- tibble(
     "2026-02-03", "2026-03-17", "2026-05-05", "2026-06-16",
     "2026-08-11", "2026-09-29", "2026-11-03", "2026-12-08",
     "2027-02-09", "2027-03-23", "2027-05-04", "2027-06-22",
-    "2027-08-10", "2027-09-21", "2027-11-02", "2027-12-14"
+    "2027-08-10", "2027-09-28", "2027-11-02", "2027-12-14"
   ))
 ) %>% 
   mutate(
@@ -139,7 +139,7 @@ abs_releases <- tribble(
 "CPI", ymd_hm("2026-09-30 11:30", tz = "Australia/Melbourne"),
 "CPI", ymd_hm("2026-10-28 11:30", tz = "Australia/Melbourne"),
 "CPI", ymd_hm("2026-11-25 11:30", tz = "Australia/Melbourne"),
-"CPI", ymd_hm("2026-12-30 11:30", tz = "Australia/Melbourne"),
+"CPI", ymd_hm("2027-01-06 11:30", tz = "Australia/Melbourne"),
   
   # WPI (quarterly releases)
   "WPI", ymd_hm("2025-02-19 11:30", tz = "Australia/Melbourne"),
@@ -150,7 +150,7 @@ abs_releases <- tribble(
   "WPI", ymd_hm("2026-05-13 11:30", tz = "Australia/Melbourne"),
   "WPI", ymd_hm("2026-08-12 11:30", tz = "Australia/Melbourne"),
   "WPI", ymd_hm("2026-11-18 11:30", tz = "Australia/Melbourne"),
-  "WPI", ymd_hm("2027-02-17 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2027-02-23 11:30", tz = "Australia/Melbourne"),
   
   # National Accounts (quarterly releases)
   "National Accounts", ymd_hm("2025-03-05 11:30", tz = "Australia/Melbourne"),
@@ -185,7 +185,31 @@ abs_releases <- tribble(
   "Labour Force", ymd_hm("2026-09-24 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-10-15 11:30", tz = "Australia/Melbourne"),
   "Labour Force", ymd_hm("2026-11-19 11:30", tz = "Australia/Melbourne"),
-  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne")
+  "Labour Force", ymd_hm("2026-12-17 11:30", tz = "Australia/Melbourne"),
+  # Upcoming releases verified on ABS product calendars (25 November 2026).
+  "CPI", ymd_hm("2027-01-27 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2027-02-24 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2027-03-24 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2027-04-28 11:30", tz = "Australia/Melbourne"),
+  "CPI", ymd_hm("2027-05-26 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2027-05-19 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2027-08-18 11:30", tz = "Australia/Melbourne"),
+  "WPI", ymd_hm("2027-11-17 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2027-03-03 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2027-06-02 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2027-09-01 11:30", tz = "Australia/Melbourne"),
+  "National Accounts", ymd_hm("2027-12-01 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2027-01-21 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2027-02-18 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2027-03-25 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2027-04-15 11:30", tz = "Australia/Melbourne"),
+  "Labour Force", ymd_hm("2027-05-20 11:30", tz = "Australia/Melbourne"),
+  "Household Spending", ymd_hm("2026-11-30 11:30", tz = "Australia/Melbourne"),
+  "Household Spending", ymd_hm("2027-01-12 11:30", tz = "Australia/Melbourne"),
+  "Household Spending", ymd_hm("2027-02-09 11:30", tz = "Australia/Melbourne"),
+  "Household Spending", ymd_hm("2027-02-26 11:30", tz = "Australia/Melbourne"),
+  "Household Spending", ymd_hm("2027-03-31 11:30", tz = "Australia/Melbourne"),
+  "Household Spending", ymd_hm("2027-05-06 11:30", tz = "Australia/Melbourne")
 )
 
 # ------------------------------------------------------------------------------
@@ -578,7 +602,8 @@ abs_colors <- c(
   "CPI Indicator" = "#4ECDC4",
   "WPI" = "#45B7D1",
   "National Accounts" = "#FFA726",
-  "Labour Force" = "#AB47BC"
+  "Labour Force" = "#AB47BC",
+  "Household Spending" = "#2E7D32"
 )
 
 combined_colors <- c(move_colors, abs_colors)
