@@ -1,33 +1,173 @@
 model,n,mean_log_score,mean_z2,coverage_90,mean_sd_bp,scope,meeting_date
-"days only (spline, rmse.R-style)",205,-0.10884741761991658,3.0443353687675394,0.8048780487804879,9.998356122339798,all,NA
-days only (revision decomposition),205,-0.1761969142880262,2.8839035939492237,0.8682926829268293,11.604359802726487,all,NA
-days + releases (revision decomposition),205,-0.23983997383412636,3.009697815567751,0.8682926829268293,11.63046949792923,all,NA
-days + releases (direct regression),205,-5.313508646771796,13.487150939975823,0.8,10.295810697070412,all,NA
-days + releases (direct regression),NA,1.2959564051520598,NA,NA,NA,by meeting,2025-04-01
-days + releases (revision decomposition),NA,1.1319066745795745,NA,NA,NA,by meeting,2025-04-01
-days only (revision decomposition),NA,1.1417557083156415,NA,NA,NA,by meeting,2025-04-01
-"days only (spline, rmse.R-style)",NA,1.2747743639661204,NA,NA,NA,by meeting,2025-04-01
-days + releases (direct regression),NA,1.0177590962819232,NA,NA,NA,by meeting,2025-05-20
-days + releases (revision decomposition),NA,1.0579068913664376,NA,NA,NA,by meeting,2025-05-20
-days only (revision decomposition),NA,1.062806708547771,NA,NA,NA,by meeting,2025-05-20
-"days only (spline, rmse.R-style)",NA,1.0667053438891383,NA,NA,NA,by meeting,2025-05-20
-days + releases (direct regression),NA,-36.296386251446535,NA,NA,NA,by meeting,2025-07-08
-days + releases (revision decomposition),NA,-6.52856627329232,NA,NA,NA,by meeting,2025-07-08
-days only (revision decomposition),NA,-6.167160882629932,NA,NA,NA,by meeting,2025-07-08
-"days only (spline, rmse.R-style)",NA,-6.074737223160247,NA,NA,NA,by meeting,2025-07-08
-days + releases (direct regression),NA,1.172664522608634,NA,NA,NA,by meeting,2025-08-12
-days + releases (revision decomposition),NA,1.2048089834328901,NA,NA,NA,by meeting,2025-08-12
-days only (revision decomposition),NA,1.1991141258868174,NA,NA,NA,by meeting,2025-08-12
-"days only (spline, rmse.R-style)",NA,1.3226569465083753,NA,NA,NA,by meeting,2025-08-12
-days + releases (direct regression),NA,1.1636210454026485,NA,NA,NA,by meeting,2025-09-30
-days + releases (revision decomposition),NA,1.0354088041084666,NA,NA,NA,by meeting,2025-09-30
-days only (revision decomposition),NA,1.0425552338020248,NA,NA,NA,by meeting,2025-09-30
-"days only (spline, rmse.R-style)",NA,1.1473303002161057,NA,NA,NA,by meeting,2025-09-30
-days + releases (direct regression),NA,0.5020837625427175,NA,NA,NA,by meeting,2025-11-04
-days + releases (revision decomposition),NA,0.7018362919062716,NA,NA,NA,by meeting,2025-11-04
-days only (revision decomposition),NA,0.7013228759461588,NA,NA,NA,by meeting,2025-11-04
-"days only (spline, rmse.R-style)",NA,0.5686801268477457,NA,NA,NA,by meeting,2025-11-04
-days + releases (direct regression),NA,1.1812176074684635,NA,NA,NA,by meeting,2025-12-09
-days + releases (revision decomposition),NA,1.1981471919543654,NA,NA,NA,by meeting,2025-12-09
-days only (revision decomposition),NA,1.1923315658124598,NA,NA,NA,by meeting,2025-12-09
-"days only (spline, rmse.R-style)",NA,1.3232689697638986,NA,NA,NA,by meeting,2025-12-09
+"days only (spline, rmse.R-style)",1106,0.7233751128733885,1.0642527092128977,0.8544303797468354,11.4386234935846,all,NA
+days only (revision decomposition),1106,0.7111096843247404,0.7851818616300442,0.9159132007233273,13.468609166580778,all,NA
+days + releases (revision decomposition),1106,0.7107262986643587,0.7850302247390389,0.9159132007233273,13.474796253952206,all,NA
+days + releases (direct regression),1106,0.7084353025452232,1.0984647504790428,0.8481012658227848,11.428472543661035,all,NA
+days + releases (direct regression),NA,0.28172378799783176,NA,NA,NA,by meeting,2022-05-03
+days + releases (revision decomposition),NA,0.3998483137763434,NA,NA,NA,by meeting,2022-05-03
+days only (revision decomposition),NA,0.3979584405321925,NA,NA,NA,by meeting,2022-05-03
+"days only (spline, rmse.R-style)",NA,0.31870588382466064,NA,NA,NA,by meeting,2022-05-03
+days + releases (direct regression),NA,-0.7826750831468128,NA,NA,NA,by meeting,2022-06-07
+days + releases (revision decomposition),NA,-0.49099258394040707,NA,NA,NA,by meeting,2022-06-07
+days only (revision decomposition),NA,-0.4831067773176893,NA,NA,NA,by meeting,2022-06-07
+"days only (spline, rmse.R-style)",NA,-0.727473283843511,NA,NA,NA,by meeting,2022-06-07
+days + releases (direct regression),NA,0.5867361855247294,NA,NA,NA,by meeting,2022-07-05
+days + releases (revision decomposition),NA,0.6099933162231321,NA,NA,NA,by meeting,2022-07-05
+days only (revision decomposition),NA,0.611144560588849,NA,NA,NA,by meeting,2022-07-05
+"days only (spline, rmse.R-style)",NA,0.5686274050951314,NA,NA,NA,by meeting,2022-07-05
+days + releases (direct regression),NA,0.9361291431233079,NA,NA,NA,by meeting,2022-08-02
+days + releases (revision decomposition),NA,0.9083369207090651,NA,NA,NA,by meeting,2022-08-02
+days only (revision decomposition),NA,0.9093573303929033,NA,NA,NA,by meeting,2022-08-02
+"days only (spline, rmse.R-style)",NA,0.9292677551639722,NA,NA,NA,by meeting,2022-08-02
+days + releases (direct regression),NA,0.6074025542866196,NA,NA,NA,by meeting,2022-09-06
+days + releases (revision decomposition),NA,0.6186674152386666,NA,NA,NA,by meeting,2022-09-06
+days only (revision decomposition),NA,0.6189145471732266,NA,NA,NA,by meeting,2022-09-06
+"days only (spline, rmse.R-style)",NA,0.5852685465789078,NA,NA,NA,by meeting,2022-09-06
+days + releases (direct regression),NA,0.8300750665161415,NA,NA,NA,by meeting,2022-10-04
+days + releases (revision decomposition),NA,0.8402092987250903,NA,NA,NA,by meeting,2022-10-04
+days only (revision decomposition),NA,0.8389616213003548,NA,NA,NA,by meeting,2022-10-04
+"days only (spline, rmse.R-style)",NA,0.8733880053484396,NA,NA,NA,by meeting,2022-10-04
+days + releases (direct regression),NA,1.119767498772724,NA,NA,NA,by meeting,2022-11-01
+days + releases (revision decomposition),NA,1.0459834497022762,NA,NA,NA,by meeting,2022-11-01
+days only (revision decomposition),NA,1.0494723005061106,NA,NA,NA,by meeting,2022-11-01
+"days only (spline, rmse.R-style)",NA,1.0900289851347056,NA,NA,NA,by meeting,2022-11-01
+days + releases (direct regression),NA,0.9142921310946243,NA,NA,NA,by meeting,2022-12-06
+days + releases (revision decomposition),NA,0.8532113745088241,NA,NA,NA,by meeting,2022-12-06
+days only (revision decomposition),NA,0.8539374160562726,NA,NA,NA,by meeting,2022-12-06
+"days only (spline, rmse.R-style)",NA,0.9066972375308613,NA,NA,NA,by meeting,2022-12-06
+days + releases (direct regression),NA,0.5419110144451763,NA,NA,NA,by meeting,2023-02-07
+days + releases (revision decomposition),NA,0.6559420891544565,NA,NA,NA,by meeting,2023-02-07
+days only (revision decomposition),NA,0.6562663176698629,NA,NA,NA,by meeting,2023-02-07
+"days only (spline, rmse.R-style)",NA,0.5509012791053538,NA,NA,NA,by meeting,2023-02-07
+days + releases (direct regression),NA,1.0877067185372549,NA,NA,NA,by meeting,2023-03-07
+days + releases (revision decomposition),NA,1.0108515630450798,NA,NA,NA,by meeting,2023-03-07
+days only (revision decomposition),NA,1.012251456533502,NA,NA,NA,by meeting,2023-03-07
+"days only (spline, rmse.R-style)",NA,1.0709612132675899,NA,NA,NA,by meeting,2023-03-07
+days + releases (direct regression),NA,1.1970553726691038,NA,NA,NA,by meeting,2023-04-04
+days + releases (revision decomposition),NA,1.1080052477402837,NA,NA,NA,by meeting,2023-04-04
+days only (revision decomposition),NA,1.110032231126506,NA,NA,NA,by meeting,2023-04-04
+"days only (spline, rmse.R-style)",NA,1.1767639010875541,NA,NA,NA,by meeting,2023-04-04
+days + releases (direct regression),NA,-1.2862602473802984,NA,NA,NA,by meeting,2023-05-02
+days + releases (revision decomposition),NA,-0.8565473642892198,NA,NA,NA,by meeting,2023-05-02
+days only (revision decomposition),NA,-0.8616769076951607,NA,NA,NA,by meeting,2023-05-02
+"days only (spline, rmse.R-style)",NA,-1.1198788321947672,NA,NA,NA,by meeting,2023-05-02
+days + releases (direct regression),NA,-1.960631022673264,NA,NA,NA,by meeting,2023-06-06
+days + releases (revision decomposition),NA,-1.0547841119759214,NA,NA,NA,by meeting,2023-06-06
+days only (revision decomposition),NA,-1.062070995210897,NA,NA,NA,by meeting,2023-06-06
+"days only (spline, rmse.R-style)",NA,-1.6575855947837852,NA,NA,NA,by meeting,2023-06-06
+days + releases (direct regression),NA,1.0726375928136036,NA,NA,NA,by meeting,2023-07-04
+days + releases (revision decomposition),NA,1.0016583737740188,NA,NA,NA,by meeting,2023-07-04
+days only (revision decomposition),NA,1.0029424898284869,NA,NA,NA,by meeting,2023-07-04
+"days only (spline, rmse.R-style)",NA,1.0563402687001158,NA,NA,NA,by meeting,2023-07-04
+days + releases (direct regression),NA,1.1084216079624214,NA,NA,NA,by meeting,2023-08-01
+days + releases (revision decomposition),NA,1.0835074495519363,NA,NA,NA,by meeting,2023-08-01
+days only (revision decomposition),NA,1.0836986042928376,NA,NA,NA,by meeting,2023-08-01
+"days only (spline, rmse.R-style)",NA,1.1087771049543287,NA,NA,NA,by meeting,2023-08-01
+days + releases (direct regression),NA,1.241088553299699,NA,NA,NA,by meeting,2023-09-05
+days + releases (revision decomposition),NA,1.1120250432765497,NA,NA,NA,by meeting,2023-09-05
+days only (revision decomposition),NA,1.1134609294875835,NA,NA,NA,by meeting,2023-09-05
+"days only (spline, rmse.R-style)",NA,1.219527493403503,NA,NA,NA,by meeting,2023-09-05
+days + releases (direct regression),NA,1.2915915802645421,NA,NA,NA,by meeting,2023-10-03
+days + releases (revision decomposition),NA,1.172291852453403,NA,NA,NA,by meeting,2023-10-03
+days only (revision decomposition),NA,1.174207446576476,NA,NA,NA,by meeting,2023-10-03
+"days only (spline, rmse.R-style)",NA,1.2661762496069853,NA,NA,NA,by meeting,2023-10-03
+days + releases (direct regression),NA,-0.15977773961982783,NA,NA,NA,by meeting,2023-11-07
+days + releases (revision decomposition),NA,0.09273040527925447,NA,NA,NA,by meeting,2023-11-07
+days only (revision decomposition),NA,0.09262520340410413,NA,NA,NA,by meeting,2023-11-07
+"days only (spline, rmse.R-style)",NA,-0.11357381215600296,NA,NA,NA,by meeting,2023-11-07
+days + releases (direct regression),NA,1.2811607072050082,NA,NA,NA,by meeting,2023-12-05
+days + releases (revision decomposition),NA,1.1636258647292297,NA,NA,NA,by meeting,2023-12-05
+days only (revision decomposition),NA,1.1654700478487063,NA,NA,NA,by meeting,2023-12-05
+"days only (spline, rmse.R-style)",NA,1.2557165085461361,NA,NA,NA,by meeting,2023-12-05
+days + releases (direct regression),NA,1.192741570432419,NA,NA,NA,by meeting,2024-02-06
+days + releases (revision decomposition),NA,0.9480399971451802,NA,NA,NA,by meeting,2024-02-06
+days only (revision decomposition),NA,0.9498701840066701,NA,NA,NA,by meeting,2024-02-06
+"days only (spline, rmse.R-style)",NA,1.1797108364756093,NA,NA,NA,by meeting,2024-02-06
+days + releases (direct regression),NA,0.8691076650600492,NA,NA,NA,by meeting,2024-03-19
+days + releases (revision decomposition),NA,0.8355571600996309,NA,NA,NA,by meeting,2024-03-19
+days only (revision decomposition),NA,0.8348849987648518,NA,NA,NA,by meeting,2024-03-19
+"days only (spline, rmse.R-style)",NA,0.8931444004824158,NA,NA,NA,by meeting,2024-03-19
+days + releases (direct regression),NA,1.0674597510696318,NA,NA,NA,by meeting,2024-05-07
+days + releases (revision decomposition),NA,0.9110494831590126,NA,NA,NA,by meeting,2024-05-07
+days only (revision decomposition),NA,0.9116681788553344,NA,NA,NA,by meeting,2024-05-07
+"days only (spline, rmse.R-style)",NA,1.0613438809998788,NA,NA,NA,by meeting,2024-05-07
+days + releases (direct regression),NA,0.9807401877264564,NA,NA,NA,by meeting,2024-06-18
+days + releases (revision decomposition),NA,0.9077667517571038,NA,NA,NA,by meeting,2024-06-18
+days only (revision decomposition),NA,0.9077247287260611,NA,NA,NA,by meeting,2024-06-18
+"days only (spline, rmse.R-style)",NA,0.981690252745371,NA,NA,NA,by meeting,2024-06-18
+days + releases (direct regression),NA,1.1608258691800322,NA,NA,NA,by meeting,2024-08-06
+days + releases (revision decomposition),NA,0.9993432621470542,NA,NA,NA,by meeting,2024-08-06
+days only (revision decomposition),NA,0.9996939954845545,NA,NA,NA,by meeting,2024-08-06
+"days only (spline, rmse.R-style)",NA,1.1485994698505972,NA,NA,NA,by meeting,2024-08-06
+days + releases (direct regression),NA,0.884535855300141,NA,NA,NA,by meeting,2024-09-24
+days + releases (revision decomposition),NA,0.8412068788268624,NA,NA,NA,by meeting,2024-09-24
+days only (revision decomposition),NA,0.8404409384861415,NA,NA,NA,by meeting,2024-09-24
+"days only (spline, rmse.R-style)",NA,0.9000403236287029,NA,NA,NA,by meeting,2024-09-24
+days + releases (direct regression),NA,1.1904530508859912,NA,NA,NA,by meeting,2024-11-05
+days + releases (revision decomposition),NA,1.055657071577978,NA,NA,NA,by meeting,2024-11-05
+days only (revision decomposition),NA,1.0569458354998933,NA,NA,NA,by meeting,2024-11-05
+"days only (spline, rmse.R-style)",NA,1.1735646775280737,NA,NA,NA,by meeting,2024-11-05
+days + releases (direct regression),NA,1.1892389753133839,NA,NA,NA,by meeting,2024-12-10
+days + releases (revision decomposition),NA,1.1083251475092313,NA,NA,NA,by meeting,2024-12-10
+days only (revision decomposition),NA,1.1080035205344774,NA,NA,NA,by meeting,2024-12-10
+"days only (spline, rmse.R-style)",NA,1.206811548361423,NA,NA,NA,by meeting,2024-12-10
+days + releases (direct regression),NA,1.1038768974633202,NA,NA,NA,by meeting,2025-02-18
+days + releases (revision decomposition),NA,0.9264442151804473,NA,NA,NA,by meeting,2025-02-18
+days only (revision decomposition),NA,0.9256882290078323,NA,NA,NA,by meeting,2025-02-18
+"days only (spline, rmse.R-style)",NA,1.1425280875650115,NA,NA,NA,by meeting,2025-02-18
+days + releases (direct regression),NA,1.19293546326242,NA,NA,NA,by meeting,2025-04-01
+days + releases (revision decomposition),NA,1.0510147888388786,NA,NA,NA,by meeting,2025-04-01
+days only (revision decomposition),NA,1.0531500598284507,NA,NA,NA,by meeting,2025-04-01
+"days only (spline, rmse.R-style)",NA,1.1675753832810778,NA,NA,NA,by meeting,2025-04-01
+days + releases (direct regression),NA,0.9512159920395812,NA,NA,NA,by meeting,2025-05-20
+days + releases (revision decomposition),NA,0.9177051228972933,NA,NA,NA,by meeting,2025-05-20
+days only (revision decomposition),NA,0.9178186032299517,NA,NA,NA,by meeting,2025-05-20
+"days only (spline, rmse.R-style)",NA,0.962401835926481,NA,NA,NA,by meeting,2025-05-20
+days + releases (direct regression),NA,-0.656984838163909,NA,NA,NA,by meeting,2025-07-08
+days + releases (revision decomposition),NA,-0.39153548262169136,NA,NA,NA,by meeting,2025-07-08
+days only (revision decomposition),NA,-0.39065331972635015,NA,NA,NA,by meeting,2025-07-08
+"days only (spline, rmse.R-style)",NA,-0.6746466512821286,NA,NA,NA,by meeting,2025-07-08
+days + releases (direct regression),NA,1.2259655753723333,NA,NA,NA,by meeting,2025-08-12
+days + releases (revision decomposition),NA,1.1396903355351533,NA,NA,NA,by meeting,2025-08-12
+days only (revision decomposition),NA,1.1397372605219984,NA,NA,NA,by meeting,2025-08-12
+"days only (spline, rmse.R-style)",NA,1.2461379139406636,NA,NA,NA,by meeting,2025-08-12
+days + releases (direct regression),NA,1.1248329767254972,NA,NA,NA,by meeting,2025-09-30
+days + releases (revision decomposition),NA,0.979554022745388,NA,NA,NA,by meeting,2025-09-30
+days only (revision decomposition),NA,0.9813110206046473,NA,NA,NA,by meeting,2025-09-30
+"days only (spline, rmse.R-style)",NA,1.1034180131254354,NA,NA,NA,by meeting,2025-09-30
+days + releases (direct regression),NA,0.675361815625772,NA,NA,NA,by meeting,2025-11-04
+days + releases (revision decomposition),NA,0.6990550620870712,NA,NA,NA,by meeting,2025-11-04
+days only (revision decomposition),NA,0.6986028115292184,NA,NA,NA,by meeting,2025-11-04
+"days only (spline, rmse.R-style)",NA,0.693899093237792,NA,NA,NA,by meeting,2025-11-04
+days + releases (direct regression),NA,1.2157701335800282,NA,NA,NA,by meeting,2025-12-09
+days + releases (revision decomposition),NA,1.127407483515184,NA,NA,NA,by meeting,2025-12-09
+days only (revision decomposition),NA,1.1273497017506462,NA,NA,NA,by meeting,2025-12-09
+"days only (spline, rmse.R-style)",NA,1.2343341892264401,NA,NA,NA,by meeting,2025-12-09
+days + releases (direct regression),NA,0.19205035566319598,NA,NA,NA,by meeting,2026-02-03
+days + releases (revision decomposition),NA,0.4028654551233078,NA,NA,NA,by meeting,2026-02-03
+days only (revision decomposition),NA,0.40241296828454776,NA,NA,NA,by meeting,2026-02-03
+"days only (spline, rmse.R-style)",NA,0.255546177381711,NA,NA,NA,by meeting,2026-02-03
+days + releases (direct regression),NA,-0.21970547434408064,NA,NA,NA,by meeting,2026-03-17
+days + releases (revision decomposition),NA,0.002390817331049213,NA,NA,NA,by meeting,2026-03-17
+days only (revision decomposition),NA,0.004741028603794186,NA,NA,NA,by meeting,2026-03-17
+"days only (spline, rmse.R-style)",NA,-0.25895821271432745,NA,NA,NA,by meeting,2026-03-17
+days + releases (direct regression),NA,0.9585296402040725,NA,NA,NA,by meeting,2026-05-05
+days + releases (revision decomposition),NA,0.8588062080079761,NA,NA,NA,by meeting,2026-05-05
+days only (revision decomposition),NA,0.8596533533872095,NA,NA,NA,by meeting,2026-05-05
+"days only (spline, rmse.R-style)",NA,0.9510245665147063,NA,NA,NA,by meeting,2026-05-05
+days + releases (direct regression),NA,1.1613550199419262,NA,NA,NA,by meeting,2026-06-16
+days + releases (revision decomposition),NA,1.0772217528731909,NA,NA,NA,by meeting,2026-06-16
+days only (revision decomposition),NA,1.07600763971401,NA,NA,NA,by meeting,2026-06-16
+"days only (spline, rmse.R-style)",NA,1.2018947196566343,NA,NA,NA,by meeting,2026-06-16
+days + releases (direct regression),NA,1.1318553513502703,NA,NA,NA,by meeting,2026-08-11
+days + releases (revision decomposition),NA,0.9642975938653557,NA,NA,NA,by meeting,2026-08-11
+days only (revision decomposition),NA,0.9641771190054039,NA,NA,NA,by meeting,2026-08-11
+"days only (spline, rmse.R-style)",NA,1.132490515455296,NA,NA,NA,by meeting,2026-08-11
+days + releases (direct regression),NA,0.5477091288398979,NA,NA,NA,by meeting,2026-09-29
+days + releases (revision decomposition),NA,0.68557700967108,NA,NA,NA,by meeting,2026-09-29
+days only (revision decomposition),NA,0.6854311350870358,NA,NA,NA,by meeting,2026-09-29
+"days only (spline, rmse.R-style)",NA,0.5716181019621881,NA,NA,NA,by meeting,2026-09-29
+days + releases (direct regression),NA,0.2971516065731937,NA,NA,NA,by meeting,2026-11-03
+days + releases (revision decomposition),NA,0.44088277763171946,NA,NA,NA,by meeting,2026-11-03
+days only (revision decomposition),NA,0.44052911997156907,NA,NA,NA,by meeting,2026-11-03
+"days only (spline, rmse.R-style)",NA,0.3334198455582223,NA,NA,NA,by meeting,2026-11-03

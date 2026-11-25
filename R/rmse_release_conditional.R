@@ -16,10 +16,11 @@
 #
 # Forecast = implied post-meeting rate, decomposed exactly as in
 # R/line_chart.R; error = forecast - realised target after the meeting.
-# Outcomes come from readrba (RBA F1) when available, otherwise the "Actual"
-# column of combined_data/f17_rmse.csv. Release dates come from the repository
-# calendar (R/abs_release_calendar.R), so meetings are used only where the
-# calendar covers the whole forecast window.
+# Outcomes come from readrba (RBA F1 cash rate target) when available,
+# otherwise the "Actual" column of combined_data/f17_rmse.csv. Release dates
+# come from the repository calendar (R/abs_release_calendar.R), backfilled from
+# official ABS release pages from January 2022, so the sample runs from the
+# start of the futures archive (April 2022).
 #
 # Approach 1 (main): daily-revision variance decomposition. If the implied
 # rate is an efficient forecast, its error is the sum of the remaining daily
@@ -48,6 +49,10 @@ tz <- "Australia/Melbourne"
 
 # ---- Meetings ---------------------------------------------------------------
 meetings <- as.Date(c(
+  "2022-02-01", "2022-03-01", "2022-04-05", "2022-05-03", "2022-06-07", "2022-07-05",
+  "2022-08-02", "2022-09-06", "2022-10-04", "2022-11-01", "2022-12-06",
+  "2023-02-07", "2023-03-07", "2023-04-04", "2023-05-02", "2023-06-06", "2023-07-04",
+  "2023-08-01", "2023-09-05", "2023-10-03", "2023-11-07", "2023-12-05",
   "2024-02-06", "2024-03-19", "2024-05-07", "2024-06-18", "2024-08-06", "2024-09-24",
   "2024-11-05", "2024-12-10",
   "2025-02-18", "2025-04-01", "2025-05-20", "2025-07-08", "2025-08-12", "2025-09-30",
@@ -106,7 +111,8 @@ snaps <- cash %>%
   ungroup() %>%
   mutate(
     days_ahead = as.integer(meeting_date - forecast_date),
-    rate_before = rate_on(forecast_date),
+    # rate in force: the previous decision applies from its 14:30 announcement
+    rate_before = rate_on(forecast_date + (forecast_date == previous_meeting)),
     # date = contract month; decomposition as in R/line_chart.R
     nb = if_else(meeting_date < date, 0, (day(meeting_date) - 1) / days_in_month(date)),
     implied = (cash_rate - rate_before * nb) / (1 - nb),
@@ -116,8 +122,13 @@ snaps <- cash %>%
   filter(is.finite(implied)) %>%
   arrange(meeting_date, scrape_time)
 
+# Releases of a type between two instants, counting each release day once
+# (quarterly CPI and the monthly indicator were often published together).
 n_between <- function(type, from, to) {
-  vapply(seq_along(from), function(i) sum(rel$type == type & rel$at > from[i] & rel$at < to[i]), integer(1))
+  vapply(seq_along(from), function(i) {
+    hit <- rel$type == type & rel$at > from[i] & rel$at < to[i]
+    length(unique(rel$at[hit]))
+  }, integer(1))
 }
 weekdays_between <- function(from, to) {   # weekdays in (from, to]
   vapply(seq_along(from), function(i) {
