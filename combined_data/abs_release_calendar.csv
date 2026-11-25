@@ -62,6 +62,7 @@
 "WPI","2026-11-18","11:30",,"R/line_chart.R",
 "Labour Force","2026-11-19","11:30",,"R/line_chart.R",
 "CPI","2026-11-25","11:30",,"R/line_chart.R",
+"Household Spending","2026-11-30","11:30","Monthly Household Spending Indicator","abs.gov.au release calendar","2026-11-25T01:25:12Z"
 "National Accounts","2026-12-02","11:30",,"R/line_chart.R",
 "Labour Force","2026-12-17","11:30",,"R/line_chart.R",
 "CPI","2026-12-30","11:30",,"R/line_chart.R",
