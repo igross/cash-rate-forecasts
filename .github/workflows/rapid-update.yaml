@@ -1,0 +1,115 @@
+name: rapid-abs-update
+# Lightweight ABS data-release mode: on release days, five updates at 11:30,
+# 11:32, 11:34, 11:36 and 11:38 Melbourne time, each published immediately.
+# Only the ASX futures snapshot, the incremental dataset, the market feed JSON
+# and the standard line / forecast-path charts are regenerated (see
+# R/rapid_update.R). The full pipeline stays in refresh-data.yaml.
+permissions:
+  contents: write
+
+on:
+  schedule:
+    # Cron is UTC, cannot follow daylight saving and may be delayed, so each
+    # day has two early triggers for AEDT (UTC+11) and two for AEST (UTC+10).
+    # The gate job drops triggers outside 10:30-12:00 Melbourne time, non-release
+    # days and releases already handled; the job then sleeps until each slot.
+    - cron: '47 23 * * 0-4'  # 10:47 AEDT Mon-Fri (09:47 AEST: gated out)
+    - cron: '7 0 * * 1-5'    # 11:07 AEDT          (10:07 AEST: gated out)
+    - cron: '47 0 * * 1-5'   # 10:47 AEST          (11:47 AEDT: late catch-up only)
+    - cron: '7 1 * * 1-5'    # 11:07 AEST          (12:07 AEDT: gated out)
+  workflow_dispatch:
+    inputs:
+      schedule:
+        description: 'immediate = start at the next minute; release-times = 11:30-11:38 Melbourne today'
+        type: choice
+        options: [immediate, release-times]
+        default: immediate
+      iterations:
+        description: 'Number of updates (immediate mode)'
+        default: '5'
+      interval_seconds:
+        description: 'Seconds between update start times (immediate mode, >= 60)'
+        default: '120'
+      publish:
+        description: 'Commit and push after every update (untick for a dry run)'
+        type: boolean
+        default: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+      releases: ${{ steps.gate.outputs.releases }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            R/abs_release_calendar.R
+            R/line_chart.R
+            combined_data/abs_release_calendar.csv
+            combined_data/rapid_update_log.csv
+
+      - uses: r-lib/actions/setup-r@v2
+
+      - name: Is this an ABS release-day window?
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual test: always run, independent of the release calendar.
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "releases=manual" >> "$GITHUB_OUTPUT"
+          else
+            Rscript R/abs_release_calendar.R gate --from 10:30 --to 12:00
+          fi
+
+  rapid-update:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    # Same runner image as the regular pipeline so charts render identically.
+    runs-on: macos-latest
+    timeout-minutes: 100
+    # Shared with refresh-data.yaml: regular and rapid runs never write at the
+    # same time. A queued run waits; it is not cancelled.
+    concurrency:
+      group: cash-rate-publish
+      cancel-in-progress: false
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Restore R package cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: rapid-${{ runner.os }}-${{ runner.arch }}-r${{ hashFiles('.github/workflows/rapid-update.yaml') }}-v1
+
+      - name: Install packages (only those missing from the cache)
+        run: |
+          Rscript -e 'pk <- c("dplyr","lubridate","purrr","tibble","ggplot2","tidyr","plotly","scales","glue","jsonlite","readr","htmlwidgets","stringr","viridis","here","readrba","curl","xml2"); miss <- pk[!pk %in% rownames(installed.packages())]; if (length(miss)) install.packages(miss); stopifnot(all(pk %in% rownames(installed.packages())))'
+
+      - name: Rapid updates
+        env:
+          SCHEDULE_MODE: ${{ inputs.schedule }}
+          ITERATIONS: ${{ inputs.iterations }}
+          INTERVAL: ${{ inputs.interval_seconds }}
+          PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
+        run: |
+          git config --global user.name 'igross'
+          args=()
+          if [ "$PUBLISH" = "true" ]; then args+=(--publish); fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            args+=(--force)
+            if [ "$SCHEDULE_MODE" = "immediate" ]; then
+              args+=(--mode immediate --iterations "$ITERATIONS" --interval "$INTERVAL")
+            fi
+          fi
+          Rscript R/rapid_update.R "${args[@]}"

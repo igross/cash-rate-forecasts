@@ -14,8 +14,40 @@ on:
   workflow_dispatch:
 
 jobs:
+  # On ABS release days the rapid-update workflow (rapid-update.yaml) owns
+  # publishing between 10:40 and 11:45 Melbourne time. Scheduled regular runs
+  # in that window are skipped so they cannot delay or displace it; the next
+  # regular run afterwards performs the full pipeline as usual.
+  rapid-window:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      in_window: ${{ steps.window.outputs.in_window }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            R/abs_release_calendar.R
+            R/line_chart.R
+            combined_data/abs_release_calendar.csv
+      - uses: r-lib/actions/setup-r@v2
+      - id: window
+        run: Rscript R/abs_release_calendar.R window --from 10:40 --to 11:45
+
   refresh-data:
+    needs: rapid-window
+    # Runs for every event as before (rapid-window is skipped for non-schedule
+    # events, and a gate failure never blocks the regular pipeline).
+    if: ${{ !cancelled() && needs.rapid-window.outputs.in_window != 'true' }}
     runs-on: macos-latest
+    # Shared with rapid-update.yaml so regular and rapid runs never write to
+    # the repository at the same time (queued runs wait, never cancelled).
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.ref) || 'cash-rate-publish' }}
+      cancel-in-progress: false
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
@@ -43,6 +75,12 @@ jobs:
       - name: Get data
         if: ${{ github.event_name != 'pull_request' }}
         run: Rscript -e 'source(here::here("R","scrape_cash_rate.R"), echo = TRUE)'
+
+      # ── Daily: maintain the ABS release calendar used by rapid updates ──
+      - name: Refresh ABS release calendar
+        continue-on-error: true
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *') }}
+        run: Rscript R/abs_release_calendar.R refresh
 
          # ── Monthly + push: RMSEs ──────────────────────────────────────────
       - name: Calculate RMSEs

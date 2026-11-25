@@ -31,27 +31,14 @@ library(jsonlite)
 library(lubridate)
 
 
-json_url <- "https://asx.api.markitdigital.com/asx-research/1.0/derivatives/interest-rate/IB/futures?days=1&height=179&width=179"
+source("R/market_data.R")  # shared with the rapid ABS release mode
+
+json_url <- asx_futures_url
 json_file <- tempfile()
 
 # download and parse
 download.file(json_url, json_file)
-new_data <- fromJSON(json_file) %>% 
-  pluck("data", "items") %>% 
-  as_tibble() %>% 
-  mutate(
-    # floor expiry to the month start
-    date         = ymd(dateExpiry) %>% floor_date("month"),
-    scrape_date  = ymd(datePreviousSettlement),
-    scrape_time  = now(tzone = "Australia/Melbourne"),
-    # choose price based on which date is more recent (trade preferred if tied)
-    cash_rate    = if_else(
-      !is.na(dateLastTrade) & ymd(dateLastTrade) >= ymd(datePreviousSettlement),
-      100 - priceLastTrade,
-      100 - pricePreviousSettlement
-    ),
-    cash_rate_PreviousSettlement = 100 - pricePreviousSettlement
-  )
+new_data <- parse_asx_futures(json_file, scrape_time = now(tzone = "Australia/Melbourne"))
 
 
 print(new_data)
@@ -66,44 +53,15 @@ if (length(scrape_dt) != 1) {
   scrape_dt <- Sys.Date() - 1
 }
 
-# 3. Format as YYYY-MM-DD
-scrape_str <- format(scrape_dt, "%Y-%m-%d_%H%M")
-
-# 4. Build a single file name
-out_file <- file.path(
-  "daily_data",
-  paste0("scraped_cash_rate_", scrape_str, ".csv")
-)
+# 3-4. Build a single file name (YYYY-MM-DD_HHMM)
+out_file <- scrape_file_path(scrape_dt)
 
 # 5. Write the CSV once
 write_csv(new_data, out_file)
 
 # Compact public feed for the main website's market-rate reference line.
-# Preserve the ASX monthly-average rate definition; do not extend the horizon.
-market_points <- new_data %>%
-  filter(!is.na(date), is.finite(cash_rate)) %>%
-  arrange(date) %>%
-  transmute(month = format(date, "%Y-%m"), ratePct = cash_rate)
-stopifnot(nrow(market_points) >= 2, !anyDuplicated(market_points$month))
-market_feed <- list(
-  schemaVersion = 1L,
-  source = "igross/cash-rate-forecasts",
-  sourceUrl = "https://github.com/igross/cash-rate-forecasts",
-  definition = "ASX cash-rate futures-implied monthly average (100 minus contract price)",
-  scrapedAt = format(max(new_data$scrape_time), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
-  quoteDate = format(max(c(ymd(new_data$dateLastTrade), new_data$scrape_date), na.rm = TRUE), "%Y-%m-%d"),
-  points = market_points
-)
-dir.create("docs/data", recursive = TRUE, showWarnings = FALSE)
-jsonlite::write_json(market_feed, "docs/data/cash-rate-latest.json",
-                     auto_unbox = TRUE, dataframe = "rows", digits = 15,
-                     pretty = TRUE, na = "null")
+write_market_feed(new_data, "docs/data/cash-rate-latest.json")
 
-
-library(purrr)
-library(readr)
-library(dplyr)
-library(lubridate)
 
 # 1. list your files
 files <- list.files(
@@ -112,47 +70,8 @@ files <- list.files(
   full.names = TRUE
 )
 
-df_list <- files %>% map(function(f) {
-  df <- read_csv(f, col_types = cols())
-
-  if (!"scrape_time" %in% names(df)) {
-    # create a POSIXct NA in Melbourne time
-    df$scrape_time <- as.POSIXct(NA, tz = "Australia/Melbourne")
-  } else {
-    # read_csv already parses ISO timestamps as instants. Reparsing their UTC
-    # clock text as Melbourne time shifts observations by 10/11 hours.
-    if (inherits(df$scrape_time, "POSIXt")) {
-      df$scrape_time <- with_tz(df$scrape_time, "Australia/Melbourne")
-    } else {
-      df$scrape_time <- ymd_hms(df$scrape_time, tz = "Australia/Melbourne")
-    }
-  }
-
-  df
-})
-
-
-# 3. bind them into one data‑frame
-all_data <- bind_rows(df_list) %>%
-  mutate(
-    date        = as.Date(date),
-    cash_rate   = as.double(cash_rate),    # ← use as.double()
-    scrape_date = as.Date(scrape_date),
-    scrape_time = coalesce(
-      scrape_time,
-      as.POSIXct(scrape_date, tz = "Australia/Melbourne") + hours(12)
-    )
-  ) %>%
-  filter(
-    !scrape_date %in% ymd(c(
-      "2022-08-06","2022-08-07","2022-08-08",
-      "2023-01-18","2023-01-24","2023-01-31",
-      "2023-02-02","2022-12-30","2022-12-29"
-    )),
-    !is.na(scrape_date),
-    !is.na(date),
-    !is.na(cash_rate)
-  )
+# 2-3. read every file and bind them into one data-frame (full rebuild)
+all_data <- rebuild_all_data(files)
 
 # 5. ensure the output folder exists
 if (!dir.exists("combined_data")) {
