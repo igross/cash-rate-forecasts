@@ -26,18 +26,29 @@ suppressPackageStartupMessages({
 # 2. DATA LOADING & CONFIGURATION
 # ------------------------------------------------------------------------------
 
-# Load cash rate futures data (columns: date, cash_rate, scrape_time)
-cash_rate <- readRDS("combined_data/all_data.Rds")
+# Rapid ABS-release mode: R/rapid_update.R evaluates this script with a
+# `rapid_ctx` list holding inputs already loaded in a warm R session (dataset,
+# cached RMSE table, validated policy state, RBA history) and a staging output
+# directory. Only the next-meeting line charts are produced in that mode; the
+# per-meeting probability bar charts, dated archive copies and summary RDS are
+# left to the regular full pipeline. Without `rapid_ctx` nothing changes.
+rapid_ctx <- get0("rapid_ctx", ifnotfound = NULL)
+rapid_mode <- !is.null(rapid_ctx)
+out_path <- function(...) if (rapid_mode) file.path(rapid_ctx$out_dir, ...) else file.path(...)
 
-# Load RMSE lookup table (days_to_meeting → forecast error)
-load("combined_data/rmse_new.RData")
+# Load cash rate futures data (columns: date, cash_rate, scrape_time)
+cash_rate <- if (rapid_mode) rapid_ctx$cash_rate else readRDS("combined_data/all_data.Rds")
+
+# Load RMSE lookup table (days_to_meeting → forecast error); cached, never
+# recalculated here (R/rmse.R recalculates it in the regular pipeline).
+if (rapid_mode) rmse_days <- rapid_ctx$rmse_days else load("combined_data/rmse_new.RData")
 
 print(head(rmse_days$finalrmse, 30))
 
 # Configuration parameters
 spread <- 0.00  # Spread adjustment for cash rate
-source("R/rba_policy_state.R")
-policy_state <- rba_policy_state()
+if (!rapid_mode) source("R/rba_policy_state.R")
+policy_state <- if (rapid_mode) rapid_ctx$policy_state else rba_policy_state()
 
 # Apply spread adjustment
 cash_rate$cash_rate <- cash_rate$cash_rate + spread
@@ -188,7 +199,7 @@ last_meeting <- max(meeting_schedule$meeting_date[
 
 # Use the announced target immediately; retain workbook rates only for history.
 initial_rt <- current_rate <- policy_state$rate
-rba_historical <- read_rba(series_id = "FIRMMCRTD")
+rba_historical <- if (rapid_mode) rapid_ctx$rba_historical else read_rba(series_id = "FIRMMCRTD")
 message("Announced cash-rate target: ", current_rate, "; next decision: ", next_meeting)
 
 # ------------------------------------------------------------------------------
@@ -381,8 +392,8 @@ latest_scrape <- max(all_estimates_buckets$scrape_time)
 
 print(paste("Latest scrape:", latest_scrape))
 
-# Generate a bar chart for each upcoming meeting
-for (mt in as.character(future_meetings)) {
+# Generate a bar chart for each upcoming meeting (skipped in rapid mode)
+for (mt in if (rapid_mode) character() else as.character(future_meetings)) {
   
   # Filter data for this specific meeting and latest scrape
   bar_df <- all_estimates_buckets %>%
@@ -531,9 +542,11 @@ rba_summary_data <- list(
   top3_probabilities = top3_summary$probability
 )
 
-# Save as RDS file
-saveRDS(rba_summary_data, "docs/rba_summary_data.rds")
-cat("\nProbability summary data saved to: docs/rba_summary_data.rds\n")
+# Save as RDS file (regular pipeline only)
+if (!rapid_mode) {
+  saveRDS(rba_summary_data, "docs/rba_summary_data.rds")
+  cat("\nProbability summary data saved to: docs/rba_summary_data.rds\n")
+}
 
 
 # ------------------------------------------------------------------------------
@@ -648,14 +661,15 @@ line <- ggplot(top3_df, aes(x = with_tz(scrape_time, "Australia/Melbourne"),
     legend.title = element_blank()
   )
 
-line_plot_dir <- file.path("docs", "plots", "line_charts")
+line_plot_dir <- out_path("docs", "plots", "line_charts")
 if (!dir.exists(line_plot_dir)) {
   dir.create(line_plot_dir, recursive = TRUE)
 }
 
 # Save static plot (two versions)
 ggsave(file.path(line_plot_dir, "line.png"), line, width = 10, height = 5, dpi = 300)
-ggsave(
+# Dated per-meeting archive copy (regular pipeline only)
+if (!rapid_mode) ggsave(
   file.path(
     line_plot_dir,
     glue("line_{format(next_meeting, '%d %b %Y')}.png")
@@ -744,7 +758,7 @@ line_dual <- ggplot() +
   )
 
 ggsave(file.path(line_plot_dir, "line_dual.png"), line_dual, width = 10, height = 5, dpi = 300)
-ggsave(
+if (!rapid_mode) ggsave(
   file.path(
     line_plot_dir,
     glue("line_dual_{format(next_meeting, '%d %b %Y')}.png")
@@ -974,7 +988,7 @@ interactive_line <- interactive_line %>%
 # Save interactive HTML
 htmlwidgets::saveWidget(
   interactive_line,
-  file = "docs/line_interactive.html",
+  file = out_path("docs", "line_interactive.html"),
   selfcontained = TRUE
 )
 

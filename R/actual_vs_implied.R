@@ -15,7 +15,12 @@ ensure_packages <- function(pkgs) {
   }
 }
 
-ensure_packages(c(
+# Rapid ABS-release mode (R/rapid_update.R) supplies pre-loaded inputs and a
+# staging output directory via `rapid_ctx`; without it nothing changes.
+rapid_ctx <- get0("rapid_ctx", ifnotfound = NULL)
+rapid_mode <- !is.null(rapid_ctx)
+
+if (!rapid_mode) ensure_packages(c(
   "dplyr", "ggplot2", "here", "htmlwidgets", "lubridate", "purrr",
   "plotly", "readrba", "scales", "viridis", "stringr", "tibble",
   "tidyr", "evaluate"
@@ -47,7 +52,7 @@ if (!dir.exists(here("docs"))) {
 }
 
 # Load consolidated futures data (columns: date, cash_rate, scrape_time)
-cash_rate <- readRDS("combined_data/all_data.Rds")
+cash_rate <- if (rapid_mode) rapid_ctx$cash_rate_full else readRDS("combined_data/all_data.Rds")
 
 # Latest observation per contract per scrape date
 cash_rate_daily <- cash_rate %>%
@@ -71,7 +76,7 @@ front_month <- cash_rate_daily %>%
   )
 
 # Historical actual cash rate
-actual_cash_rate <- read_rba(series_id = "FIRMMCRTD") %>%
+actual_cash_rate <- (if (rapid_mode) rapid_ctx$rba_historical else read_rba(series_id = "FIRMMCRTD")) %>%
   transmute(
     date,
     actual_rate = value
@@ -425,7 +430,7 @@ forecast_plot_interactive <- ggplotly(forecast_plot, tooltip = "text") %>%
 # ------------------------------------------------------------------------------
 
 # Static forecast path overlay
-forecast_plot_dir <- here("docs", "plots", "forecast_paths")
+forecast_plot_dir <- if (rapid_mode) file.path(rapid_ctx$out_dir, "docs", "plots", "forecast_paths") else here("docs", "plots", "forecast_paths")
 if (!dir.exists(forecast_plot_dir)) {
   dir.create(forecast_plot_dir, recursive = TRUE)
 }
@@ -440,7 +445,7 @@ ggsave(
 )
 
 # Interactive widget
-forecast_path_html <- here("docs", "cash_rate_forecast_paths.html")
+forecast_path_html <- if (rapid_mode) file.path(rapid_ctx$out_dir, "docs", "cash_rate_forecast_paths.html") else here("docs", "cash_rate_forecast_paths.html")
 saveWidget(
   widget = forecast_plot_interactive,
   file = forecast_path_html,
