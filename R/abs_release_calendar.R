@@ -19,10 +19,14 @@
 #   Rscript R/abs_release_calendar.R gate --from 10:30 --to 12:00
 #   Rscript R/abs_release_calendar.R window --from 10:40 --to 11:50
 #   Rscript R/abs_release_calendar.R refresh
+#   Rscript R/abs_release_calendar.R history --from 2021-12   (one-off backfill)
 # ==============================================================================
 
 abs_tz <- "Australia/Melbourne"
 abs_calendar_file <- "combined_data/abs_release_calendar.csv"
+abs_source <- "abs.gov.au release calendar"
+abs_page_source <- "abs.gov.au release page"
+abs_authoritative <- c(abs_source, abs_page_source)
 abs_calendar_cols <- c("dataset", "release_date", "release_time", "title", "source", "updated_at")
 
 # Economically significant releases that trigger the rapid-update mode.
@@ -55,7 +59,8 @@ normalise_calendar <- function(x) {
   x$release_date <- format(as.Date(x$release_date))
   x$release_time <- ifelse(is.na(x$release_time) | x$release_time == "", "11:30", substr(x$release_time, 1, 5))
   x <- x[!is.na(x$release_date) & !is.na(x$dataset), , drop = FALSE]
-  x <- x[order(x$release_date, x$dataset, x$source), , drop = FALSE]
+  # On duplicates keep the ABS-sourced row (authoritative), then any other.
+  x <- x[order(x$release_date, x$dataset, !x$source %in% abs_authoritative), , drop = FALSE]
   x <- x[!duplicated(x[, c("dataset", "release_date")]), , drop = FALSE]
   rownames(x) <- NULL
   x
@@ -104,12 +109,29 @@ line_chart_abs_releases <- function(path = "R/line_chart.R", name = "abs_release
   ))
 }
 
-load_abs_calendar <- function(path = abs_calendar_file, line_chart = "R/line_chart.R") {
+# Dates read from abs.gov.au (future-releases calendar or individual release
+# pages) are authoritative. Within the date range they cover for a dataset,
+# hand-maintained dates they do not confirm (typos, rescheduled releases) are
+# dropped; outside that range hand-maintained dates are kept.
+resolve_calendar_conflicts <- function(x, today = melbourne_date()) {
+  auth <- x[x$source %in% abs_authoritative, , drop = FALSE]
+  if (!nrow(auth)) return(x)
+  ad <- as.Date(auth$release_date)
+  # A future-calendar range starts today; release-page history covers its span.
+  lo <- tapply(ifelse(auth$source == abs_source, pmin(as.numeric(ad), as.numeric(today)), as.numeric(ad)), auth$dataset, min)
+  hi <- tapply(as.numeric(ad), auth$dataset, max)
+  d <- as.numeric(as.Date(x$release_date))
+  superseded <- !(x$source %in% abs_authoritative) & x$dataset %in% names(hi) &
+    d >= lo[x$dataset] & d <= hi[x$dataset]
+  x[!superseded %in% TRUE, , drop = FALSE]
+}
+
+load_abs_calendar <- function(path = abs_calendar_file, line_chart = "R/line_chart.R", today = melbourne_date()) {
   existing <- tryCatch(line_chart_abs_releases(line_chart), error = function(e) {
     message("Could not read release table from ", line_chart, ": ", conditionMessage(e))
     empty_calendar()
   })
-  normalise_calendar(rbind(read_abs_calendar_file(path), existing))
+  resolve_calendar_conflicts(normalise_calendar(rbind(read_abs_calendar_file(path), existing)), today)
 }
 
 melbourne_date <- function(now = Sys.time()) as.Date(format(now, "%Y-%m-%d", tz = abs_tz))
@@ -211,7 +233,7 @@ parse_abs_calendar_page <- function(html, retrieved_at = Sys.time()) {
     if (is.null(when)) return(NULL)
     title <- titles[vapply(titles, grepl, logical(1), pattern = abs_title_patterns[[datasets]])][1]
     data.frame(dataset = datasets, release_date = when$date, release_time = when$time,
-               title = title, source = "abs.gov.au release calendar",
+               title = title, source = abs_source,
                updated_at = format(retrieved_at, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
                stringsAsFactors = FALSE)
   })
@@ -229,17 +251,18 @@ fetch_url_text <- function(url, timeout = 30) {
 # table. Never removes entries if the ABS page cannot be read or parsed.
 refresh_abs_calendar <- function(path = abs_calendar_file, fetch = fetch_url_text,
                                  base_url = "https://www.abs.gov.au/release-calendar/future-releases",
-                                 max_pages = 6, now = Sys.time()) {
+                                 max_months = 9, now = Sys.time()) {
   current <- read_abs_calendar_file(path)
   scraped <- list()
-  for (page in seq_len(max_pages) - 1L) {
-    url <- if (page == 0L) base_url else paste0(base_url, "?page=", page)
+  # The calendar is published one page per month: <base_url>/YYYYMM.
+  first_month <- as.Date(format(melbourne_date(now), "%Y-%m-01"))
+  months <- seq(first_month, by = "month", length.out = max_months)
+  for (m in format(months, "%Y%m")) {
+    url <- paste0(base_url, "/", m)
     html <- tryCatch(fetch(url), error = function(e) {
       message("ABS calendar fetch failed (", url, "): ", conditionMessage(e)); NULL })
-    if (is.null(html)) break
-    rows <- parse_abs_calendar_page(html, now)
-    if (!nrow(rows)) break
-    scraped[[length(scraped) + 1L]] <- rows
+    if (is.null(html) || !grepl("views-row", html, fixed = TRUE)) break   # beyond the published horizon
+    scraped[[length(scraped) + 1L]] <- parse_abs_calendar_page(html, now)
   }
   scraped <- normalise_calendar(do.call(rbind, scraped))
   today <- melbourne_date(now)
@@ -251,11 +274,11 @@ refresh_abs_calendar <- function(path = abs_calendar_file, fetch = fetch_url_tex
     # ABS dates (handles rescheduling); past entries are kept as history.
     covered <- unique(scraped$dataset)
     stale <- current$dataset %in% covered & as.Date(current$release_date) >= today &
-      current$source == scraped$source[1]
+      current$source %in% abs_source
     current <- current[!stale, , drop = FALSE]
   }
   existing <- tryCatch(line_chart_abs_releases(), error = function(e) empty_calendar())
-  merged <- normalise_calendar(rbind(scraped, current, existing))
+  merged <- resolve_calendar_conflicts(normalise_calendar(rbind(scraped, current, existing)), today)
   write_abs_calendar_file(merged, path)
   cov <- abs_calendar_coverage(merged, today)
   for (ds in setdiff(c("CPI", "Labour Force", "National Accounts", "WPI"), cov$dataset[as.Date(cov$last_release) >= today + 35])) {
@@ -263,6 +286,61 @@ refresh_abs_calendar <- function(path = abs_calendar_file, fetch = fetch_url_tex
             " release scheduled more than 35 days ahead; rapid updates need ",
             path, " (or the abs_releases table in R/line_chart.R) to be extended.")
   }
+  invisible(merged)
+}
+
+# ------------------------------------------------------------------------------
+# Release history from individual ABS release pages ("Released dd/mm/yyyy")
+# ------------------------------------------------------------------------------
+
+abs_history_series <- list(
+  list(dataset = "Labour Force", path = "statistics/labour/employment-and-unemployment/labour-force-australia",
+       slugs = function(m) format(m, "%b-%Y")),
+  list(dataset = "CPI", path = "statistics/economy/price-indexes-and-inflation/consumer-price-index-australia",
+       # quarterly releases (slug changed from "mar-2022" to "dec-quarter-2022"),
+       # then the full monthly CPI from the October 2025 reference month
+       slugs = function(m) if (as.integer(format(m, "%m")) %% 3 == 0 && m < as.Date("2025-10-01"))
+         c(format(m, "%b-quarter-%Y"), format(m, "%b-%Y")) else if (m >= as.Date("2025-10-01")) format(m, "%b-%Y") else character()),
+  list(dataset = "CPI Indicator", path = "statistics/economy/price-indexes-and-inflation/monthly-consumer-price-index-indicator",
+       slugs = function(m) if (m >= as.Date("2022-09-01") && m <= as.Date("2025-09-01")) format(m, "%b-%Y") else character())
+)
+
+parse_release_page_date <- function(html) {
+  m <- regmatches(html, regexpr('field__label">Released</div><div class="field__item">[^<]*', html))
+  if (!length(m)) return(NA_character_)
+  d <- as.Date(trimws(sub(".*field__item\">", "", m)), format = "%d/%m/%Y")
+  if (is.na(d)) NA_character_ else format(d)
+}
+
+# Official release dates for reference months from..to (YYYY-MM). Release
+# pages give the date only; ABS releases these series at 11:30 Canberra time.
+fetch_abs_release_history <- function(from = "2021-12", to = format(Sys.Date() - 31, "%Y-%m"),
+                                      fetch = fetch_url_text, pause = 0.2, now = Sys.time()) {
+  months <- seq(as.Date(paste0(from, "-01")), as.Date(paste0(to, "-01")), by = "month")
+  rows <- list()
+  for (s in abs_history_series) for (i in seq_along(months)) {
+    for (slug in tolower(s$slugs(months[i]))) {
+      html <- tryCatch(fetch(paste0("https://www.abs.gov.au/", s$path, "/", slug)), error = function(e) NULL)
+      Sys.sleep(pause)
+      date <- if (is.null(html)) NA_character_ else parse_release_page_date(html)
+      if (!is.na(date)) {
+        rows[[length(rows) + 1L]] <- data.frame(dataset = s$dataset, release_date = date, release_time = "11:30",
+          title = paste0(s$dataset, " (", format(months[i], "%b %Y"), ")"), source = abs_page_source,
+          updated_at = format(now, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"), stringsAsFactors = FALSE)
+        break
+      }
+    }
+  }
+  normalise_calendar(do.call(rbind, rows))
+}
+
+update_abs_release_history <- function(path = abs_calendar_file, ...) {
+  hist <- fetch_abs_release_history(...)
+  message("ABS release pages: ", nrow(hist), " historical releases (",
+          paste(names(table(hist$dataset)), table(hist$dataset), sep = " ", collapse = ", "), ")")
+  merged <- resolve_calendar_conflicts(normalise_calendar(rbind(hist, read_abs_calendar_file(path),
+                                                                line_chart_abs_releases())))
+  write_abs_calendar_file(merged, path)
   invisible(merged)
 }
 
@@ -300,6 +378,8 @@ abs_calendar_cli <- function(args = commandArgs(TRUE)) {
     out("in_window", tolower(in_rapid_window(now, from = opt("from", "10:40"), to = opt("to", "11:45"))))
   } else if (cmd == "refresh") {
     refresh_abs_calendar()
+  } else if (cmd == "history") {
+    update_abs_release_history(from = opt("from", "2021-12"), to = opt("to", format(Sys.Date() - 31, "%Y-%m")))
   } else stop("Unknown command: ", cmd)
 }
 

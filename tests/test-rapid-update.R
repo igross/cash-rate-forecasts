@@ -29,7 +29,16 @@ check("calendar reuses the line-chart release table", nrow(line_chart_abs_releas
 check("CPI release day detected (25 Nov 2026)", identical(abs_releases_on("2026-11-25", cal)$dataset, "CPI"))
 check("Labour Force release day detected (17 Dec 2026)", "Labour Force" %in% abs_releases_on("2026-12-17", cal)$dataset)
 check("GDP release day detected (2 Dec 2026)", "National Accounts" %in% abs_releases_on("2026-12-02", cal)$dataset)
-check("WPI release day detected (17 Feb 2027)", "WPI" %in% abs_releases_on("2027-02-17", cal)$dataset)
+check("WPI release day from the ABS calendar (23 Feb 2027)", "WPI" %in% abs_releases_on("2027-02-23", cal)$dataset)
+check("hand-kept dates ABS does not confirm are superseded (CPI 30 Dec 2026, WPI 17 Feb 2027)",
+      !nrow(abs_releases_on("2026-12-30", cal)) && !nrow(abs_releases_on("2027-02-17", cal)) &&
+        "CPI" %in% abs_releases_on("2027-01-06", cal)$dataset)
+check("historical releases come from ABS release pages (LF 20 Jan 2022, CPI indicator 26 Oct 2022)",
+      any(cal$dataset == "Labour Force" & cal$release_date == "2022-01-20" & cal$source == abs_page_source) &&
+        any(cal$dataset == "CPI Indicator" & cal$release_date == "2022-10-26" & cal$source == abs_page_source))
+check("release page parser reads 'Released dd/mm/yyyy'",
+      identical(parse_release_page_date('<div class="field__label">Released</div><div class="field__item"> 18/01/2024</div>'), "2024-01-18") &&
+        is.na(parse_release_page_date("<html>no date</html>")))
 check("non-release day not detected (26 Nov 2026)", nrow(abs_releases_on("2026-11-26", cal)) == 0)
 check("non-significant dataset ignored",
       nrow(abs_releases_on("2026-11-27", rbind(cal, data.frame(dataset = "Building Approvals", release_date = "2026-11-27",
@@ -62,12 +71,16 @@ tmp_cal <- tempfile(fileext = ".csv")
 write_abs_calendar_file(cal, tmp_cal)
 suppressMessages(refresh_abs_calendar(tmp_cal, fetch = function(url) stop("offline"), now = mel("2026-11-25 03:00")))
 check("calendar refresh keeps entries when ABS is unreachable", nrow(read_abs_calendar_file(tmp_cal)) >= nrow(cal))
-suppressMessages(refresh_abs_calendar(tmp_cal, fetch = function(url) if (grepl("page=", url)) "<html></html>" else page,
-                                      now = mel("2026-11-25 03:00")))
+urls <- character()
+suppressMessages(refresh_abs_calendar(tmp_cal, fetch = function(url) {
+  urls <<- c(urls, url); if (grepl("/202701$", url)) page else if (grepl("/2027", url)) "<html></html>" else "<div class=\"views-row\"></div>"
+}, now = mel("2026-11-25 03:00")))
 merged <- read_abs_calendar_file(tmp_cal)
-check("calendar refresh adds new ABS releases (incl. household spending)",
+check("calendar refresh walks month pages (YYYYMM) until the published horizon ends",
+      identical(sub(".*/", "", urls), c("202611", "202612", "202701", "202702")))
+check("calendar refresh adds new ABS releases (incl. household spending) and they take precedence",
       any(merged$dataset == "Household Spending" & merged$release_date == "2027-02-04") &&
-        any(merged$dataset == "CPI" & merged$release_date == "2026-12-30"))
+        any(merged$dataset == "CPI" & merged$release_date == "2027-01-27" & merged$source == abs_source))
 check("session dedupe reads the rapid log",
       rapid_session_logged("2026-11-25", log = data.frame(release_date = "2026-11-25", mode = "release", iteration = "2", status = "published")) &&
         !rapid_session_logged("2026-11-25", log = data.frame(release_date = "2026-11-25", mode = "release", iteration = "1", status = "missed")))
