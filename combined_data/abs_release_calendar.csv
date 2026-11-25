@@ -1,7 +1,7 @@
 "dataset","release_date","release_time","title","source","updated_at"
 "Labour Force","2025-01-16","11:30",,"R/line_chart.R",
-"CPI Indicator","2025-01-29","11:30",,"R/line_chart.R",
 "CPI","2025-01-29","11:30",,"R/line_chart.R",
+"CPI Indicator","2025-01-29","11:30",,"R/line_chart.R",
 "WPI","2025-02-19","11:30",,"R/line_chart.R",
 "Labour Force","2025-02-20","11:30",,"R/line_chart.R",
 "CPI Indicator","2025-02-26","11:30",,"R/line_chart.R",
@@ -9,8 +9,8 @@
 "Labour Force","2025-03-20","11:30",,"R/line_chart.R",
 "CPI Indicator","2025-03-26","11:30",,"R/line_chart.R",
 "Labour Force","2025-04-17","11:30",,"R/line_chart.R",
-"CPI Indicator","2025-04-30","11:30",,"R/line_chart.R",
 "CPI","2025-04-30","11:30",,"R/line_chart.R",
+"CPI Indicator","2025-04-30","11:30",,"R/line_chart.R",
 "WPI","2025-05-14","11:30",,"R/line_chart.R",
 "Labour Force","2025-05-15","11:30",,"R/line_chart.R",
 "CPI Indicator","2025-05-28","11:30",,"R/line_chart.R",
@@ -18,8 +18,8 @@
 "Labour Force","2025-06-19","11:30",,"R/line_chart.R",
 "CPI Indicator","2025-06-25","11:30",,"R/line_chart.R",
 "Labour Force","2025-07-17","11:30",,"R/line_chart.R",
-"CPI Indicator","2025-07-30","11:30",,"R/line_chart.R",
 "CPI","2025-07-30","11:30",,"R/line_chart.R",
+"CPI Indicator","2025-07-30","11:30",,"R/line_chart.R",
 "WPI","2025-08-13","11:30",,"R/line_chart.R",
 "Labour Force","2025-08-14","11:30",,"R/line_chart.R",
 "CPI Indicator","2025-08-27","11:30",,"R/line_chart.R",
@@ -62,7 +62,7 @@
 "WPI","2026-11-18","11:30",,"R/line_chart.R",
 "Labour Force","2026-11-19","11:30",,"R/line_chart.R",
 "CPI","2026-11-25","11:30",,"R/line_chart.R",
-"Household Spending","2026-11-30","11:30","Monthly Household Spending Indicator","abs.gov.au release calendar","2026-11-25T01:50:13Z"
+"Household Spending","2026-11-30","11:30","Monthly Household Spending Indicator","abs.gov.au release calendar","2026-11-25T02:34:19Z"
 "National Accounts","2026-12-02","11:30",,"R/line_chart.R",
 "Labour Force","2026-12-17","11:30",,"R/line_chart.R",
 "CPI","2027-01-06","11:30",,"R/line_chart.R",
