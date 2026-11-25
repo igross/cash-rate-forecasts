@@ -73,13 +73,22 @@ cash_rate <- cash_rate %>%
 
 cat("Updated scrape_time timezone to:", attr(cash_rate$scrape_time, "tzone"), "\n")
 
-# Meeting schedule
+# Meeting schedule. All meetings are needed, not only those evaluated: the
+# implied rate for a meeting is chained through every meeting before it.
 meeting_schedule <- tibble(
   meeting_date = as.Date(c(
+    "2022-02-01", "2022-03-01", "2022-04-05", "2022-05-03", "2022-06-07", "2022-07-05",
+    "2022-08-02", "2022-09-06", "2022-10-04", "2022-11-01", "2022-12-06",
+    "2023-02-07", "2023-03-07", "2023-04-04", "2023-05-02", "2023-06-06", "2023-07-04",
+    "2023-08-01", "2023-09-05", "2023-10-03", "2023-11-07", "2023-12-05",
     "2024-02-06", "2024-03-19", "2024-05-07", "2024-06-18",
     "2024-08-06", "2024-09-24", "2024-11-05", "2024-12-10",
     "2025-02-18", "2025-04-01", "2025-05-20", "2025-07-08",
-    "2025-08-12", "2025-09-30", "2025-11-04", "2025-12-09"
+    "2025-08-12", "2025-09-30", "2025-11-04", "2025-12-09",
+    "2026-02-03", "2026-03-17", "2026-05-05", "2026-06-16",
+    "2026-08-11", "2026-09-29", "2026-11-03", "2026-12-08",
+    "2027-02-09", "2027-03-23", "2027-05-04", "2027-06-22",
+    "2027-08-10", "2027-09-21", "2027-11-02", "2027-12-14"
   ))
 ) %>% 
   mutate(
@@ -87,7 +96,8 @@ meeting_schedule <- tibble(
       day(meeting_date) >= days_in_month(meeting_date) - 1,
       ceiling_date(meeting_date, "month"),
       floor_date(meeting_date, "month")
-    )
+    ),
+    decision_time = as.POSIXct(paste(meeting_date, "14:30:00"), tz = "Australia/Melbourne")
   )
 
 # CPI release schedule (quarterly CPI and monthly indicator)
@@ -107,6 +117,12 @@ library(readrba)
 rba_actual <- read_rba(series_id = "FIRMMCRTD") %>%
   arrange(date)
 
+# Cash rate target in force on a date (last published value on or before it).
+rate_on <- function(d) {
+  i <- findInterval(as.numeric(d), as.numeric(rba_actual$date))
+  ifelse(i > 0, rba_actual$value[pmax(i, 1)], NA_real_)
+}
+
 meeting_outcomes <- meeting_schedule %>%
   rowwise() %>%
   mutate(
@@ -120,29 +136,60 @@ meeting_outcomes <- meeting_schedule %>%
   ungroup() %>%
   filter(!is.na(actual_rate))
 
-# Prepare daily forecasts
-daily_forecasts <- cash_rate %>%
-  inner_join(meeting_schedule, by = c("date" = "expiry")) %>%
-  inner_join(
-    meeting_outcomes %>% select(meeting_date, actual_rate),
-    by = "meeting_date"
-  ) %>%
+# Prepare daily forecasts.
+# The forecast evaluated is the futures-implied cash rate AFTER each meeting,
+# computed exactly as R/line_chart.R does for the probability charts: the
+# meeting-month contract is split into its pre- and post-meeting days and the
+# rate is chained through every earlier meeting. (Previously the raw contract
+# rate was compared with the post-meeting rate, which counts the pre-meeting
+# days of the month as "error" whenever the rate changes.) Horizons are
+# measured from the snapshot's Melbourne date, matching the RMSE lookup in
+# R/line_chart.R (previously the ASX previous-settlement date was used).
+snapshots <- cash_rate %>%
+  filter(!is.na(scrape_time), !is.na(cash_rate)) %>%
+  mutate(forecast_date = as.Date(scrape_time, tz = "Australia/Melbourne")) %>%
+  filter(lubridate::wday(forecast_date, week_start = 1) %in% 1:5) %>%   # weekdays only
+  group_by(forecast_date) %>%
+  filter(scrape_time == max(scrape_time)) %>%                         # latest snapshot each day
+  ungroup()
+
+# Rate in force at each snapshot: a decision announced at 14:30 applies to
+# snapshots taken after the announcement.
+decided_today <- function(t) {
+  d <- as.Date(t, tz = "Australia/Melbourne")
+  d %in% meeting_schedule$meeting_date &
+    t >= as.POSIXct(paste(d, "14:30:00"), tz = "Australia/Melbourne")
+}
+
+implied_paths <- snapshots %>%
+  group_by(scrape_time, forecast_date) %>%
+  group_modify(function(snap, key) {
+    scr <- key$scrape_time
+    start_rate <- rate_on(key$forecast_date + decided_today(scr))
+    mt <- meeting_schedule[meeting_schedule$decision_time > scr, ]
+    mt$forecast_rate <- snap$cash_rate[match(mt$expiry, snap$date)]
+    mt <- mt[!is.na(mt$forecast_rate), ]
+    if (!nrow(mt) || is.na(start_rate)) return(tibble())
+    implied <- numeric(nrow(mt))
+    prev <- start_rate
+    for (i in seq_len(nrow(mt))) {
+      nb <- if (mt$meeting_date[i] < mt$expiry[i]) 0 else (day(mt$meeting_date[i]) - 1) / days_in_month(mt$expiry[i])
+      implied[i] <- (mt$forecast_rate[i] - prev * nb) / (1 - nb)
+      prev <- implied[i]
+    }
+    tibble(meeting_date = mt$meeting_date, contract_rate = mt$forecast_rate, implied_rate = implied)
+  }) %>%
+  ungroup()
+
+daily_forecasts <- implied_paths %>%
+  inner_join(meeting_outcomes %>% select(meeting_date, actual_rate), by = "meeting_date") %>%
   mutate(
-    forecast_date = coalesce(scrape_date, as.Date(scrape_time)),
     days_ahead = as.integer(meeting_date - forecast_date),
-    forecast_rate = cash_rate,
+    forecast_rate = implied_rate,
     forecast_error = forecast_rate - actual_rate,
-    day_of_week = lubridate::wday(forecast_date, week_start = 1),
     cpi_release_window = forecast_date %in% cpi_release_dates |
       forecast_date %in% (cpi_release_dates - days(1))
   ) %>%
-  # Remove weekends (Saturday = 6, Sunday = 7)
-  filter(day_of_week %in% 1:5) %>%
-  # Keep only one forecast per day per meeting
-  arrange(meeting_date, forecast_date, desc(scrape_time)) %>%
-  group_by(meeting_date, forecast_date) %>%
-  slice(1) %>%
-  ungroup() %>%
   filter(days_ahead > 0) %>%
   select(
     forecast_date, meeting_date, days_ahead, forecast_rate, actual_rate,
