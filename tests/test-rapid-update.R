@@ -29,7 +29,11 @@ check("calendar reuses the line-chart release table", nrow(line_chart_abs_releas
 check("CPI release day detected (25 Nov 2026)", identical(abs_releases_on("2026-11-25", cal)$dataset, "CPI"))
 check("Labour Force release day detected (17 Dec 2026)", "Labour Force" %in% abs_releases_on("2026-12-17", cal)$dataset)
 check("GDP release day detected (2 Dec 2026)", "National Accounts" %in% abs_releases_on("2026-12-02", cal)$dataset)
-check("WPI release day detected (17 Feb 2027)", "WPI" %in% abs_releases_on("2027-02-17", cal)$dataset)
+check("CPI release day detected (6 Jan 2027)", "CPI" %in% abs_releases_on("2027-01-06", cal)$dataset)
+check("WPI release day detected (23 Feb 2027)", "WPI" %in% abs_releases_on("2027-02-23", cal)$dataset)
+check("superseded CPI and WPI dates do not trigger those series",
+      !("CPI" %in% abs_releases_on("2026-12-30", cal)$dataset) &&
+        !("WPI" %in% abs_releases_on("2027-02-17", cal)$dataset))
 check("non-release day not detected (26 Nov 2026)", nrow(abs_releases_on("2026-11-26", cal)) == 0)
 check("non-significant dataset ignored",
       nrow(abs_releases_on("2026-11-27", rbind(cal, data.frame(dataset = "Building Approvals", release_date = "2026-11-27",
@@ -67,7 +71,12 @@ suppressMessages(refresh_abs_calendar(tmp_cal, fetch = function(url) if (grepl("
 merged <- read_abs_calendar_file(tmp_cal)
 check("calendar refresh adds new ABS releases (incl. household spending)",
       any(merged$dataset == "Household Spending" & merged$release_date == "2027-02-04") &&
-        any(merged$dataset == "CPI" & merged$release_date == "2026-12-30"))
+        any(merged$dataset == "CPI" & merged$release_date == "2027-01-27"))
+check("calendar refresh preserves corrected dates without resurrecting old dates",
+      "CPI" %in% abs_releases_on("2027-01-06", merged)$dataset &&
+        "WPI" %in% abs_releases_on("2027-02-23", merged)$dataset &&
+        !("CPI" %in% abs_releases_on("2026-12-30", merged)$dataset) &&
+        !("WPI" %in% abs_releases_on("2027-02-17", merged)$dataset))
 check("session dedupe reads the rapid log",
       rapid_session_logged("2026-11-25", log = data.frame(release_date = "2026-11-25", mode = "release", iteration = "2", status = "published")) &&
         !rapid_session_logged("2026-11-25", log = data.frame(release_date = "2026-11-25", mode = "release", iteration = "1", status = "missed")))
