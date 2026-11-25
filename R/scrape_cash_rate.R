@@ -63,26 +63,36 @@ write_csv(new_data, out_file)
 write_market_feed(new_data, "docs/data/cash-rate-latest.json")
 
 
-# 1. list your files
-files <- list.files(
-  path       = "daily_data",
-  pattern    = "\\.csv$",
-  full.names = TRUE
-)
-
-# 2-3. read every file and bind them into one data-frame (full rebuild)
-all_data <- rebuild_all_data(files)
-
-# 5. ensure the output folder exists
+# Combined dataset. Frequent runs append only the new snapshot(s) to
+# all_data.Rds / cash_rate.csv (identical result, seconds instead of a minute);
+# a full rebuild from every daily CSV runs when FULL_REBUILD is set (daily
+# scheduled run, pushes, manual runs) or when the dataset is missing.
 if (!dir.exists("combined_data")) {
   dir.create("combined_data", recursive = TRUE)
 }
+full_rebuild <- nzchar(Sys.getenv("FULL_REBUILD")) || !file.exists("combined_data/all_data.Rds")
+
+if (full_rebuild) {
+  files <- list.files(
+    path       = "daily_data",
+    pattern    = "\\.csv$",
+    full.names = TRUE
+  )
+  all_data <- rebuild_all_data(files)
+  saveRDS(all_data, file = "combined_data/all_data.Rds")
+  write_csv(all_data,  file = "combined_data/cash_rate.csv")
+} else {
+  previous <- readRDS("combined_data/all_data.Rds")
+  caught <- catch_up_dataset(previous)
+  all_data <- caught$all_data
+  cat("Incremental update: appended", length(caught$files), "snapshot file(s)\n")
+  if (length(caught$files)) {
+    saveRDS(all_data, file = "combined_data/all_data.Rds")
+    append_cash_rate_csv(all_data, all_data[(nrow(previous) + 1):nrow(all_data), ])
+  }
+}
 
 tail(all_data,20)
-
-# 6. save
-saveRDS(all_data, file = "combined_data/all_data.Rds")
-write_csv(all_data,  file = "combined_data/cash_rate.csv")
 
 
 # =============================================
@@ -125,12 +135,11 @@ archive_data %>%
                        format(scrape_date, "%Y-%m-%d"),
                        format(scrape_time, "%H%M"))
     
-    # Ensure directory exists
-    
-    # Write to CSV
-    write_csv(output_data, filename)
-    
-    cat("Created:", filename, "\n")
+    # Archive files never change: write only those that are missing.
+    if (!file.exists(filename)) {
+      write_csv(output_data, filename)
+      cat("Created:", filename, "\n")
+    }
   })
 
 cat("\nConversion complete!\n")

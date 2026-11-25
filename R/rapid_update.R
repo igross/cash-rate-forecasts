@@ -191,24 +191,6 @@ rapid_load_packages <- function() {
   if ("conflicted" %in% loadedNamespaces()) conflicted::conflict_prefer_all("dplyr", quiet = TRUE)
 }
 
-# Append any daily CSV newer than the dataset (e.g. after a resync), in
-# filename order, so all_data matches a full rebuild without performing one.
-catch_up_dataset <- function(all_data, dir = "daily_data") {
-  latest <- max(all_data$scrape_time, na.rm = TRUE)
-  files <- sort(list.files(dir, pattern = "^scraped_cash_rate_.*[.]csv$", full.names = TRUE))
-  stamp <- as.POSIXct(sub("^scraped_cash_rate_(.*)[.]csv$", "\\1", basename(files)),
-                      format = "%Y-%m-%d_%H%M", tz = rapid_tz)
-  cand <- files[!is.na(stamp) & stamp >= latest - 120]
-  if (!length(cand)) return(list(all_data = all_data, files = character()))
-  known <- unique(as.numeric(all_data$scrape_time))
-  keep <- cand[vapply(cand, function(f) {
-    st <- read_scrape_file(f)$scrape_time
-    any(!is.na(st)) && !any(round(as.numeric(st)) %in% round(known))
-  }, logical(1))]
-  if (!length(keep)) return(list(all_data = all_data, files = character()))
-  list(all_data = append_scrape_files(all_data, keep)$all_data, files = keep)
-}
-
 latest_signature <- function(all_data) {
   t <- max(all_data$scrape_time, na.rm = TRUE)
   market_signature(all_data[all_data$scrape_time == t, , drop = FALSE])

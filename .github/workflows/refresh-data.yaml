@@ -65,15 +65,28 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install --cask xquartz
 
-      - name: Install vctrs
-        run: Rscript -e 'install.packages("vctrs")'
+      # R packages are cached and refreshed weekly (new key each ISO week, no
+      # fallback key) instead of being reinstalled on every run.
+      - name: Weekly package cache key
+        id: rcache
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
 
-      - name: Install packages
-        run: Rscript -e 'install.packages(c("tidyverse","here","jsonlite","ggrepel","viridis","conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo","vroom"))'
+      - name: Restore R package cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: refresh-${{ runner.os }}-${{ runner.arch }}-${{ steps.rcache.outputs.week }}-${{ hashFiles('.github/workflows/refresh-data.yaml') }}
+
+      - name: Install packages (only those missing from the cache)
+        run: Rscript -e 'pk <- c("vctrs","tidyverse","here","jsonlite","ggrepel","viridis","conflicted","tidyr","scales","readabs","readrba","plotly","purrr","cachem","dplyr","ggpattern","ggtext","zoo","vroom"); miss <- pk[!pk %in% rownames(installed.packages())]; if (length(miss)) install.packages(miss)'
 
       # ── Always: scrape data ────────────────────────────────────────────
       - name: Get data
         if: ${{ github.event_name != 'pull_request' }}
+        env:
+          # Full rebuild from every daily CSV on the daily run, pushes and manual
+          # runs; the frequent runs append only the new snapshot (same result).
+          FULL_REBUILD: ${{ (github.event_name != 'schedule' || github.event.schedule == '0 3 * * *') && '1' || '' }}
         run: Rscript -e 'source(here::here("R","scrape_cash_rate.R"), echo = TRUE)'
 
       # ── Daily: maintain the ABS release calendar used by rapid updates ──

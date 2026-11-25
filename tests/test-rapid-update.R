@@ -330,8 +330,9 @@ if (!have_chart_pkgs) {
 # 8. Workflows: shared concurrency group, gate, manual trigger
 # ------------------------------------------------------------------------------
 if (requireNamespace("yaml", quietly = TRUE)) {
-  rapid_wf <- yaml::read_yaml(".github/workflows/rapid-update.yaml")
-  regular_wf <- yaml::read_yaml(".github/workflows/refresh-data.yaml")
+  read_wf <- function(f) yaml::yaml.load(paste(readLines(f, encoding = "UTF-8", warn = FALSE), collapse = "\n"))
+  rapid_wf <- read_wf(".github/workflows/rapid-update.yaml")
+  regular_wf <- read_wf(".github/workflows/refresh-data.yaml")
   on_rapid <- rapid_wf[["on"]] %||% rapid_wf[["TRUE"]]  # YAML 1.1 reads `on` as TRUE
   on_regular <- regular_wf[["on"]] %||% regular_wf[["TRUE"]]
   check("rapid and regular publishing share one non-cancelling concurrency group",

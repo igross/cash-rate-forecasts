@@ -47,6 +47,12 @@ csv_files <- c(
 ) %>%
   unique()
 
+# Performance: only files dated on/after the latest RDS scrape can hold newer
+# rows (file names carry the local scrape date), so the other ~12k files are
+# not re-read. The filters below are unchanged.
+file_dates <- as.Date(sub("^scraped_cash_rate_(\\d{4}-\\d{2}-\\d{2})_.*$", "\\1", basename(csv_files)))
+csv_files <- csv_files[is.na(file_dates) | file_dates >= latest_rds_scrape - 1]
+
 if (length(csv_files) > 0) {
   csv_data <- purrr::map_dfr(csv_files, function(f) {
     readr::read_csv(f, show_col_types = FALSE) %>%
@@ -213,53 +219,53 @@ scrapes_daily <- all_dates
 rba_historical <- read_rba(series_id = "FIRMMCRTD") %>%
   arrange(date)
 
-all_list_area <- map(all_dates, function(scr_date) {
-  historical_rate <- rba_historical %>%
-    filter(date <= scr_date) %>%
-    slice_max(date, n = 1, with_ties = FALSE) %>%
-    pull(value)
-  
-  snapshot_time <- max(cash_rate_daily$scrape_time[cash_rate_daily$scrape_date == scr_date])
+# Performance: rows are indexed by date once and each day's chain is computed
+# on plain vectors; the join keeps left_join semantics (duplicate contracts).
+sched <- meeting_schedule %>% distinct(expiry, meeting_date)
+sched_decision <- as.POSIXct(paste(sched$meeting_date, "14:30:00"), tz = "Australia/Sydney")
+sched_nb <- (day(sched$meeting_date) - 1) / days_in_month(sched$expiry)
+sched_before_expiry <- sched$meeting_date < sched$expiry
+rows_by_date <- split(seq_len(nrow(cash_rate_daily)), match(cash_rate_daily$scrape_date, all_dates))
+
+all_list_area <- map(seq_along(all_dates), function(k) {
+  scr_date <- all_dates[k]
+  idx <- rows_by_date[[k]]
+  snapshot_time <- max(cash_rate_daily$scrape_time[idx])
   initial_rt_at_scrape <- rba_rate_at_snapshot(snapshot_time, policy_state, rba_historical)
-  
-  df_rates <- cash_rate_daily %>% 
-    filter(scrape_date == scr_date) %>%
-    select(expiry = date, forecast_rate = cash_rate, scrape_date)
-  
-  df <- meeting_schedule %>%
-    distinct(expiry, meeting_date) %>%
-    mutate(scrape_date = scr_date) %>%
-    left_join(df_rates, by = "expiry") %>%
-    arrange(expiry) %>%
-    filter(!is.na(forecast_rate), as.POSIXct(paste(meeting_date, "14:30:00"), tz = "Australia/Sydney") > snapshot_time)
-  
-  if (nrow(df) == 0) return(NULL)
-  
+
+  rate_dates <- cash_rate_daily$date[idx]
+  hits <- lapply(sched$expiry, function(e) { w <- which(rate_dates == e); if (length(w)) w else NA_integer_ })
+  si <- rep(seq_len(nrow(sched)), lengths(hits))
+  forecast_rate <- cash_rate_daily$cash_rate[idx][unlist(hits)]
+  ord <- order(sched$expiry[si])                         # arrange(expiry), stable
+  si <- si[ord]; forecast_rate <- forecast_rate[ord]
+  keep <- !is.na(forecast_rate) & sched_decision[si] > snapshot_time
+  si <- si[keep]; forecast_rate <- forecast_rate[keep]
+  if (length(si) == 0) return(NULL)
+
+  implied <- previous <- numeric(length(si))
   prev_implied <- NA_real_
-  out <- vector("list", nrow(df))
-  
-  for (i in seq_len(nrow(df))) {
-    row <- df[i, ]
+  for (i in seq_along(si)) {
     rt_in <- if (is.na(prev_implied)) initial_rt_at_scrape else prev_implied
-    
-    r_tp1 <- if (row$meeting_date < row$expiry) {
-      row$forecast_rate
+    j <- si[i]
+    r_tp1 <- if (sched_before_expiry[j]) {
+      forecast_rate[i]
     } else {
-      nb <- (day(row$meeting_date)-1) / days_in_month(row$expiry)
+      nb <- sched_nb[j]
       na <- 1 - nb
-      (row$forecast_rate - rt_in * nb) / na
+      (forecast_rate[i] - rt_in * nb) / na
     }
-    
-    out[[i]] <- tibble(
-      scrape_date = scr_date,
-      meeting_date = row$meeting_date,
-      implied_mean = r_tp1,
-      days_to_meeting = as.integer(row$meeting_date - scr_date),
-      previous_rate = rt_in
-    )
+    implied[i] <- r_tp1
+    previous[i] <- rt_in
     prev_implied <- r_tp1
   }
-  bind_rows(out)
+  tibble(
+    scrape_date = scr_date,
+    meeting_date = sched$meeting_date[si],
+    implied_mean = implied,
+    days_to_meeting = as.integer(sched$meeting_date[si] - scr_date),
+    previous_rate = previous
+  )
 })
 
 all_estimates_area <- all_list_area %>%
@@ -292,22 +298,26 @@ bucket_max <- 6.1
 bucket_centers_ext <- seq(bucket_min, bucket_max, by = 0.25)
 half_width_ext <- 0.125
 
-cat("Creating extended buckets for", nrow(all_estimates_area), "estimate rows\n")
+# Performance: bucket probabilities are only used for the meetings processed
+# below, so they are computed for those rows only, into vectors.
+processed_meetings <- sort(unique(meeting_schedule$meeting_date[meeting_schedule$meeting_date >= as.Date(policy_state$nextMeeting)]))
+est_ext <- all_estimates_area[all_estimates_area$meeting_date %in% processed_meetings, ]
+cat("Creating extended buckets for", nrow(est_ext), "estimate rows\n")
 
-bucket_list_ext <- vector("list", nrow(all_estimates_area))
-for (i in seq_len(nrow(all_estimates_area))) {
-  mu_i <- all_estimates_area$implied_mean[i]
-  sigma_i <- all_estimates_area$stdev[i]
-  d_i <- all_estimates_area$days_to_meeting[i]
+n_b <- length(bucket_centers_ext)
+ext_ok <- logical(nrow(est_ext))
+ext_sigma <- numeric(nrow(est_ext))
+ext_prob <- matrix(0, n_b, nrow(est_ext))
+for (i in seq_len(nrow(est_ext))) {
+  mu_i <- est_ext$implied_mean[i]
+  sigma_i <- est_ext$stdev[i]
+  d_i <- est_ext$days_to_meeting[i]
 
   if (!is.finite(mu_i)) next
   if (!is.finite(sigma_i) || sigma_i <= 0) sigma_i <- sd_fallback
 
-  p_vec <- sapply(bucket_centers_ext, function(b) {
-    lower <- b - half_width_ext
-    upper <- b + half_width_ext
-    pnorm(upper, mean = mu_i, sd = sigma_i) - pnorm(lower, mean = mu_i, sd = sigma_i)
-  })
+  p_vec <- pnorm(bucket_centers_ext + half_width_ext, mean = mu_i, sd = sigma_i) -
+    pnorm(bucket_centers_ext - half_width_ext, mean = mu_i, sd = sigma_i)
 
   p_vec[!is.finite(p_vec) | p_vec < 0] <- 0
   p_vec[p_vec < 0.01] <- 0
@@ -331,18 +341,22 @@ for (i in seq_len(nrow(all_estimates_area))) {
   blend <- blend_weight(d_i)
   v <- blend * l_vec + (1 - blend) * p_vec
 
-  bucket_list_ext[[i]] <- tibble::tibble(
-    scrape_date = all_estimates_area$scrape_date[i],
-    meeting_date = all_estimates_area$meeting_date[i],
-    implied_mean = mu_i,
-    stdev = sigma_i,
-    days_to_meeting = d_i,
-    bucket = bucket_centers_ext,
-    probability = v
-  )
+  ext_ok[i] <- TRUE
+  ext_sigma[i] <- sigma_i
+  ext_prob[, i] <- v
 }
 
-all_estimates_buckets_ext <- dplyr::bind_rows(bucket_list_ext) %>%
+ok_i <- which(ext_ok)
+row_i <- rep(ok_i, each = n_b)
+all_estimates_buckets_ext <- tibble::tibble(
+  scrape_date = est_ext$scrape_date[row_i],
+  meeting_date = est_ext$meeting_date[row_i],
+  implied_mean = est_ext$implied_mean[row_i],
+  stdev = rep(ext_sigma[ok_i], each = n_b),
+  days_to_meeting = est_ext$days_to_meeting[row_i],
+  bucket = rep(bucket_centers_ext, length(ok_i)),
+  probability = as.vector(ext_prob[, ok_i, drop = FALSE])
+) %>%
   dplyr::mutate(
     diff_bps = as.integer(round((bucket - current_center_ext) * 100L)),
     diff_bps = pmax(pmin(diff_bps, bp_span), -bp_span),
@@ -834,19 +848,14 @@ for (mt in as.character(meetings_to_process)) {
   heat_matrix <- heat_matrix %>% dplyr::select(-scrape_date)
   
   # Create custom hover text
-  hover_text <- matrix("", nrow = nrow(heat_matrix), ncol = ncol(heat_matrix))
-  for (i in seq_len(nrow(heat_matrix))) {
-    for (j in seq_len(ncol(heat_matrix))) {
-      prob_val <- heat_matrix[i, j]
-      if (!is.na(prob_val)) {
-        hover_text[i, j] <- paste0(
-          "Date: ", format(dates[i], "%d %b %Y"), "<br>",
-          "Cash Rate: ", colnames(heat_matrix)[j], "<br>",
-          "Probability: ", sprintf("%.1f%%", prob_val * 100)
-        )
-      }
-    }
-  }
+  # Performance: built in one vectorised step (was a cell-by-cell tibble loop).
+  prob_m <- as.matrix(heat_matrix)
+  hover_text <- matrix(paste0(
+    "Date: ", format(dates, "%d %b %Y")[row(prob_m)], "<br>",
+    "Cash Rate: ", colnames(heat_matrix)[col(prob_m)], "<br>",
+    "Probability: ", sprintf("%.1f%%", prob_m * 100)
+  ), nrow = nrow(prob_m))
+  hover_text[is.na(prob_m)] <- ""
   
   filename_html <- paste0("docs/meetings/daily_heatmap_", fmt_file(meeting_date_proper), ".html")
   

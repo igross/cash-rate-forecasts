@@ -91,50 +91,56 @@ scrapes <- all_times
 # ----------------------------------------------------------------------------
 # Implied rate calculations for every scrape × meeting
 # ----------------------------------------------------------------------------
-all_list <- map(scrapes, function(scr) {
+# Performance: rows are indexed by scrape once (instead of filtering the full
+# dataset for every scrape) and each scrape's chain is computed on plain
+# vectors (instead of a one-row tibble per meeting). The join below keeps
+# left_join semantics exactly, including duplicate contract rows.
+sched <- meeting_schedule %>% distinct(expiry, meeting_date)
+sched_decision <- as.POSIXct(paste(sched$meeting_date, "14:30:00"), tz = "Australia/Sydney")
+sched_nb <- (day(sched$meeting_date) - 1) / days_in_month(sched$expiry)
+sched_before_expiry <- sched$meeting_date < sched$expiry
+rows_by_scrape <- split(seq_len(nrow(cash_rate)), match(cash_rate$scrape_time, scrapes))
+
+all_list <- map(seq_along(scrapes), function(k) {
+  scr <- scrapes[k]
   scr_date <- as.Date(scr, tz = "Australia/Sydney")
   snapshot_rate <- rba_rate_at_snapshot(scr, policy_state, rba_historical)
 
-  df_rates <- cash_rate %>%
-    filter(scrape_time == scr) %>%
-    select(expiry = date, forecast_rate = cash_rate, scrape_time)
+  idx <- rows_by_scrape[[k]]
+  rate_dates <- cash_rate$date[idx]
+  hits <- lapply(sched$expiry, function(e) { w <- which(rate_dates == e); if (length(w)) w else NA_integer_ })
+  si <- rep(seq_len(nrow(sched)), lengths(hits))
+  forecast_rate <- cash_rate$cash_rate[idx][unlist(hits)]
+  ord <- order(sched$expiry[si])                         # arrange(expiry), stable
+  si <- si[ord]; forecast_rate <- forecast_rate[ord]
+  keep <- !is.na(forecast_rate) & sched_decision[si] > scr
+  si <- si[keep]; forecast_rate <- forecast_rate[keep]
+  if (length(si) == 0) return(NULL)
 
-  df <- meeting_schedule %>%
-    distinct(expiry, meeting_date) %>%
-    mutate(scrape_time = scr) %>%
-    left_join(df_rates, by = "expiry") %>%
-    arrange(expiry)
-
-  df <- df %>% filter(!is.na(forecast_rate), as.POSIXct(paste(meeting_date, "14:30:00"), tz = "Australia/Sydney") > scr)
-  if (nrow(df) == 0) return(NULL)
-
+  implied <- previous <- numeric(length(si))
   prev_implied <- NA_real_
-  out <- vector("list", nrow(df))
-
-  for (i in seq_len(nrow(df))) {
-    row <- df[i, ]
+  for (i in seq_along(si)) {
     rt_in <- if (is.na(prev_implied)) snapshot_rate else prev_implied
-
-    r_tp1 <- if (row$meeting_date < row$expiry) {
-      row$forecast_rate
+    j <- si[i]
+    r_tp1 <- if (sched_before_expiry[j]) {
+      forecast_rate[i]
     } else {
-      nb <- (day(row$meeting_date) - 1) / days_in_month(row$expiry)
+      nb <- sched_nb[j]
       na <- 1 - nb
-      (row$forecast_rate - rt_in * nb) / na
+      (forecast_rate[i] - rt_in * nb) / na
     }
-
-    out[[i]] <- tibble(
-      scrape_time = scr,
-      meeting_date = row$meeting_date,
-      implied_mean = r_tp1,
-      days_to_meeting = as.integer(row$meeting_date - scr_date),
-      previous_rate = rt_in
-    )
-
+    implied[i] <- r_tp1
+    previous[i] <- rt_in
     prev_implied <- r_tp1
   }
 
-  bind_rows(out)
+  tibble(
+    scrape_time = scr,
+    meeting_date = sched$meeting_date[si],
+    implied_mean = implied,
+    days_to_meeting = as.integer(sched$meeting_date[si] - scr_date),
+    previous_rate = previous
+  )
 })
 
 all_estimates <- all_list %>%
@@ -163,18 +169,22 @@ bucket_centers <- seq(0.10, 6.10, by = 0.25)
 half_width <- 0.125
 current_center <- bucket_centers[which.min(abs(bucket_centers - current_rate))]
 
-bucket_list <- vector("list", nrow(all_estimates))
+# Only future meetings are charted below, so probabilities are computed for
+# those rows only; the "as of" time still uses every scrape.
+future_meetings <- meeting_schedule$meeting_date[meeting_schedule$meeting_date >= as.Date(policy_state$nextMeeting)]
+as_of_time <- with_tz(as.POSIXct(max(all_estimates$scrape_time)), tz = "Australia/Sydney")
+all_estimates <- all_estimates %>% filter(meeting_date %in% future_meetings)
+
+n_b <- length(bucket_centers)
+lin_mat <- prob_mat <- blend_mat <- matrix(0, n_b, nrow(all_estimates))
 
 for (i in seq_len(nrow(all_estimates))) {
   mu_i <- all_estimates$implied_mean[i]
   sigma_i <- all_estimates$stdev[i]
   d_i <- all_estimates$days_to_meeting[i]
 
-  p_vec <- sapply(bucket_centers, function(b) {
-    lower <- b - half_width
-    upper <- b + half_width
-    pnorm(upper, mean = mu_i, sd = sigma_i) - pnorm(lower, mean = mu_i, sd = sigma_i)
-  })
+  p_vec <- pnorm(bucket_centers + half_width, mean = mu_i, sd = sigma_i) -
+    pnorm(bucket_centers - half_width, mean = mu_i, sd = sigma_i)
   p_vec[p_vec < 0] <- 0
   p_vec[p_vec < 0.01] <- 0
 
@@ -201,23 +211,24 @@ for (i in seq_len(nrow(all_estimates))) {
   v_total <- sum(v)
   if (v_total > 0) v <- v / v_total
 
-  bucket_list[[i]] <- tibble(
-    scrape_time = all_estimates$scrape_time[i],
-    meeting_date = all_estimates$meeting_date[i],
-    implied_mean = mu_i,
-    stdev = sigma_i,
-    days_to_meeting = d_i,
-    bucket = bucket_centers,
-    probability_linear = l_vec,
-    probability_prob = p_vec,
-    probability = v,
-    diff = bucket_centers - current_rate
-  )
+  lin_mat[, i] <- l_vec
+  prob_mat[, i] <- p_vec
+  blend_mat[, i] <- v
 }
 
-all_estimates_buckets <- bind_rows(bucket_list)
-future_meetings <- meeting_schedule$meeting_date[meeting_schedule$meeting_date >= as.Date(policy_state$nextMeeting)]
-as_of_time <- with_tz(as.POSIXct(max(all_estimates_buckets$scrape_time)), tz = "Australia/Sydney")
+row_i <- rep(seq_len(nrow(all_estimates)), each = n_b)
+all_estimates_buckets <- tibble(
+  scrape_time = all_estimates$scrape_time[row_i],
+  meeting_date = all_estimates$meeting_date[row_i],
+  implied_mean = all_estimates$implied_mean[row_i],
+  stdev = all_estimates$stdev[row_i],
+  days_to_meeting = all_estimates$days_to_meeting[row_i],
+  bucket = rep(bucket_centers, nrow(all_estimates)),
+  probability_linear = as.vector(lin_mat),
+  probability_prob = as.vector(prob_mat),
+  probability = as.vector(blend_mat),
+  diff = rep(bucket_centers, nrow(all_estimates)) - current_rate
+)
 
 # ----------------------------------------------------------------------------
 # Line charts for every future meeting (thresholded at 10% peak probability)
